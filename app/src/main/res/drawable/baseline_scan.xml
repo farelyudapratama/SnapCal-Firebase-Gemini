@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Background transparant -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,0h48v48h-48z"/>
+
+    <!-- Sudut kiri atas -->
+    <path
+        android:pathData="M6,16L6,6L16,6"
+        android:strokeWidth="4"
+        android:strokeColor="#000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+    <!-- Sudut kanan atas -->
+    <path
+        android:pathData="M32,6L42,6L42,16"
+        android:strokeWidth="4"
+        android:strokeColor="#000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+    <!-- Sudut kiri bawah -->
+    <path
+        android:pathData="M6,32L6,42L16,42"
+        android:strokeWidth="4"
+        android:strokeColor="#000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+    <!-- Sudut kanan bawah -->
+    <path
+        android:pathData="M32,42L42,42L42,32"
+        android:strokeWidth="4"
+        android:strokeColor="#000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+
+    <!-- Efek jejak scan (lebih transparan) -->
+<!--    <path-->
+<!--        android:pathData="M14,22L34,22"-->
+<!--        android:strokeWidth="2"-->
+<!--        android:strokeColor="#FFE0E0"-->
+<!--        android:strokeLineCap="round"/>-->
+
+    <!-- Garis scan utama berwarna merah -->
+    <path
+        android:pathData="M14,24L34,24"
+        android:strokeWidth="3"
+        android:strokeColor="#FF0000"
+        android:strokeLineCap="round"/>
+</vector>
