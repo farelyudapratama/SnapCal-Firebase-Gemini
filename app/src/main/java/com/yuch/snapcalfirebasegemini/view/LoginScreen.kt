@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 
@@ -31,7 +32,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
 
     LaunchedEffect(authState.value) {
         when(authState.value){
-            is AuthState.Authenticated -> navController.navigate("home")
+            is AuthState.Authenticated -> navController.navigate(Screen.Main.route)
             is AuthState.Error -> Toast.makeText(context,
                 (authState.value as AuthState.Error).message, Toast.LENGTH_SHORT).show()
             else -> Unit

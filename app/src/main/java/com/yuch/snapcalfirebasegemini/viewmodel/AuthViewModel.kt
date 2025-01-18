@@ -11,6 +11,8 @@ class AuthViewModel : ViewModel() {
 
     private val _authState = MutableLiveData<AuthState>()
     val authState: LiveData<AuthState> = _authState
+    private val _userEmail = MutableLiveData<String>()
+    val userEmail: LiveData<String> = _userEmail
 
     init {
         checkAuthStatus()
@@ -22,6 +24,7 @@ class AuthViewModel : ViewModel() {
             _authState.value = AuthState.Unauthenticated
         }else{
             _authState.value = AuthState.Authenticated
+            _userEmail.value = auth.currentUser?.email
         }
     }
 
@@ -36,6 +39,7 @@ class AuthViewModel : ViewModel() {
             .addOnCompleteListener{task->
                 if (task.isSuccessful){
                     _authState.value = AuthState.Authenticated
+                    _userEmail.value = auth.currentUser?.email
                 }else{
                     _authState.value = AuthState.Error(task.exception?.message?:"Something went wrong")
                 }
@@ -53,6 +57,7 @@ class AuthViewModel : ViewModel() {
             .addOnCompleteListener{task->
                 if (task.isSuccessful){
                     _authState.value = AuthState.Authenticated
+                    _userEmail.value = auth.currentUser?.email
                 }else{
                     _authState.value = AuthState.Error(task.exception?.message?:"Something went wrong")
                 }

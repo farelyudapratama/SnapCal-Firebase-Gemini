@@ -5,9 +5,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.view.LoginScreen
 import com.yuch.snapcalfirebasegemini.view.MainScreen
+import com.yuch.snapcalfirebasegemini.view.ProfileScreen
 import com.yuch.snapcalfirebasegemini.view.RegisterScreen
+import com.yuch.snapcalfirebasegemini.view.ScanScreen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 
 @Composable
@@ -16,15 +19,21 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel
 ) {
-    NavHost(navController = navController, startDestination = "login") {
-        composable("login") {
+    NavHost(navController = navController, startDestination = Screen.Login.route) {
+        composable(Screen.Login.route) {
             LoginScreen(modifier, navController, authViewModel)
         }
-        composable("register") {
+        composable(Screen.Register.route) {
             RegisterScreen(modifier, navController, authViewModel)
         }
-        composable("home") {
+        composable(Screen.Main.route) {
             MainScreen(modifier, navController, authViewModel)
+        }
+        composable(Screen.Profile.route) {
+            ProfileScreen(modifier, navController, authViewModel)
+        }
+        composable(Screen.Scan.route) {
+            ScanScreen(modifier, navController, authViewModel)
         }
     }
 }
