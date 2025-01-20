@@ -14,6 +14,10 @@ class CameraViewModel : ViewModel() {
     private val _capturedImagePaths = MutableStateFlow<List<String>>(emptyList())
     val capturedImagePaths = _capturedImagePaths.asStateFlow()
 
+    // StateFlow untuk menyimpan status kamera depan atau belakang
+    private val _isFrontCamera = MutableStateFlow(false)
+    val isFrontCamera = _isFrontCamera.asStateFlow()
+
     // Fungsi untuk menangani pengambilan foto
 //    fun onTakePhoto(bitmap: String, imagePath: String) {
 //        _bitmaps.value += bitmap
@@ -23,5 +27,14 @@ class CameraViewModel : ViewModel() {
     fun onTakePhoto(imagePath: String) {
         // Menambahkan path gambar ke list
         _capturedImagePaths.value += imagePath
+    }
+
+    fun saveBitmapToFile(bitmap: Bitmap): String {
+        // Simpan bitmap ke file
+        return ""
+    }
+
+    fun toggleCamera() {
+        _isFrontCamera.value = !_isFrontCamera.value
     }
 }
