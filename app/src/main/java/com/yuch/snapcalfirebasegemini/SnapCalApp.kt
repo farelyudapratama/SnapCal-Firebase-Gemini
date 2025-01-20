@@ -25,7 +25,8 @@ fun SnapCalApp(authViewModel: AuthViewModel) {
 
     val screensWithoutBottomBar = listOf(
         Screen.Login.route,
-        Screen.Register.route
+        Screen.Register.route,
+        Screen.Scan.route
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()

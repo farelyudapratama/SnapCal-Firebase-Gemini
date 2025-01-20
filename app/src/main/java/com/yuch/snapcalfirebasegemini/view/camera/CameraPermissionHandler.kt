@@ -1,0 +1,61 @@
+package com.yuch.snapcalfirebasegemini.view.camera
+
+import android.Manifest
+import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import com.google.accompanist.permissions.*
+
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun CameraPermissionHandler(
+    onPermissionGranted: @Composable () -> Unit,
+    onPermissionDenied: @Composable () -> Unit
+) {
+    val permissionState = rememberPermissionState(permission = Manifest.permission.CAMERA)
+
+    when {
+        permissionState.hasPermission -> {
+            // Izin sudah diberikan
+            onPermissionGranted()
+        }
+        permissionState.shouldShowRationale -> {
+            // Pengguna menolak izin sebelumnya
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Aplikasi memerlukan izin kamera untuk mengambil gambar.")
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { permissionState.launchPermissionRequest() }) {
+                    Text("Berikan Izin")
+                }
+            }
+        }
+        else -> {
+            // Izin belum diberikan
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Izin kamera belum diberikan.")
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { permissionState.launchPermissionRequest() }) {
+                    Text("Minta Izin Kamera")
+                }
+            }
+        }
+    }
+}
+

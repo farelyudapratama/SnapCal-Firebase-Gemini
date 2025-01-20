@@ -10,8 +10,9 @@ import com.yuch.snapcalfirebasegemini.view.LoginScreen
 import com.yuch.snapcalfirebasegemini.view.MainScreen
 import com.yuch.snapcalfirebasegemini.view.ProfileScreen
 import com.yuch.snapcalfirebasegemini.view.RegisterScreen
-import com.yuch.snapcalfirebasegemini.view.ScanScreen
+import com.yuch.snapcalfirebasegemini.view.camera.ScanScreen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 
 @Composable
 fun AppNavHost(
@@ -33,7 +34,10 @@ fun AppNavHost(
             ProfileScreen(modifier, navController, authViewModel)
         }
         composable(Screen.Scan.route) {
-            ScanScreen(modifier, navController, authViewModel)
+            ScanScreen(
+                modifier, navController, authViewModel, viewModel = CameraViewModel(),
+                onBack = { navController.popBackStack() },
+            )
         }
     }
 }
