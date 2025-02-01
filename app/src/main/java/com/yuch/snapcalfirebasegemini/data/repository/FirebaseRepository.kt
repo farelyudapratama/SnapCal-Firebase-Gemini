@@ -1,6 +1,6 @@
-package com.yuch.snapcalfirebasegemini.repository
+package com.yuch.snapcalfirebasegemini.data.repository
 
-import com.yuch.snapcalfirebasegemini.model.User
+import com.yuch.snapcalfirebasegemini.data.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
@@ -30,7 +30,8 @@ class FirebaseRepository {
     fun getUserData(uid: String, onResult: (User?) -> Unit) {
         database.getReference("users").child(uid).get()
             .addOnSuccessListener { snapshot ->
-                val user = snapshot.getValue(User::class.java)
+                val user = snapshot.getValue(
+                    User::class.java)
                 onResult(user)
             }
     }

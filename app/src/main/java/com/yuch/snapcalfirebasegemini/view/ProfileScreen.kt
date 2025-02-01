@@ -43,6 +43,5 @@ fun ProfileScreen(modifier: Modifier = Modifier, navController: NavController, a
 //            Text("Test Firebase Token")
 //        }
 
-
     }
 }

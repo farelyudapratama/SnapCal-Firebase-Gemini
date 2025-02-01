@@ -44,7 +44,6 @@ class AuthViewModel : ViewModel() {
                 if (task.isSuccessful){
                     _authState.value = AuthState.Authenticated
                     _userEmail.value = auth.currentUser?.email
-//                    getFirebaseToken()
                 }else{
                     _authState.value = AuthState.Error(task.exception?.message?:"Something went wrong")
                 }
@@ -57,12 +56,14 @@ class AuthViewModel : ViewModel() {
             if (task.isSuccessful) {
                 val token = task.result?.token
                 // Tampilkan di Logcat
-//                Log.d("FIREBASE_DEBUG", "Token berhasil didapatkan : $token")
+                Log.d("FIREBASE_DEBUG", "Token berhasil didapatkan : Bearer $token")
 //                Log.d("FIREBASE_DEBUG", "Token length: ${token?.length} characters")
 //                Log.d("FIREBASE_DEBUG", "First 10 chars: ${token?.take(10)}...")
 
                 // Untuk debugging - HAPUS SEBELUM PRODUCTION
                 // _firebaseToken.postValue(token) // Uncomment jika mau tampilkan di UI
+
+                return@addOnCompleteListener
             } else {
                 Log.e("FIREBASE_DEBUG", "Error getting token:", task.exception)
             }

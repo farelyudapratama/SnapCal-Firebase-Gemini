@@ -1,4 +1,4 @@
-package com.yuch.snapcalfirebasegemini.model
+package com.yuch.snapcalfirebasegemini.data.model
 
 data class User(
     val uid: String,
