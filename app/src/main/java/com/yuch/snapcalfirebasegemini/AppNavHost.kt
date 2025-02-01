@@ -1,6 +1,7 @@
 package com.yuch.snapcalfirebasegemini
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -11,6 +12,7 @@ import com.yuch.snapcalfirebasegemini.view.MainScreen
 import com.yuch.snapcalfirebasegemini.view.ProfileScreen
 import com.yuch.snapcalfirebasegemini.view.RegisterScreen
 import com.yuch.snapcalfirebasegemini.view.camera.ScanScreen
+import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 
@@ -20,7 +22,15 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel
 ) {
-    NavHost(navController = navController, startDestination = Screen.Login.route) {
+    val authState = authViewModel.authState.observeAsState()
+
+    val startDestination = when (authState.value) {
+        is AuthState.Authenticated -> Screen.Main.route
+        else -> Screen.Login.route
+    }
+
+
+    NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Login.route) {
             LoginScreen(modifier, navController, authViewModel)
         }

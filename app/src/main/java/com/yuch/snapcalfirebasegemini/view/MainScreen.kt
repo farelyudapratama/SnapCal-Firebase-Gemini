@@ -1,11 +1,14 @@
 package com.yuch.snapcalfirebasegemini.view
 
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -23,6 +26,23 @@ fun MainScreen(
     // Observasi email pengguna (dari AuthViewModel)
     val email by authViewModel.userEmail.observeAsState("")
 
+    // Context
+    val context = LocalContext.current
+    var backPressedTime by remember { mutableLongStateOf(0L) }
+
+    // Handle back button
+    BackHandler {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - backPressedTime < 2000) {
+            // Jika dalam 2 detik ditekan lagi, keluar aplikasi
+            // Keluar aplikasi ketika tekan back di main screen
+            android.os.Process.killProcess(android.os.Process.myPid())
+        } else {
+            // Jika tidak, berikan peringatan dulu
+            backPressedTime = currentTime
+            Toast.makeText(context, "Tekan sekali lagi untuk keluar", Toast.LENGTH_SHORT).show()
+        }
+    }
     // Redirect ke login jika pengguna tidak terautentikasi
     LaunchedEffect(authState.value) {
         when (authState.value) {
