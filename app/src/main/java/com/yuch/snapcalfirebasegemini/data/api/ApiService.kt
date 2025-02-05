@@ -4,6 +4,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.ChatRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.ChatResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodAnalysisResponse
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -14,10 +15,10 @@ import retrofit2.http.Part
 
 interface ApiService {
     @Multipart
-    @POST("api/food/analyze")
+    @POST("food/analyze")
     suspend fun analyzeFood(
         @Part image: MultipartBody.Part,
-        @Part("service") service: String
+        @Part("service") service: RequestBody
     ): Response<FoodAnalysisResponse>
 
     @POST("api/chat/start")

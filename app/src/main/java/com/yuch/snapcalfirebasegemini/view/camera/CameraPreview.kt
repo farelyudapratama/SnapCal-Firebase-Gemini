@@ -1,43 +1,37 @@
 package com.yuch.snapcalfirebasegemini.view.camera
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import java.io.File
-import androidx.camera.core.ImageCapture.OutputFileOptions
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import java.io.File
+import java.io.FileOutputStream
+import java.util.concurrent.Executors
 
 @Composable
 fun CameraPreview(
@@ -49,7 +43,12 @@ fun CameraPreview(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val previewView = remember { PreviewView(context) }
-    val imageCapture = remember { ImageCapture.Builder().build() }
+    val imageCapture = remember {
+        ImageCapture.Builder()
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            .setJpegQuality(85) // Kompresi JPEG 85%
+            .build()
+    }
 
     // State untuk animasi fokus
     var focusPoint by remember { mutableStateOf<Offset?>(null) }
@@ -84,15 +83,24 @@ fun CameraPreview(
     }
 
     val takePhoto = {
-        val photoFile = File(context.filesDir, "image_${System.currentTimeMillis()}.jpg")
-        val outputOptions = OutputFileOptions.Builder(photoFile).build()
+        val photoFile = File.createTempFile(
+            "IMG_${System.currentTimeMillis()}",
+            ".jpg",
+            context.externalCacheDir ?: context.cacheDir
+        )
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
         imageCapture.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    onImageCaptured(photoFile.absolutePath)
+                    try {
+                        val compressedFile = compressAndValidateImage(photoFile, isFrontCamera)
+                        onImageCaptured(compressedFile.absolutePath)
+                    } catch (e: Exception) {
+                        onError(e)
+                    }
                 }
 
                 override fun onError(exception: ImageCaptureException) {
@@ -225,4 +233,41 @@ fun CameraPreview(
             }
         }
     }
+}
+
+// Fungsi kompresi dan validasi gambar
+private fun compressAndValidateImage(file: File, isFrontCamera: Boolean): File {
+    // Baca dan kompres gambar
+    val options = BitmapFactory.Options().apply {
+        inSampleSize = 2 // Downsample
+    }
+
+    var bitmap = BitmapFactory.decodeFile(file.absolutePath, options)
+
+    // Flip horizontal untuk kamera depan
+    if (isFrontCamera) {
+        val matrix = Matrix().apply { postScale(-1f, 1f) }
+        bitmap = Bitmap.createBitmap(
+            bitmap,
+            0,
+            0,
+            bitmap.width,
+            bitmap.height,
+            matrix,
+            true
+        )
+    }
+
+    // Kompresi ulang
+    FileOutputStream(file).use { outputStream ->
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+        outputStream.flush()
+    }
+
+    // Validasi ukuran file
+    if (file.length() > 5 * 1024 * 1024) {
+        throw Exception("Ukuran file melebihi 5MB setelah kompresi")
+    }
+
+    return file
 }

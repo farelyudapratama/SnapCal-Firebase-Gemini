@@ -1,8 +1,11 @@
 package com.yuch.snapcalfirebasegemini.view.camera
 
 import android.content.Context
-import android.graphics.Bitmap
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -44,6 +47,7 @@ import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +64,19 @@ fun ScanScreen(
     val scaffoldState = rememberBottomSheetScaffoldState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Gallery Launcher
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let {
+            selectedImageUri = it
+            // Handle selected image
+            processSelectedImage(context, it, viewModel, navController)
+        }
+    }
 
     LaunchedEffect(toastMessage) {
         toastMessage?.let {
@@ -92,8 +109,9 @@ fun ScanScreen(
                     CameraPreview(
                         onImageCaptured = { imagePath ->
                             viewModel.onTakePhoto(imagePath)
-                            // Navigate to preview screen after capture
-                            navController.navigate("preview/$imagePath")
+                            // Encode path untuk navigasi
+                            val encodedPath = java.net.URLEncoder.encode(imagePath, "UTF-8")
+                            navController.navigate("analyze/$encodedPath")
                         },
                         onError = { error ->
                             toastMessage = "Error: ${error.message}"
@@ -117,9 +135,9 @@ fun ScanScreen(
                     ) {
                         IconButton(
                             onClick = {
-                                scope.launch {
-                                    scaffoldState.bottomSheetState.expand()
-                                }
+                                galleryLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
                             }
                         ) {
                             Icon(
@@ -223,4 +241,40 @@ fun CameraSwitchButton(
                 .padding(4.dp)
         )
     }
+}
+
+private fun processSelectedImage(
+    context: Context,
+    uri: Uri,
+    viewModel: CameraViewModel,
+    navController: NavController
+) {
+    try {
+        // Convert URI to File
+        val file = uriToFile(context, uri)
+
+        // Simpan ke ViewModel
+        viewModel.onTakePhoto(file.absolutePath)
+
+        // Encode path untuk navigasi
+        val encodedPath = java.net.URLEncoder.encode(file.absolutePath, "UTF-8")
+
+        // Navigasi ke preview screen
+        navController.navigate("analyze/$encodedPath")
+    } catch (e: Exception) {
+        Toast.makeText(context, "Gagal memuat gambar", Toast.LENGTH_SHORT).show()
+    }
+}
+
+fun uriToFile(context: Context, uri: Uri): File {
+    val contentResolver = context.contentResolver
+    val file = kotlin.io.path.createTempFile(suffix = ".jpg").toFile()
+
+    contentResolver.openInputStream(uri)?.use { input ->
+        FileOutputStream(file).use { output ->
+            input.copyTo(output)
+        }
+    }
+
+    return file
 }

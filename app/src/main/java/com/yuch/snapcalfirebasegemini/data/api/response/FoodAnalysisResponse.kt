@@ -1,12 +1,12 @@
 package com.yuch.snapcalfirebasegemini.data.api.response
 
 data class FoodAnalysisResponse(
-    val NamaMakanan: String,
-    val Kalori: Int,
-    val Karbohidrat: Int,
-    val Protein: Int,
-    val LemakTotal: Double,
-    val LemakJenuh: Double,
-    val Serat: Int,
-    val Gula: Double
+    val foodName: String,
+    val calories: Double,
+    val carbs: Double,
+    val protein: Double,
+    val totalFat: Double,
+    val saturatedFat: Double,
+    val fiber: Double,
+    val sugar: Double
 )

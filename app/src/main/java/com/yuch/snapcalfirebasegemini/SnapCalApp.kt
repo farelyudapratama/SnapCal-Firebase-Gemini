@@ -18,15 +18,20 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 
 @Composable
-fun SnapCalApp(authViewModel: AuthViewModel) {
+fun SnapCalApp(
+    authViewModel: AuthViewModel,
+    cameraViewModel: CameraViewModel
+) {
     val navController = rememberNavController()
 
     val screensWithoutBottomBar = listOf(
         Screen.Login.route,
         Screen.Register.route,
-        Screen.Scan.route
+        Screen.Scan.route,
+        Screen.Analyze.route
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -55,7 +60,8 @@ fun SnapCalApp(authViewModel: AuthViewModel) {
             AppNavHost(
                 navController = navController,
                 modifier = Modifier.padding(innerPadding),
-                authViewModel = authViewModel
+                authViewModel = authViewModel,
+                cameraViewModel = cameraViewModel
             )
         }
 
