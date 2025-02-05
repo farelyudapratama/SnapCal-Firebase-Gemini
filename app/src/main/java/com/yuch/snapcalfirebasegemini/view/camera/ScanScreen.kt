@@ -127,7 +127,7 @@ fun ScanScreen(
                     )
 
                     Row(
-                        modifier = Modifier
+                        modifier = modifier
                             .fillMaxWidth()
                             .align(Alignment.BottomCenter)
                             .padding(16.dp),
@@ -169,7 +169,7 @@ fun ScanScreen(
         },
         onPermissionDenied = {
             Column(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,

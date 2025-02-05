@@ -39,9 +39,9 @@ fun ProfileScreen(modifier: Modifier = Modifier, navController: NavController, a
         }) {
             Text(text = "Sign out")
         }
-//        Button(onClick = { authViewModel.getFirebaseToken() }) {
-//            Text("Test Firebase Token")
-//        }
+        Button(onClick = { authViewModel.getFirebaseToken() }) {
+            Text("Test Firebase Token")
+        }
 
     }
 }

@@ -4,16 +4,23 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodAnalysisResponse
+import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.viewmodel.AnalyzeViewModel
 import java.io.File
 
@@ -29,7 +36,25 @@ fun AnalyzeScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
+    // State untuk menyimpan data yang bisa diedit
+    var editableFood by remember { mutableStateOf<EditableFoodData?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Update editable data ketika mendapat hasil analisis baru
+    LaunchedEffect(analysisResult) {
+        analysisResult?.let { result ->
+            editableFood = EditableFoodData(
+                foodName = result.foodName ?: "",
+                calories = result.calories.toString() ?: "",
+                carbs = result.carbs.toString() ?: "",
+                protein = result.protein.toString() ?: "",
+                totalFat = result.totalFat.toString() ?: "",
+                saturatedFat = result.saturatedFat.toString() ?: "",
+                fiber = result.fiber.toString() ?: "",
+                sugar = result.sugar.toString() ?: ""
+            )
+        }
+    }
 
     // Handle error messages with Snackbar
     LaunchedEffect(errorMessage) {
@@ -38,59 +63,217 @@ fun AnalyzeScreen(
                 message = it,
                 duration = SnackbarDuration.Long
             )
-            // Clear the error message after showing
             viewModel.clearErrorMessage()
         }
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Food Analysis",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        },
+        floatingActionButton = {
+            if (editableFood != null) {
+                FloatingActionButton(
+                    onClick = {
+                        // TODO: Implement save function
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Icon(Icons.Default.Save, contentDescription = "Save")
+                }
+            }
+        },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Image Preview
-            ImagePreview(imagePath)
+            item {
+                ImagePreview(imagePath)
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (analysisResult == null) {
-                ServiceSelectionContent(
-                    selectedService = selectedService,
-                    onServiceSelected = { selectedService = it },
-                    onAnalyzeClick = { service ->
-                        viewModel.analyzeImage(imagePath, service)
-                    },
-                    isLoading = isLoading
-                )
-            } else {
-                // Analysis Results
-                LazyColumn {
-                    item {
-                        AnalysisResultCard(analysisResult!!)
+            item {
+                when {
+                    isLoading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(48.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 4.dp
+                            )
+                        }
+                    }
+                    editableFood == null -> {
+                        ServiceSelectionContent(
+                            selectedService = selectedService,
+                            onServiceSelected = { selectedService = it },
+                            onAnalyzeClick = { service ->
+                                viewModel.analyzeImage(imagePath, service)
+                            },
+                            isLoading = isLoading
+                        )
+                    }
+                    else -> {
+                        EditableAnalysisCard(
+                            foodData = editableFood!!,
+                            onValueChange = { editableFood = it }
+                        )
                     }
                 }
+            }
+
+            // Tambah space di bawah untuk menghindari FAB
+            item {
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
     }
 }
 
 @Composable
-private fun ImagePreview(imagePath: String) {
-    AsyncImage(
-        model = File(imagePath),
-        contentDescription = "Captured food image",
+private fun EditableAnalysisCard(
+    foodData: EditableFoodData,
+    onValueChange: (EditableFoodData) -> Unit
+) {
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp)
-            .clip(RoundedCornerShape(12.dp)),
-        contentScale = ContentScale.Crop
-    )
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                "Nutrition Information",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            OutlinedTextField(
+                value = foodData.foodName,
+                onValueChange = { onValueChange(foodData.copy(foodName = it)) },
+                label = { Text("Food Name") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            EditableNutritionRow("Calories (kcal)", foodData.calories) {
+                onValueChange(foodData.copy(calories = it))
+            }
+
+            EditableNutritionRow("Carbs (g)", foodData.carbs) {
+                onValueChange(foodData.copy(carbs = it))
+            }
+
+            EditableNutritionRow("Protein (g)", foodData.protein) {
+                onValueChange(foodData.copy(protein = it))
+            }
+
+            EditableNutritionRow("Total Fat (g)", foodData.totalFat) {
+                onValueChange(foodData.copy(totalFat = it))
+            }
+
+            EditableNutritionRow("Saturated Fat (g)", foodData.saturatedFat) {
+                onValueChange(foodData.copy(saturatedFat = it))
+            }
+
+            EditableNutritionRow("Fiber (g)", foodData.fiber) {
+                onValueChange(foodData.copy(fiber = it))
+            }
+
+            EditableNutritionRow("Sugar (g)", foodData.sugar) {
+                onValueChange(foodData.copy(sugar = it))
+            }
+        }
+    }
+}
+
+@Composable
+private fun EditableNutritionRow(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit
+) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+    }
+}
+
+@Composable
+private fun ImagePreview(imagePath: String) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        AsyncImage(
+            model = File(imagePath),
+            contentDescription = "Captured food image",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp),
+            contentScale = ContentScale.Crop
+        )
+    }
 }
 
 @Composable
@@ -100,46 +283,69 @@ private fun ServiceSelectionContent(
     onAnalyzeClick: (String) -> Unit,
     isLoading: Boolean
 ) {
-    Column {
-        Text(
-            "Select AI Service",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth()
         ) {
-            ServiceButton(
-                text = "Gemini",
-                isSelected = selectedService == "gemini",
-                onClick = { onServiceSelected("gemini") }
+            Text(
+                "Select AI Service",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            ServiceButton(
-                text = "Groq",
-                isSelected = selectedService == "groq",
-                onClick = { onServiceSelected("groq") }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                selectedService?.let(onAnalyzeClick)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = selectedService != null && !isLoading
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(24.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                ServiceButton(
+                    text = "Gemini",
+                    isSelected = selectedService == "gemini",
+                    onClick = { onServiceSelected("gemini") },
+                    modifier = Modifier.weight(1f)
                 )
-            } else {
-                Text("Analyze")
+
+                ServiceButton(
+                    text = "Groq",
+                    isSelected = selectedService == "groq",
+                    onClick = { onServiceSelected("groq") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = { selectedService?.let(onAnalyzeClick) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = selectedService != null && !isLoading,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                )
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else {
+                    Text(
+                        "Analyze",
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             }
         }
     }
@@ -149,66 +355,33 @@ private fun ServiceSelectionContent(
 private fun ServiceButton(
     text: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier.height(48.dp),
+        modifier = modifier
+            .height(48.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (isSelected)
                 MaterialTheme.colorScheme.primary
             else
-                MaterialTheme.colorScheme.surface
+                MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (isSelected)
+                MaterialTheme.colorScheme.onPrimary
+            else
+                MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = if (isSelected) 4.dp else 0.dp
         )
     ) {
         Text(
             text = text,
-            color = if (isSelected)
-                MaterialTheme.colorScheme.onPrimary
-            else
-                MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
-@Composable
-private fun AnalysisResultCard(result: FoodAnalysisResponse) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
-            Text(
-                text = result.foodName,
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(bottom = 16.dp)
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
             )
-
-            NutritionRow("Calories", "${result.calories} kcal")
-            NutritionRow("Carbs", "${result.carbs}g")
-            NutritionRow("Protein", "${result.protein}g")
-            NutritionRow("Total Fat", "${result.totalFat}g")
-            NutritionRow("Saturated Fat", "${result.saturatedFat}g")
-            NutritionRow("Fiber", "${result.fiber}g")
-            NutritionRow("Sugar", "${result.sugar}g")
-        }
-    }
-}
-
-@Composable
-private fun NutritionRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = label)
-        Text(text = value, fontWeight = FontWeight.Bold)
+        )
     }
 }
