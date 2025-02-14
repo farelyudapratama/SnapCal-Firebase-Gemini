@@ -8,5 +8,6 @@ data class EditableFoodData (
     val totalFat: String = "",
     val saturatedFat: String = "",
     val fiber: String = "",
-    val sugar: String = ""
+    val sugar: String = "",
+    var mealType: String? = null
 )

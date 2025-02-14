@@ -3,6 +3,8 @@ package com.yuch.snapcalfirebasegemini.data.repository
 import android.net.Uri
 import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
+import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
+import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.ChatRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodAnalysisResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -17,7 +19,7 @@ class ApiRepository private constructor(
 //    suspend fun analyzeFood(image: MultipartBody.Part, service: String) = apiService.analyzeFood(image, service)
 //    suspend fun sendMessage(message: ChatRequest) = apiService.sendMessage(message)
 
-    suspend fun analyzeFood(imageUri: Uri, service: String): Result<FoodAnalysisResponse> {
+    suspend fun analyzeFood(imageUri: Uri, service: String): Result<ApiResponse<AnalyzeResult>> {
         return try {
             val file = File(imageUri.path!!)
             val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())

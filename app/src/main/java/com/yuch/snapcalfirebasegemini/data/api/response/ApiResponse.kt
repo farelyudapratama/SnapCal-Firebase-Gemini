@@ -1,0 +1,53 @@
+package com.yuch.snapcalfirebasegemini.data.api.response
+
+import com.google.gson.annotations.SerializedName
+
+data class ApiResponse<T>(
+	val status: String,
+	val message: String,
+	val data: T? = null,
+	val error: ErrorResponse ? = null
+)
+data class ErrorResponse(
+	val code: Int,
+	val description: String
+)
+data class Food(
+	val id: String,
+	val userId: String,
+	val foodName: String,
+	val mealType: String,
+	val nutritionData: NutritionData,
+	val imageUrl: String?
+)
+
+data class NutritionData(
+	val calories: Double,
+	val carbs: Double,
+	val protein: Double,
+	val totalFat: Double,
+	val saturatedFat: Double,
+	val fiber: Double,
+	val sugar: Double
+)
+
+data class AnalyzeResult(
+	val foodName: String,
+	val calories: Double,
+	val carbs: Double,
+	val protein: Double,
+	val totalFat: Double,
+	val saturatedFat: Double,
+	val fiber: Double,
+	val sugar: Double
+)
+
+data class DailySummary(
+	val totalCalories: Double,
+	val totalCarbs: Double,
+	val totalProtein: Double,
+	val totalFat: Double,
+	val totalSaturatedFat: Double,
+	val totalFiber: Double,
+	val totalSugar: Double
+)

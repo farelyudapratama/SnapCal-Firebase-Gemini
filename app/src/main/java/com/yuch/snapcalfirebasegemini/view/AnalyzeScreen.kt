@@ -1,6 +1,5 @@
 package com.yuch.snapcalfirebasegemini.view
 
-import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,50 +11,67 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.yuch.snapcalfirebasegemini.data.api.response.FoodAnalysisResponse
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
-import com.yuch.snapcalfirebasegemini.viewmodel.AnalyzeViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
+import kotlinx.coroutines.launch
 import java.io.File
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyzeScreen(
     imagePath: String,
-    viewModel: AnalyzeViewModel = viewModel(),
+    viewModel: FoodViewModel = viewModel(),
     onBack: () -> Unit
 ) {
     var selectedService by remember { mutableStateOf<String?>(null) }
-    val analysisResult by viewModel.analysisResult.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
+    val analysisResult by viewModel.analysisResult.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val successMessage by viewModel.successMessage.collectAsStateWithLifecycle()
 
     // State untuk menyimpan data yang bisa diedit
     var editableFood by remember { mutableStateOf<EditableFoodData?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-
+    val coroutineScope = rememberCoroutineScope()
     // Update editable data ketika mendapat hasil analisis baru
     LaunchedEffect(analysisResult) {
-        analysisResult?.let { result ->
-            editableFood = EditableFoodData(
-                foodName = result.foodName ?: "",
-                calories = result.calories.toString() ?: "",
-                carbs = result.carbs.toString() ?: "",
-                protein = result.protein.toString() ?: "",
-                totalFat = result.totalFat.toString() ?: "",
-                saturatedFat = result.saturatedFat.toString() ?: "",
-                fiber = result.fiber.toString() ?: "",
-                sugar = result.sugar.toString() ?: ""
-            )
+        analysisResult.let { result ->
+            editableFood =
+                result.data?.let {
+                    EditableFoodData(
+                        foodName = it.foodName,
+                        calories = it.calories.toString(),
+                        carbs = it.carbs.toString(),
+                        protein = it.protein.toString(),
+                        totalFat = it.totalFat.toString(),
+                        saturatedFat = it.saturatedFat.toString(),
+                        fiber = it.fiber.toString(),
+                        sugar = it.sugar.toString()
+                    )
+                }
         }
     }
 
+    // Handle success message
+    LaunchedEffect(successMessage) {
+        successMessage?.let {
+            snackbarHostState.showSnackbar(
+                message = it,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearErrorMessage()
+            // Navigate after showing success message
+//            onUploadSuccess()
+        }
+    }
     // Handle error messages with Snackbar
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
@@ -89,10 +105,21 @@ fun AnalyzeScreen(
             )
         },
         floatingActionButton = {
-            if (editableFood != null) {
+            if (editableFood != null && !isLoading) {
                 FloatingActionButton(
                     onClick = {
-                        // TODO: Implement save function
+                        editableFood?.let { foodData ->
+                            if (foodData.mealType != null) {
+                                viewModel.uploadFood(imagePath, foodData)
+                            } else {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Please select a meal type before saving",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }
+                        }
                     },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -127,11 +154,21 @@ fun AnalyzeScreen(
                                 .padding(32.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(48.dp),
-                                color = MaterialTheme.colorScheme.primary,
-                                strokeWidth = 4.dp
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(48.dp),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    strokeWidth = 4.dp
+                                )
+                                Text(
+                                    "Loading...",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                     }
                     editableFood == null -> {
@@ -161,6 +198,9 @@ fun AnalyzeScreen(
     }
 }
 
+@OptIn(
+    ExperimentalMaterial3Api::class
+)
 @Composable
 private fun EditableAnalysisCard(
     foodData: EditableFoodData,
@@ -185,6 +225,47 @@ private fun EditableAnalysisCard(
                 ),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
+
+            var expanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded }
+            ) {
+                OutlinedTextField(
+                    value = foodData.mealType?.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(Locale.getDefault())
+                        else it.toString()
+                    } ?: "Select Meal Type",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Meal Type") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    listOf("breakfast", "lunch", "dinner", "snack", "drink").forEach { mealType ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(mealType.replaceFirstChar {
+                                    if (it.isLowerCase()) it.titlecase(Locale.ROOT)
+                                    else it.toString()
+                                })
+                            },
+                            onClick = {
+                                onValueChange(foodData.copy(mealType = mealType))
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
 
             OutlinedTextField(
                 value = foodData.foodName,
