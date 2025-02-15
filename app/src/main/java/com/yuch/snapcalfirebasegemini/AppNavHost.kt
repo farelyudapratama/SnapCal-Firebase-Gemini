@@ -12,6 +12,7 @@ import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.view.AnalyzeScreen
 import com.yuch.snapcalfirebasegemini.view.LoginScreen
 import com.yuch.snapcalfirebasegemini.view.MainScreen
+import com.yuch.snapcalfirebasegemini.view.ManualEntryScreen
 import com.yuch.snapcalfirebasegemini.view.ProfileScreen
 import com.yuch.snapcalfirebasegemini.view.RegisterScreen
 import com.yuch.snapcalfirebasegemini.view.camera.ScanScreen
@@ -71,6 +72,12 @@ fun AppNavHost(
                 onBack = { navController.popBackStack() }
             )
         }
-
+        composable(Screen.ManualEntry.route) {
+            ManualEntryScreen(
+                modifier,
+                onBack = { navController.popBackStack() },
+                onImageCapture = { navController.navigate(Screen.Scan.route) }
+            )
+        }
     }
 }

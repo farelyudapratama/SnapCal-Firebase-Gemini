@@ -7,4 +7,6 @@ sealed class Screen(val route: String) {
     data object Scan : Screen("scan")
     data object Analyze : Screen("analyze/{imagePath}")
     data object Profile : Screen("profile")
+    data object ManualEntry : Screen("manual-entry")
+    data object Message : Screen("message")
 }
