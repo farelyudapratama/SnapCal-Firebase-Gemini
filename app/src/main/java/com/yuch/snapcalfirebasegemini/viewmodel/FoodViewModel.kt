@@ -144,16 +144,47 @@ class FoodViewModel(
         }
     }
 
-    private fun <T> handleFoodResponse(response: Response<ApiResponse<T>>) {
+    private fun handleFoodResponse(response: Response<ApiResponse<Food>>) {
         if (response.isSuccessful) {
-            response.body()?.let {
-                _errorMessage.value = null
-                _successMessage.value = it.message
-            } ?: run {
-                _errorMessage.value = "Empty response from server"
-            }
+            response.body()
+                ?.let { apiResponse ->
+                    when (apiResponse.status) {
+                        "success" -> {
+                            _uploadResult.value =
+                                apiResponse
+                            _errorMessage.value =
+                                null
+                        }
+
+                        "error" -> {
+                            val statusCode =
+                                response.code()
+                            _errorMessage.value =
+                                "[Code: $statusCode] ${apiResponse.message}"
+                        }
+                    }
+                }
+                ?: run {
+                    _errorMessage.value =
+                        "[Code: ${response.code()}] Empty response from server"
+                }
         } else {
-            _errorMessage.value = "HTTP Error: ${response.code()}, ${response.message()}"
+            try {
+                // Parse error response from backend
+                val errorBody =
+                    response.errorBody()
+                        ?.string()
+                val errorResponse =
+                    Gson().fromJson(
+                        errorBody,
+                        ApiResponse::class.java
+                    )
+                _errorMessage.value =
+                    "[Code: ${response.code()}] ${errorResponse.message}"
+            } catch (e: Exception) {
+                _errorMessage.value =
+                    "[Code: ${response.code()}] ${response.message()}"
+            }
         }
     }
 

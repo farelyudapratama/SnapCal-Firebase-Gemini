@@ -75,8 +75,7 @@ fun AppNavHost(
         composable(Screen.ManualEntry.route) {
             ManualEntryScreen(
                 modifier,
-                onBack = { navController.popBackStack() },
-                onImageCapture = { navController.navigate(Screen.Scan.route) }
+                onBack = { navController.popBackStack() }
             )
         }
     }

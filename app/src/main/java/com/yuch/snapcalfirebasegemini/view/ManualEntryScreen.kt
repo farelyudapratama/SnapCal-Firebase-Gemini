@@ -1,5 +1,11 @@
 package com.yuch.snapcalfirebasegemini.view
 
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,23 +19,47 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import kotlinx.coroutines.launch
-import java.util.Locale
+import android.os.Build
+import android.content.pm.PackageManager
+import android.Manifest
+import android.content.Context
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.icons.filled.Cookie
+import androidx.compose.material.icons.filled.DinnerDining
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.FreeBreakfast
+import androidx.compose.material.icons.filled.Grain
+import androidx.compose.material.icons.filled.Grass
+import androidx.compose.material.icons.filled.LocalCafe
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.LunchDining
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import java.io.File
+import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ManualEntryScreen(
     modifier: Modifier = Modifier,
     viewModel: FoodViewModel = viewModel(),
-    onBack: () -> Unit,
-    onImageCapture: () -> Unit
+    onBack: () -> Unit
 ) {
     var foodData by remember {
         mutableStateOf(
@@ -46,11 +76,64 @@ fun ManualEntryScreen(
             )
         )
     }
+    val focusManager = LocalFocusManager.current
+    val foodNameFocus = remember { FocusRequester() }
+    val caloriesFocus = remember { FocusRequester() }
+    val carbsFocus = remember { FocusRequester() }
+    val proteinFocus = remember { FocusRequester() }
+    val totalFatFocus = remember { FocusRequester() }
+    val saturatedFatFocus = remember { FocusRequester() }
+    val fiberFocus = remember { FocusRequester() }
+    val sugarFocus = remember { FocusRequester() }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
+
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    val context = LocalContext.current
+    var hasPermission by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasPermission = isGranted
+        if (!isGranted) {
+            Toast.makeText(context, "Permission Denied!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let {
+            selectedImageUri = it
+
+            // Handle selected image
+            val file = uriToFile(context, it)
+            viewModel.uploadFood(file.absolutePath, foodData)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
+                if (context.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                    permissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
+                } else {
+                    hasPermission = true
+                }
+            }
+            else -> {
+                if (context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                } else {
+                    hasPermission = true
+                }
+            }
+        }
+    }
 
     // Handle error messages
     LaunchedEffect(errorMessage) {
@@ -68,7 +151,7 @@ fun ManualEntryScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Manual Food Entry",
+                        "Add Food Entry",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Medium
                         )
@@ -88,7 +171,10 @@ fun ManualEntryScreen(
             FloatingActionButton(
                 onClick = {
                     if (foodData.mealType != null && foodData.foodName.isNotBlank()) {
-                        viewModel.uploadFood(null, foodData)
+                        viewModel.uploadFood(
+                            selectedImageUri?.let { uriToFile(context, it).absolutePath },
+                            foodData
+                        )
                     } else {
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar(
@@ -118,164 +204,373 @@ fun ManualEntryScreen(
                     modifier = modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    shape = RoundedCornerShape(24.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Column(
-                        modifier = modifier.padding(16.dp)
+                        modifier = modifier.padding(24.dp)
                     ) {
-                        // Optional Image Button
-                        OutlinedButton(
-                            onClick = onImageCapture,
-                            modifier = modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    Icons.Default.AddAPhoto,
-                                    contentDescription = "Add Photo",
-                                    modifier = modifier.size(48.dp)
-                                )
-                                Spacer(modifier = modifier.height(8.dp))
-                                Text("Add Food Photo (Optional)")
-                            }
-                        }
-
-                        Spacer(modifier = modifier.height(16.dp))
-
-                        // Meal Type Dropdown
-                        var expanded by remember { mutableStateOf(false) }
-                        ExposedDropdownMenuBox(
-                            expanded = expanded,
-                            onExpandedChange = { expanded = !expanded }
-                        ) {
-                            OutlinedTextField(
-                                value = foodData.mealType?.replaceFirstChar {
-                                    if (it.isLowerCase()) it.titlecase(Locale.getDefault())
-                                    else it.toString()
-                                } ?: "Select Meal Type",
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text("Meal Type") },
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                                modifier = modifier
-                                    .fillMaxWidth()
-                                    .menuAnchor(),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-
-                            ExposedDropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false }
-                            ) {
-                                listOf("breakfast", "lunch", "dinner", "snack", "drink").forEach { mealType ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(mealType.replaceFirstChar {
-                                                if (it.isLowerCase()) it.titlecase(Locale.ROOT)
-                                                else it.toString()
-                                            })
-                                        },
-                                        onClick = {
-                                            foodData = foodData.copy(mealType = mealType)
-                                            expanded = false
-                                        }
+                        // Image Selection with Preview
+                        ImageSelectionButton(
+                            selectedImageUri = selectedImageUri,
+                            hasPermission = hasPermission,
+                            onImageSelect = {
+                                if (hasPermission) {
+                                    galleryLauncher.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                     )
+                                } else {
+                                    Toast.makeText(context, "Permission Denied!", Toast.LENGTH_SHORT).show()
                                 }
                             }
-                        }
-
-                        Spacer(modifier = modifier.height(16.dp))
-
-                        // Food Name
-                        OutlinedTextField(
-                            value = foodData.foodName,
-                            onValueChange = { foodData = foodData.copy(foodName = it) },
-                            label = { Text("Food Name") },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = modifier.height(24.dp))
 
-                        // Nutrition Fields
-                        EditableNutritionRow("Calories (kcal)", foodData.calories) {
-                            foodData = foodData.copy(calories = it)
-                        }
+                        // Meal Type Selector
+                        MealTypeDropdown(
+                            selectedMealType = foodData.mealType,
+                            onMealTypeSelected = { foodData = foodData.copy(mealType = it) }
+                        )
 
-                        EditableNutritionRow("Carbs (g)", foodData.carbs) {
-                            foodData = foodData.copy(carbs = it)
-                        }
+                        Spacer(modifier = modifier.height(24.dp))
 
-                        EditableNutritionRow("Protein (g)", foodData.protein) {
-                            foodData = foodData.copy(protein = it)
-                        }
+                        Text(
+                            "Food Information",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
 
-                        EditableNutritionRow("Total Fat (g)", foodData.totalFat) {
-                            foodData = foodData.copy(totalFat = it)
-                        }
+                        // Food Name Input
+                        TextField(
+                            value = foodData.foodName,
+                            onValueChange = { foodData = foodData.copy(foodName = it) },
+                            label = "Food Name",
+                            leadingIcon = { Icon(Icons.Default.Restaurant, "Food") },
+                            focusRequester = foodNameFocus,
+                            onNext = { caloriesFocus.requestFocus() }
+                        )
 
-                        EditableNutritionRow("Saturated Fat (g)", foodData.saturatedFat) {
-                            foodData = foodData.copy(saturatedFat = it)
-                        }
+                        Spacer(modifier = modifier.height(24.dp))
 
-                        EditableNutritionRow("Fiber (g)", foodData.fiber) {
-                            foodData = foodData.copy(fiber = it)
-                        }
+                        // Nutrition Section
+                        Text(
+                            "Nutrition Information",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
 
-                        EditableNutritionRow("Sugar (g)", foodData.sugar) {
-                            foodData = foodData.copy(sugar = it)
-                        }
+                        // Nutrition Inputs
+                        NutritionField(
+                            label = "Calories",
+                            value = foodData.calories,
+                            onValueChange = { foodData = foodData.copy(calories = it) },
+                            focusRequester = caloriesFocus,
+                            onNext = { carbsFocus.requestFocus() },
+                            icon = Icons.Default.LocalFireDepartment
+                        )
+
+                        NutritionField(
+                            label = "Carbohydrates (g)",
+                            value = foodData.carbs,
+                            onValueChange = { foodData = foodData.copy(carbs = it) },
+                            focusRequester = carbsFocus,
+                            onNext = { proteinFocus.requestFocus() },
+                            icon = Icons.Default.Grain
+                        )
+
+                        NutritionField(
+                            label = "Protein (g)",
+                            value = foodData.protein,
+                            onValueChange = { foodData = foodData.copy(protein = it) },
+                            focusRequester = proteinFocus,
+                            onNext = { totalFatFocus.requestFocus() },
+                            icon = Icons.Default.FitnessCenter
+                        )
+
+                        NutritionField(
+                            label = "Total Fat (g)",
+                            value = foodData.totalFat,
+                            onValueChange = { foodData = foodData.copy(totalFat = it) },
+                            focusRequester = totalFatFocus,
+                            onNext = { saturatedFatFocus.requestFocus() },
+                            icon = Icons.Default.WaterDrop
+                        )
+
+                        NutritionField(
+                            label = "Saturated Fat (g)",
+                            value = foodData.saturatedFat,
+                            onValueChange = { foodData = foodData.copy(saturatedFat = it) },
+                            focusRequester = saturatedFatFocus,
+                            onNext = { fiberFocus.requestFocus() },
+                            icon = Icons.Default.WaterDrop
+                        )
+
+                        NutritionField(
+                            label = "Fiber (g)",
+                            value = foodData.fiber,
+                            onValueChange = { foodData = foodData.copy(fiber = it) },
+                            focusRequester = fiberFocus,
+                            onNext = { sugarFocus.requestFocus() },
+                            icon = Icons.Default.Grass
+                        )
+
+                        NutritionField(
+                            label = "Sugar (g)",
+                            value = foodData.sugar,
+                            onValueChange = { foodData = foodData.copy(sugar = it) },
+                            focusRequester = sugarFocus,
+                            onNext = { focusManager.clearFocus() },
+                            icon = Icons.Default.Cookie
+                        )
                     }
                 }
             }
 
-            // Spacer at bottom to avoid FAB overlap
-            item {
-                Spacer(modifier = Modifier.height(80.dp))
-            }
+            item { Spacer(modifier = Modifier.height(80.dp)) }
         }
 
         if (isLoading) {
-            Box(
+            LoadingOverlay()
+        }
+    }
+}
+
+@Composable
+private fun TextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    focusRequester: FocusRequester,
+    onNext: () -> Unit,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        leadingIcon = leadingIcon,
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            focusedLeadingIconColor = MaterialTheme.colorScheme.primary
+        ),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = ImeAction.Next
+        ),
+        keyboardActions = KeyboardActions(
+            onNext = { onNext() }
+        ),
+        singleLine = true
+    )
+}
+
+@Composable
+private fun NutritionField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    focusRequester: FocusRequester,
+    onNext: () -> Unit,
+    icon: ImageVector
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { newValue ->
+            // Only allow numeric input
+            if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
+                onValueChange(newValue)
+            }
+        },
+        label = { Text(label) },
+        leadingIcon = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .focusRequester(focusRequester),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            focusedLeadingIconColor = MaterialTheme.colorScheme.primary
+        ),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Decimal,
+            imeAction = ImeAction.Next
+        ),
+        keyboardActions = KeyboardActions(
+            onNext = { onNext() }
+        ),
+        singleLine = true
+    )
+}
+
+@OptIn(
+    ExperimentalMaterial3Api::class
+)
+@Composable
+private fun MealTypeDropdown(
+    selectedMealType: String?,
+    onMealTypeSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val mealTypes = listOf(
+        "breakfast" to Icons.Default.FreeBreakfast,
+        "lunch" to Icons.Default.LunchDining,
+        "dinner" to Icons.Default.DinnerDining,
+        "snack" to Icons.Default.Restaurant,
+        "drink" to Icons.Default.LocalCafe
+    )
+
+    Column {
+        Text(
+            "Meal Type",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        ) {
+            OutlinedTextField(
+                value = selectedMealType?.replaceFirstChar { it.uppercase() } ?: "",
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary
+                ),
+                placeholder = { Text("Select meal type") }
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
             ) {
-                CircularProgressIndicator()
+                mealTypes.forEach { (type, icon) ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(type.replaceFirstChar { it.uppercase() })
+                            }
+                        },
+                        onClick = {
+                            onMealTypeSelected(type)
+                            expanded = false
+                        }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun EditableNutritionRow(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit
-) {
-    Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-        )
-
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
-            shape = RoundedCornerShape(12.dp),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        )
+private fun LoadingOverlay() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "Saving food entry...",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        }
     }
+}
+
+@Composable
+private fun ImageSelectionButton(
+    selectedImageUri: Uri?,
+    hasPermission: Boolean,
+    onImageSelect: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (selectedImageUri != null) {
+            Image(
+                painter = rememberAsyncImagePainter(selectedImageUri),
+                contentDescription = "Selected Image",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            IconButton(
+                onClick = onImageSelect,
+                enabled = hasPermission,
+                modifier = Modifier.size(48.dp),
+                content = {
+                    Icon(
+                        imageVector = Icons.Default.AddAPhoto,
+                        contentDescription = "Add Photo",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            )
+        }
+    }
+}
+
+fun uriToFile(context: Context, uri: Uri): File {
+    val contentResolver = context.contentResolver
+    val file = kotlin.io.path.createTempFile(suffix = ".jpg").toFile()
+
+    contentResolver.openInputStream(uri)?.use { input ->
+        FileOutputStream(file).use { output ->
+            input.copyTo(output)
+        }
+    }
+
+    return file
 }
