@@ -3,6 +3,8 @@ package com.yuch.snapcalfirebasegemini
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -10,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -24,6 +27,9 @@ import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 
+@OptIn(
+    ExperimentalMaterial3Api::class
+)
 @Composable
 fun SnapCalApp(
     authViewModel: AuthViewModel,
@@ -42,8 +48,9 @@ fun SnapCalApp(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // State untuk menampilkan dialog
-    val openDialog = remember { mutableStateOf(false) }
+    // State untuk membuka ModalBottomSheet
+    val sheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -58,7 +65,7 @@ fun SnapCalApp(
                 if (currentRoute !in screensWithoutBottomBar) {
                     FloatingActionButton(
                         onClick = {
-                            openDialog.value = true
+                            showBottomSheet = true
                         },
                         containerColor = Color(0xFFFF5722),
                         elevation = FloatingActionButtonDefaults.elevation(
@@ -85,51 +92,61 @@ fun SnapCalApp(
                 cameraViewModel = cameraViewModel
             )
         }
-        if (openDialog.value) {
-            ChooseActionDialog(
-                onDismiss = { openDialog.value = false },
-                onScanSelected = {
-                    navController.navigate(Screen.Scan.route)
-                    openDialog.value = false
+        if (showBottomSheet) {
+            ModalBottomSheet(
+                onDismissRequest = {
+                    showBottomSheet = false
                 },
-                onManualEntrySelected = {
-                    navController.navigate(Screen.ManualEntry.route)
-                    openDialog.value = false
+                sheetState = sheetState
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            navController.navigate(Screen.Scan.route)
+                            showBottomSheet = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Scan",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Scan",
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            navController.navigate(Screen.ManualEntry.route)
+                            showBottomSheet = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Isi Manual",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Isi Manual",
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
-            )
+            }
         }
     }
-}
-
-@Composable
-fun ChooseActionDialog(
-    onDismiss: () -> Unit,
-    onScanSelected: () -> Unit,
-    onManualEntrySelected: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Pilih Aksi") },
-        text = { Text("Pilih apakah Anda ingin melakukan Scan atau Manual Entry.") },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onScanSelected()
-                }
-            ) {
-                Text("Scan")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onManualEntrySelected()
-                }
-            ) {
-                Text("Manual Entry")
-            }
-        }
-    )
 }
 
 @Composable
