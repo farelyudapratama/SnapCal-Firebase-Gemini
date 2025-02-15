@@ -8,6 +8,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -40,6 +42,9 @@ fun SnapCalApp(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // State untuk menampilkan dialog
+    val openDialog = remember { mutableStateOf(false) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             bottomBar = {
@@ -53,10 +58,7 @@ fun SnapCalApp(
                 if (currentRoute !in screensWithoutBottomBar) {
                     FloatingActionButton(
                         onClick = {
-                            when (currentRoute) {
-                                Screen.Main.route -> navController.navigate(Screen.Scan.route)
-                                else -> {}
-                            }
+                            openDialog.value = true
                         },
                         containerColor = Color(0xFFFF5722),
                         elevation = FloatingActionButtonDefaults.elevation(
@@ -83,7 +85,51 @@ fun SnapCalApp(
                 cameraViewModel = cameraViewModel
             )
         }
+        if (openDialog.value) {
+            ChooseActionDialog(
+                onDismiss = { openDialog.value = false },
+                onScanSelected = {
+                    navController.navigate(Screen.Scan.route)
+                    openDialog.value = false
+                },
+                onManualEntrySelected = {
+                    navController.navigate(Screen.ManualEntry.route)
+                    openDialog.value = false
+                }
+            )
+        }
     }
+}
+
+@Composable
+fun ChooseActionDialog(
+    onDismiss: () -> Unit,
+    onScanSelected: () -> Unit,
+    onManualEntrySelected: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Pilih Aksi") },
+        text = { Text("Pilih apakah Anda ingin melakukan Scan atau Manual Entry.") },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onScanSelected()
+                }
+            ) {
+                Text("Scan")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    onManualEntrySelected()
+                }
+            ) {
+                Text("Manual Entry")
+            }
+        }
+    )
 }
 
 @Composable
