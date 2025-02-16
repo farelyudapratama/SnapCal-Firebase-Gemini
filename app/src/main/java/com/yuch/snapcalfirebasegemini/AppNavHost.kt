@@ -69,13 +69,25 @@ fun AppNavHost(
 
             AnalyzeScreen(
                 imagePath = imagePath,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onSuccessfulUpload = {
+                    navController.popBackStack(
+                        route = Screen.Main.route,
+                        inclusive = false
+                    )
+                }
             )
         }
         composable(Screen.ManualEntry.route) {
             ManualEntryScreen(
                 modifier,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onSuccessfulUpload = {
+                    navController.popBackStack(
+                        route = Screen.Main.route,
+                        inclusive = false
+                    )
+                }
             )
         }
     }

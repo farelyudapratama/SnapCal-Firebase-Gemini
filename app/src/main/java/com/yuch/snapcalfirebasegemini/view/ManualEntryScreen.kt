@@ -14,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,10 +29,6 @@ import coil.compose.rememberAsyncImagePainter
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import kotlinx.coroutines.launch
-import android.os.Build
-import android.content.pm.PackageManager
-import android.Manifest
-import android.app.Activity
 import android.content.Context
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -57,6 +52,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import com.yuch.snapcalfirebasegemini.ui.components.ImagePermissionHandler
+import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import java.io.File
 import java.io.FileOutputStream
 
@@ -65,7 +61,8 @@ import java.io.FileOutputStream
 fun ManualEntryScreen(
     modifier: Modifier = Modifier,
     viewModel: FoodViewModel = viewModel(),
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSuccessfulUpload: () -> Boolean
 ) {
     var foodData by remember {
         mutableStateOf(
@@ -124,6 +121,24 @@ fun ManualEntryScreen(
         }
     }
 
+    val uploadSuccess by viewModel.uploadSuccess.collectAsStateWithLifecycle()
+
+    // Handle navigation on success
+    LaunchedEffect(uploadSuccess) {
+        if (uploadSuccess) {
+            Toast.makeText(
+                context,
+                "Food entry added successfully!",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            viewModel.resetState()
+
+            // Pop sampai ke List screen
+            onSuccessfulUpload()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -153,6 +168,7 @@ fun ManualEntryScreen(
                             selectedImageUri?.let { uriToFile(context, it).absolutePath },
                             foodData
                         )
+
                     } else {
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar(

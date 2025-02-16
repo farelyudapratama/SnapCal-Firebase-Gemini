@@ -38,6 +38,9 @@ class FoodViewModel(
     private val _successMessage = MutableStateFlow<String?>(null)
     val successMessage = _successMessage.asStateFlow()
 
+    private val _uploadSuccess = MutableStateFlow(false)
+    val uploadSuccess = _uploadSuccess.asStateFlow()
+
     fun clearErrorMessage() {
         _errorMessage.value = null
         _successMessage.value = null
@@ -70,7 +73,7 @@ class FoodViewModel(
         }
     }
 
-    // TODO Upload Food data
+    // Upload Food data
     fun uploadFood(imagePath: String?, foodData: EditableFoodData) {
         if (foodData.mealType == null) {
             _errorMessage.value = "Please select a meal type"
@@ -105,7 +108,6 @@ class FoodViewModel(
                 val response = apiService.uploadFood(imagePart, foodNamePart, mealTypePart, nutritionPart)
 
                 handleFoodResponse(response)
-
             } catch (e: Exception) {
                 handleError(e)
             } finally {
@@ -154,6 +156,7 @@ class FoodViewModel(
                                 apiResponse
                             _errorMessage.value =
                                 null
+                            _uploadSuccess.value = true
                         }
 
                         "error" -> {
@@ -197,5 +200,10 @@ class FoodViewModel(
             }
             else -> _errorMessage.value = exception.message ?: "An unexpected error occurred"
         }
+    }
+
+    fun resetState() {
+        _uploadSuccess.value = false
+        _errorMessage.value = null
     }
 }

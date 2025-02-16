@@ -1,5 +1,6 @@
 package com.yuch.snapcalfirebasegemini.view
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -29,13 +31,15 @@ import java.util.Locale
 fun AnalyzeScreen(
     imagePath: String,
     viewModel: FoodViewModel = viewModel(),
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSuccessfulUpload: () -> Boolean
 ) {
     var selectedService by remember { mutableStateOf<String?>(null) }
     val analysisResult by viewModel.analysisResult.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
-    val successMessage by viewModel.successMessage.collectAsStateWithLifecycle()
+    val uploadSuccess by viewModel.uploadSuccess.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     // State untuk menyimpan data yang bisa diedit
     var editableFood by remember { mutableStateOf<EditableFoodData?>(null) }
@@ -60,18 +64,21 @@ fun AnalyzeScreen(
         }
     }
 
-    // Handle success message
-    LaunchedEffect(successMessage) {
-        successMessage?.let {
-            snackbarHostState.showSnackbar(
-                message = it,
-                duration = SnackbarDuration.Short
-            )
-            viewModel.clearErrorMessage()
-            // Navigate after showing success message
-//            onUploadSuccess()
+    LaunchedEffect(uploadSuccess) {
+        if (uploadSuccess) {
+            Toast.makeText(
+                context,
+                "Food entry added successfully!",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            viewModel.resetState()
+
+            // Pop sampai ke List screen
+            onSuccessfulUpload()
         }
     }
+
     // Handle error messages with Snackbar
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
