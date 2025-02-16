@@ -12,6 +12,14 @@ data class ErrorResponse(
 	val code: Int,
 	val description: String
 )
+
+data class FoodPage(
+	val page: Int,
+	val totalPages: Int,
+	val totalItems: Int,
+	val items: List<Food>
+)
+
 data class Food(
 	val id: String,
 	val userId: String,

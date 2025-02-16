@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
-import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
+import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -17,16 +17,17 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import retrofit2.Response
 import com.yuch.snapcalfirebasegemini.utils.ImageUtils
+import kotlinx.coroutines.flow.StateFlow
 import java.io.IOException
 
 class FoodViewModel(
-    private val apiService: ApiService = ApiConfig.getApiService()
+    private val repository: ApiRepository
 ) : ViewModel() {
 
-    private val _analysisResult = MutableStateFlow<ApiResponse<AnalyzeResult>>(ApiResponse("error", "error", null))
+    private val _analysisResult = MutableStateFlow<ApiResponse<AnalyzeResult>?>(null)
     val analysisResult = _analysisResult.asStateFlow()
 
-    private val _uploadResult = MutableStateFlow<ApiResponse<Food>>(ApiResponse("error", "error", null))
+    private val _uploadResult = MutableStateFlow<ApiResponse<Food>?>(null)
     val uploadResult = _uploadResult.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
@@ -35,81 +36,72 @@ class FoodViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
 
-    private val _successMessage = MutableStateFlow<String?>(null)
-    val successMessage = _successMessage.asStateFlow()
-
     private val _uploadSuccess = MutableStateFlow(false)
     val uploadSuccess = _uploadSuccess.asStateFlow()
 
+    private val _foodList = MutableStateFlow<List<Food>>(emptyList())
+    val foodList: StateFlow<List<Food>> = _foodList
+
+    private val _currentPage = MutableStateFlow(1)
+    val currentPage: StateFlow<Int> = _currentPage
+
+    private val _isLoadingPage = MutableStateFlow(false)
+    val isLoadingPage: StateFlow<Boolean> = _isLoadingPage
+
+    private val _hasMoreData = MutableStateFlow(true)
+    val hasMoreData: StateFlow<Boolean> = _hasMoreData
+
+    init {
+        fetchFood()
+    }
+
+    fun fetchFood() {
+        if (_isLoadingPage.value || !_hasMoreData.value) return
+
+        viewModelScope.launch {
+            _isLoadingPage.value = true
+            try {
+                val response = repository.getAllFood(_currentPage.value)
+                val newList = _foodList.value + (response.data?.items
+                    ?: emptyList())
+                _foodList.value = newList
+
+                _hasMoreData.value = _currentPage.value < response.data!!.totalPages
+                _currentPage.value += 1
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isLoadingPage.value = false
+            }
+        }
+    }
+
+
     fun clearErrorMessage() {
         _errorMessage.value = null
-        _successMessage.value = null
     }
 
     fun analyzeImage(imagePath: String, service: String) {
-        _analysisResult.value = ApiResponse("loading", "loading", null)
-        _errorMessage.value = null
-
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                // Gunakan ImageHelper untuk validasi gambar
-                val validationError = ImageUtils.validateImageFile(imagePath)
-                if (validationError != null) throw Exception(validationError)
-
-                _isLoading.value = true
-
-                // Gunakan ImageHelper untuk menyiapkan gambar
-                val (imagePart, mimeType) = ImageUtils.prepareImageForAnalyze(imagePath)
-                val servicePart = service.toRequestBody("text/plain".toMediaTypeOrNull())
-
-                val response = apiService.analyzeFood(imagePart, servicePart)
-                handleResponse(response)
-
+                _analysisResult.value = repository.analyzeImage(imagePath, service)
             } catch (e: Exception) {
-                handleError(e)
+                _errorMessage.value = e.message
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    // Upload Food data
     fun uploadFood(imagePath: String?, foodData: EditableFoodData) {
-        if (foodData.mealType == null) {
-            _errorMessage.value = "Please select a meal type"
-            return
-        }
-        _isLoading.value = true
-        _errorMessage.value = null
-
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                val imagePart = imagePath?.let {
-                    val validationError = ImageUtils.validateImageFile(it)
-                    if (validationError != null) throw Exception(validationError)
-                    ImageUtils.prepareImageForUpload(it).first
-                }
-
-                val foodNamePart = foodData.foodName.toRequestBody("text/plain".toMediaTypeOrNull())
-                val mealTypePart = foodData.mealType!!.toRequestBody("text/plain".toMediaTypeOrNull())
-                val nutritionJson = """
-                    {
-                        "calories": ${foodData.calories},
-                        "carbs": ${foodData.carbs},
-                        "protein": ${foodData.protein},
-                        "totalFat": ${foodData.totalFat},
-                        "saturatedFat": ${foodData.saturatedFat},
-                        "fiber": ${foodData.fiber},
-                        "sugar": ${foodData.sugar}
-                    }
-                """.trimIndent()
-                val nutritionPart = nutritionJson.toRequestBody("application/json".toMediaTypeOrNull())
-
-                val response = apiService.uploadFood(imagePart, foodNamePart, mealTypePart, nutritionPart)
-
-                handleFoodResponse(response)
+                _uploadResult.value = repository.uploadFood(imagePath, foodData)
+                _uploadSuccess.value = true
             } catch (e: Exception) {
-                handleError(e)
+                _errorMessage.value = e.message
             } finally {
                 _isLoading.value = false
             }
@@ -156,7 +148,7 @@ class FoodViewModel(
                                 apiResponse
                             _errorMessage.value =
                                 null
-                            _uploadSuccess.value = true
+//                            _uploadSuccess.value = true
                         }
 
                         "error" -> {
@@ -203,7 +195,7 @@ class FoodViewModel(
     }
 
     fun resetState() {
-        _uploadSuccess.value = false
+//        _uploadSuccess.value = false
         _errorMessage.value = null
     }
 }

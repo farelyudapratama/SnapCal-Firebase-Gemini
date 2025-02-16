@@ -8,6 +8,12 @@ sealed class Result<out T> {
     object Loading : Result<Nothing>()
 }
 
+sealed class UiState<T> {
+    object Loading : UiState<Nothing>()
+    data class Success<T>(val data: T) : UiState<T>()
+    data class Error(val message: String) : UiState<Nothing>()
+}
+
 fun handleApiError(response: Response<*>): String {
     return when (response.code()) {
         401 -> "Session expired, please login again"

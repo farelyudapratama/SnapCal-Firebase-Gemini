@@ -26,6 +26,7 @@ import androidx.navigation.compose.rememberNavController
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 
 @OptIn(
     ExperimentalMaterial3Api::class
@@ -33,7 +34,8 @@ import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 @Composable
 fun SnapCalApp(
     authViewModel: AuthViewModel,
-    cameraViewModel: CameraViewModel
+    cameraViewModel: CameraViewModel,
+    foodViewModel: FoodViewModel
 ) {
     val navController = rememberNavController()
 
@@ -89,7 +91,8 @@ fun SnapCalApp(
                 navController = navController,
                 modifier = Modifier.padding(innerPadding),
                 authViewModel = authViewModel,
-                cameraViewModel = cameraViewModel
+                cameraViewModel = cameraViewModel,
+                foodViewModel = foodViewModel
             )
         }
         if (showBottomSheet) {
@@ -258,9 +261,12 @@ fun BottomNavbar(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewSnapCalApp() {
-    // Menampilkan preview tampilan dengan parameter default (bisa ganti dengan data sebenarnya)
-    SnapCalApp(authViewModel = AuthViewModel(), cameraViewModel = CameraViewModel())
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewSnapCalApp() {
+//    // Menampilkan preview tampilan dengan parameter default (bisa ganti dengan data sebenarnya)
+//    SnapCalApp(authViewModel = AuthViewModel(), cameraViewModel = CameraViewModel(), foodViewModel = FoodViewModel(
+//        apiService = TODO(),
+//        repository = TODO()
+//    ))
+//}

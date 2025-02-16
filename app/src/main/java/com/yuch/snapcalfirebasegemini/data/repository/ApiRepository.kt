@@ -1,59 +1,62 @@
 package com.yuch.snapcalfirebasegemini.data.repository
 
-import android.net.Uri
-import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.google.gson.Gson
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
-import com.yuch.snapcalfirebasegemini.data.api.response.ChatRequest
-import com.yuch.snapcalfirebasegemini.data.api.response.FoodAnalysisResponse
+import com.yuch.snapcalfirebasegemini.data.api.response.Food
+import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
+import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
+import com.yuch.snapcalfirebasegemini.utils.ImageUtils
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.File
 
-class ApiRepository private constructor(
+class ApiRepository(
     private val apiService: ApiService
 ) {
-//    suspend fun analyzeFood(image: MultipartBody.Part, service: String) = apiService.analyzeFood(image, service)
-//    suspend fun sendMessage(message: ChatRequest) = apiService.sendMessage(message)
-
-    suspend fun analyzeFood(imageUri: Uri, service: String): Result<ApiResponse<AnalyzeResult>> {
-        return try {
-            val file = File(imageUri.path!!)
-            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-
-            // Create multipart parts
-            val imagePart = MultipartBody.Part.createFormData(
-                "image",
-                file.name,
-                requestFile
-            )
-
-            val servicePart = service.toRequestBody("text/plain".toMediaTypeOrNull())
-
-            val response = ApiConfig.getApiService().analyzeFood(imagePart, servicePart)
-
-            if (response.isSuccessful) {
-                Result.success(response.body()!!)
-            } else {
-                Result.failure(Exception("API Error: ${response.code()}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-
+    suspend fun getAllFood(page: Int): ApiResponse<FoodPage> {
+        return apiService.getAllFood(page).body()!!
     }
 
-    companion object {
-        @Volatile
-        private var instance: ApiRepository? = null
-        fun getInstance(
-            apiService: ApiService,
-        ): ApiRepository =
-            instance ?: synchronized(this) {
-                instance ?: ApiRepository(apiService)
-            }
+    suspend fun analyzeImage(imagePath: String, service: String): ApiResponse<AnalyzeResult> {
+        val validationError = ImageUtils.validateImageFile(imagePath)
+        if (validationError != null) throw Exception(validationError)
+
+        val (imagePart, _) = ImageUtils.prepareImageForAnalyze(imagePath)
+        val servicePart = service.toRequestBody("text/plain".toMediaTypeOrNull())
+
+        return apiService.analyzeFood(imagePart, servicePart).body() ?: throw Exception("Response kosong")
+    }
+
+    suspend fun uploadFood(imagePath: String?, foodData: EditableFoodData): ApiResponse<Food> {
+        if (foodData.mealType == null) throw Exception("Please select a meal type")
+
+        val imagePart = imagePath?.let {
+            val validationError = ImageUtils.validateImageFile(it)
+            if (validationError != null) throw Exception(validationError)
+            ImageUtils.prepareImageForUpload(it).first
+        }
+
+        val foodNamePart = foodData.foodName.toRequestBody("text/plain".toMediaTypeOrNull())
+        val mealTypePart = foodData.mealType!!.toRequestBody("text/plain".toMediaTypeOrNull())
+        val nutritionJson = Gson().toJson(foodData)
+        val nutritionPart = nutritionJson.toRequestBody("application/json".toMediaTypeOrNull())
+
+        return apiService.uploadFood(imagePart, foodNamePart, mealTypePart, nutritionPart).body()
+            ?: throw Exception("Response kosong")
+    }
+}
+
+class FoodViewModelFactory(private val repository: ApiRepository) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(
+                FoodViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return FoodViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

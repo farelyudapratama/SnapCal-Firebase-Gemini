@@ -48,19 +48,21 @@ fun AnalyzeScreen(
     // Update editable data ketika mendapat hasil analisis baru
     LaunchedEffect(analysisResult) {
         analysisResult.let { result ->
-            editableFood =
-                result.data?.let {
-                    EditableFoodData(
-                        foodName = it.foodName,
-                        calories = it.calories.toString(),
-                        carbs = it.carbs.toString(),
-                        protein = it.protein.toString(),
-                        totalFat = it.totalFat.toString(),
-                        saturatedFat = it.saturatedFat.toString(),
-                        fiber = it.fiber.toString(),
-                        sugar = it.sugar.toString()
-                    )
-                }
+            if (result != null) {
+                editableFood =
+                    result.data?.let {
+                        EditableFoodData(
+                            foodName = it.foodName,
+                            calories = it.calories.toString(),
+                            carbs = it.carbs.toString(),
+                            protein = it.protein.toString(),
+                            totalFat = it.totalFat.toString(),
+                            saturatedFat = it.saturatedFat.toString(),
+                            fiber = it.fiber.toString(),
+                            sugar = it.sugar.toString()
+                        )
+                    }
+            }
         }
     }
 

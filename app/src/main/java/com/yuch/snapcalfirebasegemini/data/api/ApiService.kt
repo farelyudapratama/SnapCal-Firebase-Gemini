@@ -5,13 +5,16 @@ import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.ChatRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.ChatResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
+import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import retrofit2.http.Query
 
 interface ApiService {
     @Multipart
@@ -29,6 +32,9 @@ interface ApiService {
         @Part("mealType") mealType: RequestBody,
         @Part("nutritionData") nutritionData: RequestBody
     ): Response<ApiResponse<Food>>
+
+    @GET("food/all")
+    suspend fun getAllFood(@Query("page") page: Int = 1): Response<ApiResponse<FoodPage>>
 
     @POST("api/chat/start")
     suspend fun sendMessage(
