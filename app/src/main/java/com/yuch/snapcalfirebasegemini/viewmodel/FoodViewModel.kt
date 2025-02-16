@@ -7,6 +7,9 @@ import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
+import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
+import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
+import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,59 +26,113 @@ import java.io.IOException
 class FoodViewModel(
     private val repository: ApiRepository
 ) : ViewModel() {
-
-    private val _analysisResult = MutableStateFlow<ApiResponse<AnalyzeResult>?>(null)
-    val analysisResult = _analysisResult.asStateFlow()
-
-    private val _uploadResult = MutableStateFlow<ApiResponse<Food>?>(null)
-    val uploadResult = _uploadResult.asStateFlow()
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading = _isLoading.asStateFlow()
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage = _errorMessage.asStateFlow()
-
     private val _uploadSuccess = MutableStateFlow(false)
     val uploadSuccess = _uploadSuccess.asStateFlow()
+    // State untuk daftar makanan
+    private val _foodList = MutableStateFlow<List<FoodItem>>(emptyList())
+    val foodList: StateFlow<List<FoodItem>> = _foodList
 
-    private val _foodList = MutableStateFlow<List<Food>>(emptyList())
-    val foodList: StateFlow<List<Food>> = _foodList
-
+    // Pagination: halaman saat ini dan total halaman
     private val _currentPage = MutableStateFlow(1)
     val currentPage: StateFlow<Int> = _currentPage
 
-    private val _isLoadingPage = MutableStateFlow(false)
-    val isLoadingPage: StateFlow<Boolean> = _isLoadingPage
+    private val _totalPages = MutableStateFlow(1)
+    val totalPages: StateFlow<Int> = _totalPages
 
+    // Flag apakah masih ada data yang harus dimuat
     private val _hasMoreData = MutableStateFlow(true)
     val hasMoreData: StateFlow<Boolean> = _hasMoreData
 
+    // State loading dan error
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    // State untuk hasil analisis gambar
+    private val _analysisResult = MutableStateFlow<ApiResponse<AnalyzeResult>?>(null)
+    val analysisResult: StateFlow<ApiResponse<AnalyzeResult>?> = _analysisResult
+
+    // State untuk hasil upload makanan
+    private val _uploadResult = MutableStateFlow<ApiResponse<Food>?>(null)
+    val uploadResult: StateFlow<ApiResponse<Food>?> = _uploadResult
+
     init {
-        fetchFood()
+        // Ambil data dari halaman pertama
+        fetchFood(page = 1)
     }
 
-    fun fetchFood() {
-        if (_isLoadingPage.value || !_hasMoreData.value) return
-
+    /**
+     * Mengambil data makanan dari API berdasarkan halaman.
+     * Jika halaman = 1, data akan direplace (refresh), sedangkan halaman > 1 akan diappend.
+     */
+    fun fetchFood(page: Int = _currentPage.value) {
         viewModelScope.launch {
-            _isLoadingPage.value = true
+            _isLoading.value = true
+            _errorMessage.value = null
             try {
-                val response = repository.getAllFood(_currentPage.value)
-                val newList = _foodList.value + (response.data?.items
-                    ?: emptyList())
-                _foodList.value = newList
-
-                _hasMoreData.value = _currentPage.value < response.data!!.totalPages
-                _currentPage.value += 1
+                // Coba ambil data dari API
+                val response: ApiResponse<FoodPage> = repository.getAllFood(page)
+                val fetchedItems = response.data?.items ?: emptyList()
+                _foodList.value = if (page == 1) {
+                    fetchedItems
+                } else {
+                    _foodList.value + fetchedItems
+                }
+                _currentPage.value = page
+                _totalPages.value = response.data?.totalPages ?: 1
+                _hasMoreData.value = _currentPage.value < _totalPages.value
             } catch (e: Exception) {
-                e.printStackTrace()
+                // Jika terjadi error (misalnya tidak ada internet), ambil data dari cache
+                _errorMessage.value = e.message
+                val cachedData = repository.getCachedFoods()
+                // Konversikan FoodEntity ke Food (harus Anda implementasikan fungsi mapping-nya)
+                _foodList.value = cachedData.map{
+                    FoodItem(
+                        id = it.id,
+                        userId = it.userId,
+                        foodName = it.foodName,
+                        mealType = it.mealType,
+                        nutritionData = NutritionData(
+                            calories = it.calories,
+                            carbs = it.carbs,
+                            protein = it.protein,
+                            totalFat = it.totalFat,
+                            saturatedFat = it.saturatedFat,
+                            fiber = it.fiber,
+                            sugar = it.sugar
+                        ),
+                        imageUrl = it.imageUrl,
+                        createdAt = it.createdAt.toString()
+                    )
+                }
+                // Set flag hasMoreData false jika data cache digunakan (atau Anda bisa logika lain)
+                _hasMoreData.value = false
             } finally {
-                _isLoadingPage.value = false
+                _isLoading.value = false
             }
         }
     }
 
+
+    /**
+     * Memuat halaman selanjutnya jika masih ada.
+     */
+    fun loadNextPage() {
+        if (_currentPage.value < _totalPages.value && !_isLoading.value) {
+            fetchFood(page = _currentPage.value + 1)
+        }
+    }
+
+    /**
+     * Refresh data dengan mengambil ulang dari halaman pertama.
+     */
+    fun refreshFood() {
+        _foodList.value = emptyList()
+        _currentPage.value = 1
+        fetchFood(page = 1)
+    }
 
     fun clearErrorMessage() {
         _errorMessage.value = null

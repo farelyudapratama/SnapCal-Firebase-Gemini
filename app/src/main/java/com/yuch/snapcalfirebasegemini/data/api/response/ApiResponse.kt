@@ -17,7 +17,17 @@ data class FoodPage(
 	val page: Int,
 	val totalPages: Int,
 	val totalItems: Int,
-	val items: List<Food>
+	val items: List<FoodItem>
+)
+data class FoodItem(
+	@SerializedName("_id")
+	val id: String,
+	val userId: String,
+	val foodName: String,
+	val mealType: String,
+	val nutritionData: NutritionData,
+	val imageUrl: String?,
+	val createdAt: String
 )
 
 data class Food(
@@ -26,7 +36,7 @@ data class Food(
 	val foodName: String,
 	val mealType: String,
 	val nutritionData: NutritionData,
-	val imageUrl: String?
+	val imageUrl: String?,
 )
 
 data class NutritionData(

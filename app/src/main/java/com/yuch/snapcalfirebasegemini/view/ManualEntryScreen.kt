@@ -24,7 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
@@ -51,8 +50,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
+import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.ui.components.ImagePermissionHandler
-import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import java.io.File
 import java.io.FileOutputStream
 
@@ -60,10 +60,15 @@ import java.io.FileOutputStream
 @Composable
 fun ManualEntryScreen(
     modifier: Modifier = Modifier,
-    viewModel: FoodViewModel = viewModel(),
     onBack: () -> Unit,
     onSuccessfulUpload: () -> Boolean
 ) {
+    val repository = ApiRepository(
+        ApiConfig.getApiService(),
+        foodDao = null
+    )
+    val viewModel = FoodViewModel(repository)
+
     var foodData by remember {
         mutableStateOf(
             EditableFoodData(

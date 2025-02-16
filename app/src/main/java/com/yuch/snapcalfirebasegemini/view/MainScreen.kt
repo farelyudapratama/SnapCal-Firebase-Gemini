@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -14,10 +17,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.yuch.snapcalfirebasegemini.data.api.response.Food
+import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.viewmodel.*
+import kotlinx.coroutines.launch
 
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class
+)
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
@@ -35,9 +44,20 @@ fun MainScreen(
     val context = LocalContext.current
     var backPressedTime by remember { mutableLongStateOf(0L) }
 
-    val foodList by foodViewModel.foodList.collectAsState()
-    val isLoading by foodViewModel.isLoading.collectAsState()
-    val hasMoreData by foodViewModel.hasMoreData.collectAsState()
+    val foodList by foodViewModel.foodList.collectAsStateWithLifecycle()
+    val isLoading by foodViewModel.isLoading.collectAsStateWithLifecycle()
+    val hasMoreData by foodViewModel.hasMoreData.collectAsStateWithLifecycle()
+    var isRefreshing by remember { mutableStateOf(false) }
+    val state = rememberPullToRefreshState()
+    val coroutineScope = rememberCoroutineScope()
+    val onRefresh: () -> Unit = {
+        isRefreshing = true
+        coroutineScope.launch {
+            foodViewModel.fetchFood()
+            isRefreshing = false
+        }
+    }
+
     // Handle back button
     BackHandler {
         val currentTime = System.currentTimeMillis()
@@ -59,29 +79,57 @@ fun MainScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(foodList) { food ->
-                FoodItemCard(food)
+    Column(modifier.fillMaxSize().padding(16.dp)) {
+        PullToRefreshBox(
+            modifier = Modifier.padding(8.dp),
+            state = state,
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            indicator = {
+                PullToRefreshDefaults.LoadingIndicator(
+                    state = state,
+                    isRefreshing = isRefreshing,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                )
             }
-        }
+        ) {
+            LazyColumn {
+                items(foodList) { foodItem ->
+                    FoodItemCard(foodItem)
+                }
+                if (isLoading) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+                // Jika masih ada data (halaman belum selesai), tampilkan tombol load more
+                item {
+                    if (hasMoreData && !isLoading) {
+                        Button(
+                            onClick = { foodViewModel.loadNextPage() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                        ) {
+                            Text("Muat Lebih Banyak")
+                        }
+                    }
+                }
+            }
 
-        if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        } else if (hasMoreData) {
-            Button(
-                onClick = { foodViewModel.fetchFood() },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Muat Lebih Banyak")
-            }
         }
     }
-
 }
 
 @Composable
-fun FoodItemCard(food: Food) {
+fun FoodItemCard(
+    food: FoodItem
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()

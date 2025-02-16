@@ -18,9 +18,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
+import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import kotlinx.coroutines.launch
 import java.io.File
@@ -30,10 +31,15 @@ import java.util.Locale
 @Composable
 fun AnalyzeScreen(
     imagePath: String,
-    viewModel: FoodViewModel = viewModel(),
     onBack: () -> Unit,
-    onSuccessfulUpload: () -> Boolean
+    onSuccessfulUpload: () -> Boolean,
 ) {
+    val repository = ApiRepository(
+        ApiConfig.getApiService(),
+        foodDao = null
+    )
+    val viewModel = FoodViewModel(repository)
+
     var selectedService by remember { mutableStateOf<String?>(null) }
     val analysisResult by viewModel.analysisResult.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
