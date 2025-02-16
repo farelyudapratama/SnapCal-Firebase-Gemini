@@ -35,7 +35,6 @@ import android.content.pm.PackageManager
 import android.Manifest
 import android.app.Activity
 import android.content.Context
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardActions
@@ -57,9 +56,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import com.yuch.snapcalfirebasegemini.ui.components.openAppSettings
+import com.yuch.snapcalfirebasegemini.ui.components.ImagePermissionHandler
 import java.io.File
 import java.io.FileOutputStream
 
@@ -101,62 +98,8 @@ fun ManualEntryScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var hasPermission by remember { mutableStateOf(false) }
-    var showPermissionDialog by remember { mutableStateOf(false) }
-    var isPermissionPermanentlyDenied by remember { mutableStateOf(false) }
     val context = LocalContext.current
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        hasPermission = isGranted
-        if (!isGranted) {
-            // Check if user clicked "Don't ask again"
-            val shouldShowRationale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                ActivityCompat.shouldShowRequestPermissionRationale(
-                    context as Activity,
-                    Manifest.permission.READ_MEDIA_IMAGES
-                )
-            } else {
-                ActivityCompat.shouldShowRequestPermissionRationale(
-                    context as Activity,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                )
-            }
-
-            if (!shouldShowRationale) {
-                isPermissionPermanentlyDenied = true
-            }
-            showPermissionDialog = true
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        checkAndRequestPermission(context, permissionLauncher) { permissionState ->
-            hasPermission = permissionState
-            if (!permissionState) {
-                showPermissionDialog = true
-            }
-        }
-    }
-
-    // Permission Dialog
-    if (showPermissionDialog) {
-        PermissionDialog(
-            isPermanentlyDenied = isPermissionPermanentlyDenied,
-            onDismiss = { showPermissionDialog = false },
-            onOkClick = {
-                showPermissionDialog = false
-                if (isPermissionPermanentlyDenied) {
-                    // Open settings
-                    openAppSettings(context)
-                } else {
-                    // Request permission again
-                    checkAndRequestPermission(context, permissionLauncher) { hasPermission = it }
-                }
-            }
-        )
-    }
+    var hasPermission by remember { mutableStateOf(false) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -169,25 +112,6 @@ fun ManualEntryScreen(
             viewModel.uploadFood(file.absolutePath, foodData)
         }
     }
-
-//    LaunchedEffect(Unit) {
-//        when {
-//            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
-//                if (context.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-//                    permissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
-//                } else {
-//                    hasPermission = true
-//                }
-//            }
-//            else -> {
-//                if (context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-//                    permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-//                } else {
-//                    hasPermission = true
-//                }
-//            }
-//        }
-//    }
 
     // Handle error messages
     LaunchedEffect(errorMessage) {
@@ -265,50 +189,24 @@ fun ManualEntryScreen(
                         modifier = modifier.padding(24.dp)
                     ) {
                         // Image Selection with Preview
-                        ImageSelectionButton(
-                            selectedImageUri = selectedImageUri,
-                            hasPermission = hasPermission,
-                            onImageSelect = {
-                                if (hasPermission) {
-                                    galleryLauncher.launch(
-                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                    )
-                                } else {
-                                    Toast.makeText(context, "Permission Denied!", Toast.LENGTH_SHORT).show()
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        val activity = context as? Activity
-                                        when {
-                                            context.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED -> {
-                                                hasPermission = true
-                                            }
-                                            activity?.shouldShowRequestPermissionRationale(Manifest.permission.READ_MEDIA_IMAGES) == true -> {
-                                                Toast.makeText(context, "Permission is required to access the gallery", Toast.LENGTH_LONG).show()
-                                                permissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
-                                            }
-                                            else -> {
-                                                Toast.makeText(context, "Please enable permission in Settings", Toast.LENGTH_LONG).show()
-                                                openAppSettings(context)
-                                            }
-                                        }
+                        ImagePermissionHandler(
+                            onPermissionGranted = { hasPermission = true }
+                        ) { showPermissionDialog ->
+                            ImageSelectionButton(
+                                selectedImageUri = selectedImageUri,
+                                hasPermission = hasPermission,
+                                onImageSelect = {
+                                    if (hasPermission) {
+                                        galleryLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
                                     } else {
-                                        val activity = context as? Activity
-                                        when {
-                                            context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED -> {
-                                                hasPermission = true
-                                            }
-                                            activity?.shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE) == true -> {
-                                                Toast.makeText(context, "Permission is required to access the gallery", Toast.LENGTH_LONG).show()
-                                                permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-                                            }
-                                            else -> {
-                                                Toast.makeText(context, "Please enable permission in Settings", Toast.LENGTH_LONG).show()
-                                                openAppSettings(context)
-                                            }
-                                        }
+                                        showPermissionDialog()
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
+
 
                         Spacer(modifier = modifier.height(24.dp))
 
@@ -574,78 +472,6 @@ private fun MealTypeDropdown(
     }
 }
 
-
-@Composable
-private fun PermissionDialog(
-    isPermanentlyDenied: Boolean,
-    onDismiss: () -> Unit,
-    onOkClick: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                if (isPermanentlyDenied) "Permission Required"
-                else "Storage Permission"
-            )
-        },
-        text = {
-            Text(
-                if (isPermanentlyDenied) {
-                    "Storage permission is required to select images. Please enable it in app settings."
-                } else {
-                    "This app needs access to storage to select images. Please grant the permission."
-                }
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onOkClick) {
-                Text(if (isPermanentlyDenied) "Open Settings" else "Grant Permission")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
-
-private fun checkAndRequestPermission(
-    context: Context,
-    permissionLauncher: ManagedActivityResultLauncher<String, Boolean>,
-    onResult: (Boolean) -> Unit
-) {
-    when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
-            when {
-                ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.READ_MEDIA_IMAGES
-                ) == PackageManager.PERMISSION_GRANTED -> {
-                    onResult(true)
-                }
-                else -> {
-                    permissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
-                }
-            }
-        }
-        else -> {
-            when {
-                ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED -> {
-                    onResult(true)
-                }
-                else -> {
-                    permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun LoadingOverlay() {
     Box(
@@ -690,7 +516,7 @@ private fun ImageSelectionButton(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
                 shape = RoundedCornerShape(12.dp)
             )
-            .clickable(enabled = !hasPermission) { onImageSelect() },
+            .clickable(enabled = hasPermission) { onImageSelect() },
         contentAlignment = Alignment.Center
     ) {
         if (selectedImageUri != null) {

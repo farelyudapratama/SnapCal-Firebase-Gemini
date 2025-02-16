@@ -1,11 +1,7 @@
 package com.yuch.snapcalfirebasegemini.view.camera
 
-import android.Manifest
-import android.app.Activity
 import android.content.Context
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -29,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -41,12 +38,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.yuch.snapcalfirebasegemini.ui.components.openAppSettings
+import com.yuch.snapcalfirebasegemini.ui.components.CameraPermissionHandler
+import com.yuch.snapcalfirebasegemini.ui.components.ImagePermissionHandler
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 import java.io.File
 import java.io.FileOutputStream
+import java.net.URLEncoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,15 +65,6 @@ fun ScanScreen(
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var hasPermission by remember { mutableStateOf(false) }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        hasPermission = isGranted
-        if (!isGranted) {
-            Toast.makeText(context, "Permission Denied!", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     // Gallery Launcher
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -119,7 +109,7 @@ fun ScanScreen(
                         onImageCaptured = { imagePath ->
                             viewModel.onTakePhoto(imagePath)
                             // Encode path untuk navigasi
-                            val encodedPath = java.net.URLEncoder.encode(imagePath, "UTF-8")
+                            val encodedPath = URLEncoder.encode(imagePath, "UTF-8")
                             navController.navigate("analyze/$encodedPath")
                         },
                         onError = { error ->
@@ -134,78 +124,50 @@ fun ScanScreen(
                     CameraSwitchButton(
                         onClick = viewModel::toggleCamera
                     )
-
-                    Row(
-                        modifier = modifier
-                            .fillMaxWidth()
-                            .align(Alignment.BottomCenter)
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceAround
-                    ) {
-                        IconButton(
-                            onClick = {
-                                if (hasPermission) {
-                                    galleryLauncher.launch(
-                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                    )
-                                } else {
-                                    Toast.makeText(context, "Permission Denied!", Toast.LENGTH_SHORT).show()
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        val activity = context as? Activity
-                                        when {
-                                            context.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED -> {
-                                                hasPermission = true
-                                            }
-                                            activity?.shouldShowRequestPermissionRationale(Manifest.permission.READ_MEDIA_IMAGES) == true -> {
-                                                Toast.makeText(context, "Permission is required to access the gallery", Toast.LENGTH_LONG).show()
-                                                permissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
-                                            }
-                                            else -> {
-                                                Toast.makeText(context, "Please enable permission in Settings", Toast.LENGTH_LONG).show()
-                                                openAppSettings(context)
-                                            }
-                                        }
+                    ImagePermissionHandler(
+                        onPermissionGranted = { hasPermission = true }
+                    ) { showPermissionDialog ->
+                        Row(
+                            modifier = modifier
+                                .fillMaxWidth()
+                                .align(Alignment.BottomCenter)
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceAround
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    if (hasPermission) {
+                                        galleryLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
                                     } else {
-                                        val activity = context as? Activity
-                                        when {
-                                            context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED -> {
-                                                hasPermission = true
-                                            }
-                                            activity?.shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE) == true -> {
-                                                Toast.makeText(context, "Permission is required to access the gallery", Toast.LENGTH_LONG).show()
-                                                permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-                                            }
-                                            else -> {
-                                                Toast.makeText(context, "Please enable permission in Settings", Toast.LENGTH_LONG).show()
-                                                openAppSettings(context)
-                                            }
-                                        }
+                                        showPermissionDialog()
                                     }
                                 }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PhotoLibrary,
+                                    contentDescription = "Open Gallery",
+                                    tint = Color.White
+                                )
                             }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PhotoLibrary,
-                                contentDescription = "Buka galeri",
-                                tint = Color.White
-                            )
-                        }
 
-                        Button(
-                            onClick = {
-                                cameraPreviewTakePhoto?.invoke()
-                            },
-                            modifier = Modifier.size(72.dp),
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Camera,
-                                contentDescription = "Ambil Foto",
-                                tint = Color.Black
-                            )
+                            Button(
+                                onClick = {
+                                    cameraPreviewTakePhoto?.invoke()
+                                },
+                                modifier = Modifier.size(72.dp),
+                                shape = CircleShape,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.White
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Camera,
+                                    contentDescription = "Take Photo",
+                                    tint = Color.Black
+                                )
+                            }
                         }
                     }
                 }
@@ -219,10 +181,10 @@ fun ScanScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text("Izin kamera diperlukan untuk menggunakan fitur ini.")
+                Text("Camera permission is required to use this feature..")
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(onClick = onBack) {
-                    Text("Kembali")
+                    Text("Back")
                 }
             }
         }
@@ -246,7 +208,7 @@ fun CameraSwitchButton(
     )
 
     // Animasi untuk rotasi saat diklik
-    var rotation by remember { mutableStateOf(0f) }
+    var rotation by remember { mutableFloatStateOf(0f) }
     val rotationAngle by animateFloatAsState(
         targetValue = rotation,
         animationSpec = tween(durationMillis = 300, easing = LinearEasing)
@@ -278,7 +240,7 @@ fun CameraSwitchButton(
     ) {
         Icon(
             imageVector = Icons.Default.Cameraswitch,
-            contentDescription = "Ganti Kamera",
+            contentDescription = "Switch Camera",
             tint = Color.White,
             modifier = Modifier
                 .size(24.dp)
@@ -306,7 +268,7 @@ private fun processSelectedImage(
         // Navigasi ke preview screen
         navController.navigate("analyze/$encodedPath")
     } catch (e: Exception) {
-        Toast.makeText(context, "Gagal memuat gambar", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Failed to process image", Toast.LENGTH_SHORT).show()
     }
 }
 

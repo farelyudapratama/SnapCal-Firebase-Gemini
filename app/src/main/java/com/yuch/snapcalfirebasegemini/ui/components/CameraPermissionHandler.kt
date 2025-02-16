@@ -1,16 +1,10 @@
-package com.yuch.snapcalfirebasegemini.view.camera
+package com.yuch.snapcalfirebasegemini.ui.components
 
 import android.Manifest
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.*
 
