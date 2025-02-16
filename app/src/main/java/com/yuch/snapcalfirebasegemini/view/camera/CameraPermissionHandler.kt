@@ -1,6 +1,10 @@
 package com.yuch.snapcalfirebasegemini.view.camera
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -33,10 +37,10 @@ fun CameraPermissionHandler(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text("Aplikasi memerlukan izin kamera untuk mengambil gambar.")
+                Text("The app requires camera permission to take pictures.")
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(onClick = { permissionState.launchPermissionRequest() }) {
-                    Text("Berikan Izin")
+                    Text("Request Permission")
                 }
             }
         }
@@ -49,13 +53,12 @@ fun CameraPermissionHandler(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text("Izin kamera belum diberikan.")
+                Text("Camera permission is not allowed.")
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(onClick = { permissionState.launchPermissionRequest() }) {
-                    Text("Minta Izin Kamera")
+                    Text("Request Permission")
                 }
             }
         }
     }
 }
-

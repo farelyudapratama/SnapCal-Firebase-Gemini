@@ -120,10 +120,10 @@ class FoodViewModel(
         if (response.isSuccessful) {
             response.body()?.let { apiResponse ->
                 when (apiResponse.status) {
-//                    "success" -> {
-//                        _analysisResult.value = apiResponse
-//                        _errorMessage.value = null
-//                    }
+                    "success" -> {
+                        _analysisResult.value = apiResponse
+                        _errorMessage.value = null
+                    }
                     "error" -> {
                         val statusCode = response.code()
                         _errorMessage.value = "[Code: $statusCode] ${apiResponse.message}"

@@ -1,7 +1,11 @@
 package com.yuch.snapcalfirebasegemini.view.camera
 
+import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -37,6 +41,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.yuch.snapcalfirebasegemini.ui.components.openAppSettings
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
@@ -60,6 +65,16 @@ fun ScanScreen(
     val context = LocalContext.current
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var hasPermission by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasPermission = isGranted
+        if (!isGranted) {
+            Toast.makeText(context, "Permission Denied!", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     // Gallery Launcher
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -129,9 +144,44 @@ fun ScanScreen(
                     ) {
                         IconButton(
                             onClick = {
-                                galleryLauncher.launch(
-                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                )
+                                if (hasPermission) {
+                                    galleryLauncher.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                } else {
+                                    Toast.makeText(context, "Permission Denied!", Toast.LENGTH_SHORT).show()
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        val activity = context as? Activity
+                                        when {
+                                            context.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED -> {
+                                                hasPermission = true
+                                            }
+                                            activity?.shouldShowRequestPermissionRationale(Manifest.permission.READ_MEDIA_IMAGES) == true -> {
+                                                Toast.makeText(context, "Permission is required to access the gallery", Toast.LENGTH_LONG).show()
+                                                permissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
+                                            }
+                                            else -> {
+                                                Toast.makeText(context, "Please enable permission in Settings", Toast.LENGTH_LONG).show()
+                                                openAppSettings(context)
+                                            }
+                                        }
+                                    } else {
+                                        val activity = context as? Activity
+                                        when {
+                                            context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED -> {
+                                                hasPermission = true
+                                            }
+                                            activity?.shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE) == true -> {
+                                                Toast.makeText(context, "Permission is required to access the gallery", Toast.LENGTH_LONG).show()
+                                                permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                                            }
+                                            else -> {
+                                                Toast.makeText(context, "Please enable permission in Settings", Toast.LENGTH_LONG).show()
+                                                openAppSettings(context)
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         ) {
                             Icon(
