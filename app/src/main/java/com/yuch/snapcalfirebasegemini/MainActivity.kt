@@ -9,17 +9,17 @@ import androidx.room.Room
 import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.yuch.snapcalfirebasegemini.data.local.AppDatabase
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
-import com.yuch.snapcalfirebasegemini.data.repository.FoodViewModelFactory
+import com.yuch.snapcalfirebasegemini.data.repository.ViewModelFactory
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 
 class MainActivity : ComponentActivity() {
 
     private val authViewModel: AuthViewModel by viewModels()
     private val cameraViewModel: CameraViewModel by viewModels()
-    private val foodViewModel: FoodViewModel by viewModels {
-        FoodViewModelFactory(
+    private val getFoodViewModel: GetFoodViewModel by viewModels {
+        ViewModelFactory(
             ApiRepository(
                 apiService = ApiConfig.getApiService(),
                 foodDao = Room.databaseBuilder(
@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                SnapCalApp(authViewModel = authViewModel, cameraViewModel = cameraViewModel, foodViewModel = foodViewModel)
+                SnapCalApp(authViewModel = authViewModel, cameraViewModel = cameraViewModel, getFoodViewModel = getFoodViewModel)
             }
         }
     }

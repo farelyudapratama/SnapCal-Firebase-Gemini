@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -26,7 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 
 @OptIn(
     ExperimentalMaterial3Api::class
@@ -35,7 +34,7 @@ import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 fun SnapCalApp(
     authViewModel: AuthViewModel,
     cameraViewModel: CameraViewModel,
-    foodViewModel: FoodViewModel
+    getFoodViewModel: GetFoodViewModel
 ) {
     val navController = rememberNavController()
 
@@ -92,7 +91,7 @@ fun SnapCalApp(
                 modifier = Modifier.padding(innerPadding),
                 authViewModel = authViewModel,
                 cameraViewModel = cameraViewModel,
-                foodViewModel = foodViewModel
+                getFoodViewModel = getFoodViewModel
             )
         }
         if (showBottomSheet) {

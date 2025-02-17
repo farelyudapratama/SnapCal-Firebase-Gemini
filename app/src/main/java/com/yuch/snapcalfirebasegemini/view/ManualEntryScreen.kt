@@ -50,8 +50,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
-import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
-import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.ui.components.ImagePermissionHandler
 import java.io.File
 import java.io.FileOutputStream
@@ -61,14 +59,9 @@ import java.io.FileOutputStream
 fun ManualEntryScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit,
+    viewModel: FoodViewModel,
     onSuccessfulUpload: () -> Boolean
 ) {
-    val repository = ApiRepository(
-        ApiConfig.getApiService(),
-        foodDao = null
-    )
-    val viewModel = FoodViewModel(repository)
-
     var foodData by remember {
         mutableStateOf(
             EditableFoodData(

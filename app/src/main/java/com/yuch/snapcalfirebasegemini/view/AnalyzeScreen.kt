@@ -19,9 +19,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
-import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import kotlinx.coroutines.launch
 import java.io.File
@@ -31,14 +29,11 @@ import java.util.Locale
 @Composable
 fun AnalyzeScreen(
     imagePath: String,
+    viewModel: FoodViewModel,
     onBack: () -> Unit,
     onSuccessfulUpload: () -> Boolean,
 ) {
-    val repository = ApiRepository(
-        ApiConfig.getApiService(),
-        foodDao = null
-    )
-    val viewModel = FoodViewModel(repository)
+
 
     var selectedService by remember { mutableStateOf<String?>(null) }
     val analysisResult by viewModel.analysisResult.collectAsStateWithLifecycle()
@@ -54,21 +49,19 @@ fun AnalyzeScreen(
     // Update editable data ketika mendapat hasil analisis baru
     LaunchedEffect(analysisResult) {
         analysisResult.let { result ->
-            if (result != null) {
-                editableFood =
-                    result.data?.let {
-                        EditableFoodData(
-                            foodName = it.foodName,
-                            calories = it.calories.toString(),
-                            carbs = it.carbs.toString(),
-                            protein = it.protein.toString(),
-                            totalFat = it.totalFat.toString(),
-                            saturatedFat = it.saturatedFat.toString(),
-                            fiber = it.fiber.toString(),
-                            sugar = it.sugar.toString()
-                        )
-                    }
-            }
+            editableFood =
+                result.data?.let {
+                    EditableFoodData(
+                        foodName = it.foodName,
+                        calories = it.calories.toString(),
+                        carbs = it.carbs.toString(),
+                        protein = it.protein.toString(),
+                        totalFat = it.totalFat.toString(),
+                        saturatedFat = it.saturatedFat.toString(),
+                        fiber = it.fiber.toString(),
+                        sugar = it.sugar.toString()
+                    )
+                }
         }
     }
 

@@ -20,6 +20,7 @@ import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 
 @Composable
 fun AppNavHost(
@@ -27,7 +28,7 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel,
     cameraViewModel: CameraViewModel,
-    foodViewModel: FoodViewModel
+    getFoodViewModel: GetFoodViewModel
     ) {
     val authState = authViewModel.authState.observeAsState()
 
@@ -45,7 +46,7 @@ fun AppNavHost(
             RegisterScreen(modifier, navController, authViewModel)
         }
         composable(Screen.Main.route) {
-            MainScreen(modifier, navController, authViewModel, foodViewModel)
+            MainScreen(modifier, navController, authViewModel, getFoodViewModel)
         }
         composable(Screen.Profile.route) {
             ProfileScreen(modifier, navController, authViewModel)
@@ -71,6 +72,7 @@ fun AppNavHost(
             AnalyzeScreen(
                 imagePath = imagePath,
                 onBack = { navController.popBackStack() },
+                viewModel = FoodViewModel(),
                 onSuccessfulUpload = {
                     navController.popBackStack(
                         route = Screen.Main.route,
@@ -83,6 +85,7 @@ fun AppNavHost(
             ManualEntryScreen(
                 modifier,
                 onBack = { navController.popBackStack() },
+                viewModel = FoodViewModel(),
                 onSuccessfulUpload = {
                     navController.popBackStack(
                         route = Screen.Main.route,

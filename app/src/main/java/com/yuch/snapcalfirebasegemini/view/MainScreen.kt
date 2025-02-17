@@ -32,7 +32,7 @@ fun MainScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
-    foodViewModel: FoodViewModel
+    foodViewModel: GetFoodViewModel
 ) {
     // Observasi state autentikasi
     val authState = authViewModel.authState.observeAsState()
@@ -50,13 +50,6 @@ fun MainScreen(
     var isRefreshing by remember { mutableStateOf(false) }
     val state = rememberPullToRefreshState()
     val coroutineScope = rememberCoroutineScope()
-    val onRefresh: () -> Unit = {
-        isRefreshing = true
-        coroutineScope.launch {
-            foodViewModel.fetchFood()
-            isRefreshing = false
-        }
-    }
 
     // Handle back button
     BackHandler {
@@ -79,17 +72,24 @@ fun MainScreen(
         }
     }
 
-    Column(modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+
         PullToRefreshBox(
             modifier = Modifier.padding(8.dp),
             state = state,
             isRefreshing = isRefreshing,
-            onRefresh = onRefresh,
+            onRefresh = {
+                isRefreshing = true
+                coroutineScope.launch {
+                    foodViewModel.refreshFood()
+                    isRefreshing = false
+                }
+            },
             indicator = {
                 PullToRefreshDefaults.LoadingIndicator(
                     state = state,
                     isRefreshing = isRefreshing,
-                    modifier = Modifier.align(Alignment.TopCenter),
+                    modifier = Modifier.align(Alignment.TopCenter)
                 )
             }
         ) {
@@ -107,7 +107,6 @@ fun MainScreen(
                         }
                     }
                 }
-                // Jika masih ada data (halaman belum selesai), tampilkan tombol load more
                 item {
                     if (hasMoreData && !isLoading) {
                         Button(
@@ -121,7 +120,6 @@ fun MainScreen(
                     }
                 }
             }
-
         }
     }
 }
