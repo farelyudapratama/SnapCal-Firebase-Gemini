@@ -86,9 +86,6 @@ fun MainScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Date and Time Section
-            DateTimeHeader()
-
             // Main Content
             PullToRefreshBox(
                 modifier = Modifier.fillMaxWidth(),
@@ -149,66 +146,6 @@ fun MainTopBar(email: String) {
             titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
         )
     )
-}
-
-@Composable
-fun DateTimeHeader() {
-    val currentDateTime = remember { LocalDateTime.now() }
-    val dateFormatter = DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy")
-    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            DateTimeItem(
-                icon = Icons.Outlined.DateRange,
-                text = currentDateTime.format(dateFormatter)
-            )
-            Divider(
-                modifier = Modifier
-                    .height(24.dp)
-                    .width(1.dp)
-            )
-            DateTimeItem(
-                icon = Icons.Outlined.Schedule,
-                text = currentDateTime.format(timeFormatter)
-            )
-        }
-    }
-}
-
-@Composable
-fun DateTimeItem(
-    icon: ImageVector,
-    text: String
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSecondaryContainer
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer
-        )
-    }
 }
 
 @Composable
