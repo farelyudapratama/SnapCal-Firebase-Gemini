@@ -5,6 +5,8 @@
 package com.yuch.snapcalfirebasegemini.view
 
 import android.content.Context
+import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
@@ -27,11 +29,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
+import com.github.mikephil.charting.charts.PieChart
+import com.github.mikephil.charting.data.PieData
+import com.github.mikephil.charting.data.PieDataSet
+import com.github.mikephil.charting.data.PieEntry
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
@@ -217,56 +224,109 @@ fun FoodItemCard(food: FoodItem) {
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Header with Image and Basic Info
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                FoodImage(food.imageUrl)
+                FoodImage(
+                    imageUrl = food.imageUrl,
+                    nutritionData = food.nutritionData
+                )
                 Spacer(modifier = Modifier.width(16.dp))
                 FoodBasicInfo(food)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Nutrition Info
             NutritionInfoRow(food.nutritionData)
-
-            // Meal Type and Timestamp
             FoodMetadata(food)
         }
     }
 }
 
 @Composable
-fun FoodImage(imageUrl: String?) {
-    SubcomposeAsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(imageUrl)
-            .crossfade(true)
-            .transformations(CircleCropTransformation())
-            .build(),
-        contentDescription = null,
-        modifier = Modifier
-            .size(72.dp)
-            .clip(MaterialTheme.shapes.medium),
-        loading = {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .size(24.dp)
-                    .padding(4.dp)
-            )
+fun FoodImage(
+    imageUrl: String?,
+    nutritionData: NutritionData,
+    modifier: Modifier = Modifier
+) {
+    if (imageUrl != null) {
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(imageUrl)
+                .crossfade(true)
+                .transformations(CircleCropTransformation())
+                .build(),
+            contentDescription = null,
+            modifier = modifier
+                .size(72.dp)
+                .clip(MaterialTheme.shapes.medium),
+            loading = {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(4.dp)
+                )
+            },
+            error = {
+                NutritionDonutChart(nutritionData)
+            }
+        )
+    } else {
+        NutritionDonutChart(nutritionData)
+    }
+}
+@Composable
+fun NutritionDonutChart(nutritionData: NutritionData) {
+    AndroidView(
+        modifier = Modifier.size(72.dp),
+        factory = { context ->
+            PieChart(context).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+
+                description.isEnabled = false // Hilangkan deskripsi
+                isDrawHoleEnabled = true // Buat lubang di tengah (efek donut)
+                setHoleColor(android.graphics.Color.TRANSPARENT) // Warna lubang transparan
+                holeRadius = 58f // Ukuran lubang (dalam persen)
+
+                legend.isEnabled = false // Hilangkan legend
+                setDrawEntryLabels(false) // Hilangkan label di chart
+
+                // Animate chart
+                animateY(1000)
+            }
         },
-        error = {
-            Icon(
-                imageVector = Icons.Default.BrokenImage,
-                contentDescription = null,
-                modifier = Modifier.size(72.dp)
+        update = { chart ->
+            // Siapkan data untuk chart
+            val entries = listOf(
+                PieEntry(nutritionData.calories.toFloat(), "Calories"),
+                PieEntry(nutritionData.carbs.toFloat(), "Carbs"),
+                PieEntry(nutritionData.protein.toFloat(), "Protein"),
+                PieEntry(nutritionData.totalFat.toFloat(), "Fat"),
+                PieEntry(nutritionData.fiber.toFloat(), "Fiber")
             )
+
+            val colors = listOf(
+                android.graphics.Color.rgb(255, 152, 0), // Orange untuk Carbs
+                android.graphics.Color.rgb(76, 175, 80), // Green untuk Protein
+                android.graphics.Color.rgb(33, 150, 243), // Blue untuk Fat
+                android.graphics.Color.rgb(156, 39, 176)  // Purple untuk Fiber
+            )
+
+            val dataSet = PieDataSet(entries, "Nutrition").apply {
+                this.colors = colors
+                setDrawValues(false) // Hilangkan nilai di chart
+                sliceSpace = 2f // Jarak antar slice
+            }
+
+            val data = PieData(dataSet)
+            chart.data = data
+            chart.invalidate() // Refresh chart
         }
     )
 }
-
 @Composable
 fun FoodBasicInfo(food: FoodItem) {
     Column(modifier = Modifier.fillMaxWidth()) {
