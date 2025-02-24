@@ -44,7 +44,8 @@ fun SnapCalApp(
         Screen.Scan.route,
         Screen.Analyze.route,
         Screen.ManualEntry.route,
-        Screen.DetailFood.route
+        Screen.DetailFood.route,
+        Screen.EditFood.route
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()

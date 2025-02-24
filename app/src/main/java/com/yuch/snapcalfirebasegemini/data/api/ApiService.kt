@@ -14,6 +14,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -40,6 +41,16 @@ interface ApiService {
 
     @GET("food/{id}")
     suspend fun getFoodById(@Path("id") id: String): Response<ApiResponse<FoodItem>>
+
+    @Multipart
+    @PUT("food/{id}")
+    suspend fun updateFood(
+        @Path("id") id: String,
+        @Part image: MultipartBody.Part?,
+        @Part("foodName") foodName: RequestBody?,
+        @Part("nutritionData") nutritionData: RequestBody?,
+        @Part("mealType") mealType: RequestBody?
+    ): Response<ApiResponse<FoodItem>>
 
     @POST("api/chat/start")
     suspend fun sendMessage(

@@ -8,6 +8,7 @@ import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
+import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,9 @@ class FoodViewModel(
 
     private val _uploadResult = MutableStateFlow<ApiResponse<Food>>(ApiResponse("error", "error", null))
     val uploadResult = _uploadResult.asStateFlow()
+
+    private val _editResult = MutableStateFlow<ApiResponse<FoodItem>>(ApiResponse("error", "error", null))
+    val editResult = _editResult.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -92,17 +96,17 @@ class FoodViewModel(
 
                 val foodNamePart = foodData.foodName.toRequestBody("text/plain".toMediaTypeOrNull())
                 val mealTypePart = foodData.mealType!!.toRequestBody("text/plain".toMediaTypeOrNull())
-                val nutritionJson = """
-                    {
-                        "calories": ${foodData.calories},
-                        "carbs": ${foodData.carbs},
-                        "protein": ${foodData.protein},
-                        "totalFat": ${foodData.totalFat},
-                        "saturatedFat": ${foodData.saturatedFat},
-                        "fiber": ${foodData.fiber},
-                        "sugar": ${foodData.sugar}
-                    }
-                """.trimIndent()
+                val nutritionJson = Gson().toJson(
+                    mapOf(
+                        "calories" to foodData.calories,
+                        "carbs" to foodData.carbs,
+                        "protein" to foodData.protein,
+                        "totalFat" to foodData.totalFat,
+                        "saturatedFat" to foodData.saturatedFat,
+                        "fiber" to foodData.fiber,
+                        "sugar" to foodData.sugar
+                    )
+                )
                 val nutritionPart = nutritionJson.toRequestBody("application/json".toMediaTypeOrNull())
 
                 val response = apiService.uploadFood(imagePart, foodNamePart, mealTypePart, nutritionPart)
@@ -117,6 +121,87 @@ class FoodViewModel(
     }
 
     // TODO Update Food data
+    fun updateFood(
+        foodId: String, imagePath: String?, foodData: EditableFoodData?
+    ) {
+        if (foodData?.mealType == null) {
+            _errorMessage.value = "Please select a meal type"
+            return
+        }
+        _isLoading.value = true
+        _errorMessage.value = null
+
+        viewModelScope.launch {
+            try {
+                val imagePart = imagePath?.let {
+                    val validationError = ImageUtils.validateImageFile(it)
+                    if (validationError != null) throw Exception(validationError)
+                    ImageUtils.prepareImageForUpload(it).first
+                }
+
+                val foodNamePart = foodData.foodName.toRequestBody("text/plain".toMediaTypeOrNull())
+                val mealTypePart = foodData.mealType!!.toRequestBody("text/plain".toMediaTypeOrNull())
+
+                val nutritionJson = Gson().toJson(
+                    mapOf(
+                        "calories" to foodData.calories,
+                        "carbs" to foodData.carbs,
+                        "protein" to foodData.protein,
+                        "totalFat" to foodData.totalFat,
+                        "saturatedFat" to foodData.saturatedFat,
+                        "fiber" to foodData.fiber,
+                        "sugar" to foodData.sugar
+                    )
+                )
+                val nutritionPart = nutritionJson.toRequestBody("application/json".toMediaTypeOrNull())
+
+                val response = apiService.updateFood(
+                    id = foodId,
+                    foodName = foodNamePart,
+                    mealType = mealTypePart,
+                    nutritionData = nutritionPart,
+                    image = imagePart
+                )
+
+                if (response.isSuccessful) {
+                    response.body()?.let { apiResponse ->
+                        when (apiResponse.status) {
+                            "success" -> {
+                                _editResult.value = ApiResponse(
+                                    status = "success",
+                                    message = "Food updated successfully",
+                                    data = apiResponse.data
+                                )
+                                _successMessage.value = "Food updated successfully."
+                            }
+                            else -> {
+                                _errorMessage.value = "[Code: ${response.code()}] ${apiResponse.message}"
+                            }
+                        }
+                    } ?: run {
+                        _errorMessage.value = "[Code: ${response.code()}] Empty response from server"
+                    }
+                } else {
+                    handleErrorResponse(response)
+                }
+            } catch (e: Exception) {
+                handleError(e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    private fun handleErrorResponse(response: Response<ApiResponse<FoodItem>>) {
+        try {
+            val errorBody = response.errorBody()?.string()
+            val errorResponse = Gson().fromJson(errorBody, ApiResponse::class.java)
+            _errorMessage.value = "[Code: ${response.code()}] ${errorResponse.message}"
+        } catch (e: Exception) {
+            _errorMessage.value = "[Code: ${response.code()}] ${response.message()}"
+        }
+    }
+
 
     private fun handleResponse(response: Response<ApiResponse<AnalyzeResult>>) {
         if (response.isSuccessful) {

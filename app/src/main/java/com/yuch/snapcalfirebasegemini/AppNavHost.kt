@@ -1,8 +1,10 @@
 package com.yuch.snapcalfirebasegemini
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -11,6 +13,7 @@ import androidx.navigation.navArgument
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.view.AnalyzeScreen
 import com.yuch.snapcalfirebasegemini.view.DetailFoodScreen
+import com.yuch.snapcalfirebasegemini.view.EditFoodScreen
 import com.yuch.snapcalfirebasegemini.view.LoginScreen
 import com.yuch.snapcalfirebasegemini.view.MainScreen
 import com.yuch.snapcalfirebasegemini.view.ManualEntryScreen
@@ -118,5 +121,32 @@ fun AppNavHost(
                 }
             )
         }
+        composable(
+            route = Screen.EditFood.route,
+            arguments = listOf(
+                navArgument("foodId") {
+                    type = NavType.StringType
+                    nullable = false
+                }
+            ),
+        ) { backStackEntry ->
+            val foodId = backStackEntry.arguments?.getString("foodId")
+                ?: throw IllegalArgumentException("FoodId cannot be null")
+
+            val viewModel: GetFoodViewModel = getFoodViewModel
+            val foodItem by viewModel.food.collectAsStateWithLifecycle()
+            val foodViewModel: FoodViewModel = FoodViewModel()
+
+            EditFoodScreen(
+                foodId = foodId,
+                onBack = { navController.popBackStack() },
+                navController = navController,
+                foodItem = foodItem,
+                onUpdateFood = { id, imagePath, foodData ->
+                    foodViewModel.updateFood(id, imagePath, foodData)
+                }
+            )
+        }
+
     }
 }
