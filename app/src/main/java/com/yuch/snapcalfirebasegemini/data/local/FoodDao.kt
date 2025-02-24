@@ -10,6 +10,9 @@ interface FoodDao {
     @Query("SELECT * FROM foods WHERE createdAt >= :sevenDaysAgo ORDER BY createdAt DESC")
     suspend fun getRecentFoods(sevenDaysAgo: Long): List<FoodEntity>
 
+    @Query("SELECT * FROM foods WHERE id = :id LIMIT 1")
+    suspend fun getFoodById(id: String): FoodEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFoods(foods: List<FoodEntity>)
 

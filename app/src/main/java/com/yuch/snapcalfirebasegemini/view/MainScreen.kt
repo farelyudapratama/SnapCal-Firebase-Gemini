@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -71,7 +72,19 @@ fun MainScreen(
     val coroutineScope = rememberCoroutineScope()
 
     // Handle back button and auth state
-    BackHandler { handleBackPress(context) { backPressedTime = it } }
+    BackHandler {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - backPressedTime < 2000) {
+            // Jika dalam 2 detik ditekan lagi, keluar aplikasi
+            // Keluar aplikasi ketika tekan back di main screen
+            android.os.Process.killProcess(android.os.Process.myPid())
+        } else {
+            // Jika tidak, berikan peringatan dulu
+            backPressedTime = currentTime
+            Toast.makeText(context, "Tekan sekali lagi untuk keluar", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     LaunchedEffect(authState.value) {
         if (authState.value is AuthState.Unauthenticated) {
             navController.navigate("login")
@@ -108,7 +121,7 @@ fun MainScreen(
                         items = foodList,
                         key = { it.id }
                     ) { foodItem ->
-                        FoodItemCard(foodItem)
+                        FoodItemCard(foodItem, navController)
                     }
 
                     // Loading and Load More
@@ -149,11 +162,17 @@ fun MainTopBar(email: String) {
 }
 
 @Composable
-fun FoodItemCard(food: FoodItem) {
+fun FoodItemCard(
+    food: FoodItem,
+    navController: NavController
+) {
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable {
+                navController.navigate("detail-food/${food.id}")
+            },
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(

@@ -6,6 +6,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
+import com.yuch.snapcalfirebasegemini.data.local.FoodEntity
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +15,9 @@ import kotlinx.coroutines.launch
 class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
     private val _foodList = MutableStateFlow<List<FoodItem>>(emptyList())
     val foodList: StateFlow<List<FoodItem>> = _foodList
+
+    private val _food = MutableStateFlow<FoodItem?>(null)
+    val food: StateFlow<FoodItem?> = _food
 
     // Pagination: halaman saat ini dan total halaman
     private val _currentPage = MutableStateFlow(1)
@@ -92,6 +96,25 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
         }
     }
 
+    fun fetchFoodById(foodId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+
+            try {
+                val foodData = repository.getFoodById(foodId)
+                if (foodData != null) {
+                    _food.value = foodData
+                } else {
+                    _errorMessage.value = "Makanan tidak ditemukan"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Terjadi kesalahan"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
 
     /**
      * Memuat halaman selanjutnya jika masih ada.

@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.view.AnalyzeScreen
+import com.yuch.snapcalfirebasegemini.view.DetailFoodScreen
 import com.yuch.snapcalfirebasegemini.view.LoginScreen
 import com.yuch.snapcalfirebasegemini.view.MainScreen
 import com.yuch.snapcalfirebasegemini.view.ManualEntryScreen
@@ -50,6 +51,29 @@ fun AppNavHost(
         }
         composable(Screen.Profile.route) {
             ProfileScreen(modifier, navController, authViewModel)
+        }
+        composable(Screen.Message.route) {
+            //TODO Tambahkan navigasi ke MessageScreen di sini
+        }
+        composable(
+            Screen.DetailFood.route,
+            arguments = listOf(
+                navArgument("foodId") {
+                    type = NavType.StringType
+                    nullable = false
+                }
+            )
+        ) {
+            val foodId = it.arguments?.getString("foodId")
+            requireNotNull(foodId) { "FoodId cannot be null" }
+            DetailFoodScreen(
+                foodId = foodId,
+                onBack = { navController.popBackStack() },
+                viewModel = getFoodViewModel,
+                modifier = modifier,
+                navController = navController,
+                authViewModel = authViewModel
+            )
         }
         composable(Screen.Scan.route) {
             ScanScreen(
