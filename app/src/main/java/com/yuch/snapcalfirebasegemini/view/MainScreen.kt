@@ -46,8 +46,11 @@ import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -355,8 +358,15 @@ fun NutritionItem(
 
 @Composable
 fun FoodMetadata(food: FoodItem) {
-    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")
-    val createdAt = LocalDateTime.parse(food.createdAt.substring(0, 19))
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+    val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+
+    val createdAt = try {
+        val zonedDateTime = Instant.parse(food.createdAt).atZone(ZoneId.systemDefault())
+        "${zonedDateTime.format(dateFormatter)}, ${zonedDateTime.format(timeFormatter)}"
+    } catch (e: Exception) {
+        "Date not available"
+    }
 
     Row(
         modifier = Modifier
@@ -372,8 +382,7 @@ fun FoodMetadata(food: FoodItem) {
             shape = MaterialTheme.shapes.small
         ) {
             Text(
-                text = food.mealType.capitalize(
-                    Locale.ROOT),
+                text = food.mealType.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() },
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -381,12 +390,13 @@ fun FoodMetadata(food: FoodItem) {
         }
 
         Text(
-            text = createdAt.format(formatter),
+            text = createdAt,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
+
 
 @Composable
 fun LoadingAndLoadMore(

@@ -8,6 +8,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.data.local.FoodEntity
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
+import com.yuch.snapcalfirebasegemini.utils.formatDateFromLong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -52,8 +53,8 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
             _errorMessage.value = null
             try {
                 // Coba ambil data dari API
-                val response: ApiResponse<FoodPage> = repository.getAllFood(page)
-                val fetchedItems = response.data?.items ?: emptyList()
+                val response: ApiResponse<FoodPage>? = repository.getAllFood(page)
+                val fetchedItems = response?.data?.items ?: emptyList()
 
                 // Jika halaman pertama, replace data; jika tidak, append data
                 _foodList.value = if (page == 1) {
@@ -62,7 +63,9 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
                     _foodList.value + fetchedItems
                 }
                 _currentPage.value = page
-                _totalPages.value = response.data?.totalPages ?: 1
+                if (response != null) {
+                    _totalPages.value = response.data?.totalPages ?: 1
+                }
                 _hasMoreData.value = _currentPage.value < _totalPages.value
             } catch (e: Exception) {
                 // Jika terjadi error (misalnya tidak ada internet), ambil data dari cache
@@ -85,7 +88,7 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
                             sugar = it.sugar
                         ),
                         imageUrl = it.imageUrl,
-                        createdAt = it.createdAt.toString()
+                        createdAt = formatDateFromLong(it.createdAt)
                     )
                 }
                 // Set flag hasMoreData false jika data cache digunakan (atau Anda bisa logika lain)
