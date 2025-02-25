@@ -124,29 +124,24 @@ fun AppNavHost(
         composable(
             route = Screen.EditFood.route,
             arguments = listOf(
-                navArgument("foodId") {
-                    type = NavType.StringType
-                    nullable = false
-                }
-            ),
+                navArgument("foodId") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
-            val foodId = backStackEntry.arguments?.getString("foodId")
-                ?: throw IllegalArgumentException("FoodId cannot be null")
-
+            val foodId = backStackEntry.arguments?.getString("foodId")!!
             val viewModel: GetFoodViewModel = getFoodViewModel
             val foodItem by viewModel.food.collectAsStateWithLifecycle()
-            val foodViewModel: FoodViewModel = FoodViewModel()
+            val foodViewModel: FoodViewModel = FoodViewModel() // Buat instance FoodViewModel
 
             EditFoodScreen(
                 foodId = foodId,
-                onBack = { navController.popBackStack() },
                 navController = navController,
                 foodItem = foodItem,
                 onUpdateFood = { id, imagePath, foodData ->
-                    foodViewModel.updateFood(id, imagePath, foodData)
-                }
+                    foodViewModel.updateFood(id, imagePath, foodData) // Panggil ViewModel
+                },
+                onBack = { navController.popBackStack() },
+                viewModel = foodViewModel // Pass ViewModel ke screen
             )
         }
-
     }
 }

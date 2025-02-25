@@ -10,6 +10,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
+import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -122,7 +123,7 @@ class FoodViewModel(
 
     // TODO Update Food data
     fun updateFood(
-        foodId: String, imagePath: String?, foodData: EditableFoodData?
+        foodId: String, imagePath: String?, foodData: UpdateFoodData?
     ) {
         if (foodData?.mealType == null) {
             _errorMessage.value = "Please select a meal type"
@@ -139,8 +140,9 @@ class FoodViewModel(
                     ImageUtils.prepareImageForUpload(it).first
                 }
 
-                val foodNamePart = foodData.foodName.toRequestBody("text/plain".toMediaTypeOrNull())
-                val mealTypePart = foodData.mealType!!.toRequestBody("text/plain".toMediaTypeOrNull())
+                val foodNamePart =
+                    foodData.foodName?.toRequestBody("text/plain".toMediaTypeOrNull())
+                val mealTypePart = foodData.mealType.toRequestBody("text/plain".toMediaTypeOrNull())
 
                 val nutritionJson = Gson().toJson(
                     mapOf(

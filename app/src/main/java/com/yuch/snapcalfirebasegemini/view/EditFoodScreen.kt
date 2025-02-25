@@ -1,10 +1,13 @@
 package com.yuch.snapcalfirebasegemini.view
 
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,9 +15,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -24,6 +30,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
@@ -42,6 +50,9 @@ import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
+import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(
@@ -51,8 +62,9 @@ fun EditFoodScreen(
     foodId: String,
     navController: NavController,
     foodItem: FoodItem?, // Data makanan yang akan diedit
-    onUpdateFood: (String, String?, EditableFoodData) -> Unit,
-    onBack: () -> Unit
+    onUpdateFood: (String, String?, UpdateFoodData) -> Unit,
+    onBack: () -> Unit,
+    viewModel: FoodViewModel
 ) {
     var foodName by remember { mutableStateOf(foodItem?.foodName ?: "") }
     var mealType by remember { mutableStateOf(foodItem?.mealType ?: "") }
@@ -71,15 +83,43 @@ fun EditFoodScreen(
             selectedImagePath = uri.toString()
         }
     }
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val successMessage by viewModel.successMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    // Tangani perubahan errorMessage
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { message ->
+            scope.launch {
+                snackbarHostState.showSnackbar(message)
+                viewModel.clearErrorMessage()
+            }
+        }
+    }
+
+    // Tangani perubahan successMessage
+    LaunchedEffect(successMessage) {
+        successMessage?.let { message ->
+            scope.launch {
+                snackbarHostState.showSnackbar(message)
+                viewModel.clearErrorMessage()
+                delay(2000) // Tunda navigasi agar pengguna bisa membaca pesan
+                onBack()
+            }
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Edit Food") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            Icons.Default.ArrowBack, contentDescription = "Back")
+                            Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -87,20 +127,23 @@ fun EditFoodScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    val foodData = EditableFoodData(
-                        foodName = foodName,
-                        mealType = mealType,
-                        calories = (calories.toIntOrNull() ?: 0).toString(),
-                        carbs = (carbs.toIntOrNull() ?: 0).toString(),
-                        protein = (protein.toIntOrNull() ?: 0).toString(),
-                        totalFat = (totalFat.toIntOrNull() ?: 0).toString(),
-                        saturatedFat = (saturatedFat.toIntOrNull() ?: 0).toString(),
-                        fiber = (fiber.toIntOrNull() ?: 0).toString(),
-                        sugar = (sugar.toIntOrNull() ?: 0).toString()
-                    )
-                    Log.d("EditFoodScreen", "Save changes clicked $foodData")
-                    onUpdateFood(foodId, selectedImagePath, foodData)
-                    navController.popBackStack()
+                    try {
+                        val foodData = UpdateFoodData(
+                            foodName = foodName,
+                            mealType = mealType,
+                            calories = calories.toDoubleOrNull(),
+                            carbs = carbs.toDoubleOrNull(),
+                            protein = protein.toDoubleOrNull(),
+                            totalFat = totalFat.toDoubleOrNull(),
+                            saturatedFat = saturatedFat.toDoubleOrNull(),
+                            fiber = fiber.toDoubleOrNull(),
+                            sugar = sugar.toDoubleOrNull()
+                        )
+
+                        onUpdateFood(foodId, selectedImagePath, foodData)
+                    } catch (e: Exception) {
+                        Log.e("EditFoodScreen", "Error updating food: ${e.message}")
+                    }
                 }
             ) {
                 Icon(Icons.Default.Save, contentDescription = "Save Changes")
@@ -173,6 +216,9 @@ fun EditFoodScreen(
                 NutrientInputField("Sugar", sugar) { sugar = it }
             }
         }
+        if (isLoading) {
+            LoadingOverlay()
+        }
     }
 }
 
@@ -186,4 +232,34 @@ fun NutrientInputField(label: String, value: String, onValueChange: (String) -> 
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
     )
+}
+
+@Composable
+private fun LoadingOverlay() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "Saving food entry...",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        }
+    }
 }
