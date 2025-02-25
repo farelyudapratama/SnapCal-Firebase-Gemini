@@ -43,11 +43,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -319,87 +321,66 @@ fun MacronutrientDonutChart(
     nutritionData: NutritionData,
     modifier: Modifier = Modifier
 ) {
-    // Calculate the total of macronutrients for percentages
-    val carbsGrams = nutritionData.carbs
-    val proteinGrams = nutritionData.protein
-    val fatGrams = nutritionData.totalFat
-    val total = carbsGrams + proteinGrams + fatGrams
+    val total = nutritionData.carbs + nutritionData.protein + nutritionData.totalFat + nutritionData.fiber + nutritionData.sugar
 
-    // Colors for each macronutrient
-    val carbsColor = MaterialTheme.colorScheme.primary
-    val proteinColor = MaterialTheme.colorScheme.tertiary
-    val fatColor = MaterialTheme.colorScheme.secondary
+    if (total <= 0) return // Tidak tampilkan chart jika tidak ada data
 
-    // Calculate angles
-    val carbsAngle = 360f * (carbsGrams / total)
-    val proteinAngle = 360f * (proteinGrams / total)
-    val fatAngle = 360f * (fatGrams / total)
+    // Warna makronutrien mengikuti MaterialTheme agar adaptif
+    val colors = listOf(
+        MaterialTheme.colorScheme.primary,       // Carbs
+        MaterialTheme.colorScheme.tertiary,      // Protein
+        MaterialTheme.colorScheme.secondary,     // Fat
+        Color(0xFF8BC34A), // Fiber (Hijau)
+        Color(0xFFFF9800)  // Sugar (Oranye)
+    )
+
+    val nutrientValues = listOf(
+        nutritionData.carbs,
+        nutritionData.protein,
+        nutritionData.totalFat,
+        nutritionData.fiber,
+        nutritionData.sugar
+    )
+
+    val minAngle = 5f // Minimal sudut agar tetap terlihat
+    var angles = nutrientValues.map { maxOf(360.0 * (it / total), minAngle.toDouble()) }
+    val correctionFactor = 360f / angles.sum()
+    angles = angles.map { it * correctionFactor } // Koreksi agar total tetap 360°
 
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        // Draw the donut chart
-        Canvas(modifier = Modifier.fillMaxSize()) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer(alpha = 0.99f)
+        ) {
             val strokeWidth = size.width * 0.15f
             val radius = (size.minDimension - strokeWidth) / 2
-            val innerRadius = radius * 0.6f // This creates the donut hole
-            val centerX = size.width / 2
-            val centerY = size.height / 2
+            val center = size.center
 
-            var startAngle = -90f // Start at top
+            var startAngle = -90f
 
-            // Draw carbs arc
-            if (carbsGrams > 0) {
+            angles.zip(colors).forEach { (angle, color) ->
                 drawArc(
-                    color = carbsColor,
+                    color = color,
                     startAngle = startAngle,
-                    sweepAngle = carbsAngle.toFloat(),
+                    sweepAngle = angle.toFloat(),
                     useCenter = false,
-                    topLeft = Offset(centerX - radius, centerY - radius),
                     size = Size(radius * 2, radius * 2),
-                    style = Stroke(width = strokeWidth, cap = StrokeCap.Butt)
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Butt),
+                    topLeft = Offset(center.x - radius, center.y - radius)
                 )
-                startAngle += carbsAngle.toFloat()
-            }
-
-            // Draw protein arc
-            if (proteinGrams > 0) {
-                drawArc(
-                    color = proteinColor,
-                    startAngle = startAngle,
-                    sweepAngle = proteinAngle.toFloat(),
-                    useCenter = false,
-                    topLeft = Offset(centerX - radius, centerY - radius),
-                    size = Size(radius * 2, radius * 2),
-                    style = Stroke(width = strokeWidth, cap = StrokeCap.Butt)
-                )
-                startAngle += proteinAngle.toFloat()
-            }
-
-            // Draw fat arc
-            if (fatGrams > 0) {
-                drawArc(
-                    color = fatColor,
-                    startAngle = startAngle,
-                    sweepAngle = fatAngle.toFloat(),
-                    useCenter = false,
-                    topLeft = Offset(centerX - radius, centerY - radius),
-                    size = Size(radius * 2, radius * 2),
-                    style = Stroke(width = strokeWidth, cap = StrokeCap.Butt)
-                )
+                startAngle += angle.toFloat()
             }
         }
 
-        // Display calories in the center
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        // Tampilkan kalori di tengah
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "${nutritionData.calories}",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold
-                )
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
             )
             Text(
                 text = "kcal",
@@ -416,11 +397,13 @@ fun MacronutrientDonutChart(
             .padding(top = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        LegendItem(color = carbsColor, name = "Carbs", value = "${carbsGrams}g")
-        LegendItem(color = proteinColor, name = "Protein", value = "${proteinGrams}g")
-        LegendItem(color = fatColor, name = "Fats", value = "${fatGrams}g")
+        listOf("Carbs", "Protein", "Fat", "Fiber", "Sugar").zip(nutrientValues.zip(colors)).forEach { (name, pair) ->
+            val (value, color) = pair
+            LegendItem(color = color, name = name, value = "${value}g")
+        }
     }
 }
+
 
 @Composable
 fun LegendItem(color: Color, name: String, value: String) {
