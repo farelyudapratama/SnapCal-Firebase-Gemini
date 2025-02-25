@@ -121,6 +121,31 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
         }
     }
 
+    fun deleteFood(
+        foodId: String,
+        function: () -> Boolean
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+
+            try {
+                val response = repository.deleteFood(foodId)
+                if (response != null) {
+                    if (response.status == "success") {
+                        _food.value = null
+                    } else {
+                        _errorMessage.value = "Gagal menghapus makanan"
+                    }
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Terjadi kesalahan"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     /**
      * Memuat halaman selanjutnya jika masih ada.
      */

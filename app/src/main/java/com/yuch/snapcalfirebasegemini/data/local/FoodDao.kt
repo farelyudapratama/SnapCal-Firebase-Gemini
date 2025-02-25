@@ -18,4 +18,7 @@ interface FoodDao {
 
     @Query("DELETE FROM foods WHERE createdAt < :threshold")
     suspend fun deleteOldFoods(threshold: Long)
+
+    @Query("DELETE FROM foods WHERE id = :id")
+    suspend fun deleteFoodById(id: String)
 }
