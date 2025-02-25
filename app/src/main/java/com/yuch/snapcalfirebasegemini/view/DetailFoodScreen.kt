@@ -1,26 +1,39 @@
 package com.yuch.snapcalfirebasegemini.view
 
+import android.content.Context
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DinnerDining
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.FreeBreakfast
+import androidx.compose.material.icons.filled.LocalCafe
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.LunchDining
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,6 +51,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,11 +66,11 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -66,6 +82,12 @@ import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 import java.util.Locale
+import com.yuch.snapcalfirebasegemini.ui.theme.*
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import kotlin.math.atan2
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +106,7 @@ fun DetailFoodScreen(
     val food by viewModel.food.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
+    // Auth & data fetching effects
     LaunchedEffect(authState.value) {
         when (authState.value) {
             is AuthState.Unauthenticated -> navController.navigate("login") {
@@ -94,10 +117,7 @@ fun DetailFoodScreen(
     }
 
     LaunchedEffect(foodId) {
-        viewModel.fetchFoodById(
-            foodId,
-            true
-        )
+        viewModel.fetchFoodById(foodId, true)
     }
 
     LaunchedEffect(navController.currentBackStackEntry) {
@@ -115,7 +135,7 @@ fun DetailFoodScreen(
                     Text(
                         "Food Details",
                         style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.Bold
                         )
                     )
                 },
@@ -133,8 +153,15 @@ fun DetailFoodScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate("edit-food/$foodId") }) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit Food")
+            FloatingActionButton(
+                onClick = { navController.navigate("edit-food/$foodId") },
+                containerColor = caloriesColor
+            ) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = "Edit Food",
+                    tint = Color.White
+                )
             }
         }
     ) { paddingValues ->
@@ -149,167 +176,34 @@ fun DetailFoodScreen(
             }
         } else {
             food?.let { foodItem ->
-                Column(
-                    modifier = modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .verticalScroll(scrollState)
-                ) {
-                    // Check if image URL is valid
-                    val hasValidImage = foodItem.imageUrl?.let {
-                        it.isNotEmpty() && it != "null" && it != "undefined"
-                    } ?: false
-
-                    if (hasValidImage) {
-                        // Hero image with gradient overlay
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(240.dp)
-                        ) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(foodItem.imageUrl)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = "Food Image",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-
-                            // Gradient overlay at the bottom
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.Transparent,
-                                                Color.Black.copy(alpha = 0.7f)
-                                            ),
-                                            startY = 300f,
-                                            endY = 900f
-                                        )
-                                    )
-                            )
-
-                            // Food name at the bottom
-                            Text(
-                                text = foodItem.foodName,
-                                style = MaterialTheme.typography.headlineMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    shadow = Shadow(
-                                        color = Color.Black.copy(alpha = 0.5f),
-                                        offset = Offset(4f, 4f),
-                                        blurRadius = 8f
-                                    )
-                                ),
-                                modifier = Modifier
-                                    .align(Alignment.BottomStart)
-                                    .padding(16.dp)
-                            )
-
-                        }
-                    } else {
-                        // Show donut chart instead of image
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(240.dp)
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                // Donut Chart
-                                MacronutrientDonutChart(
-                                    nutritionData = foodItem.nutritionData,
-                                    modifier = Modifier
-                                        .size(180.dp)
-                                        .padding(8.dp)
-                                )
-
-                                // Food name below chart
-                                Text(
-                                    text = foodItem.foodName,
-                                    style = MaterialTheme.typography.headlineSmall.copy(
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    modifier = Modifier.padding(top = 8.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    // Meal type badge
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.primary)
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = foodItem.mealType.uppercase(Locale.getDefault()),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
-                    }
-
-                    // Content section
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        // Info row
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            InfoItem(
-                                icon = Icons.Default.LocalFireDepartment,
-                                label = "Calories",
-                                value = "${foodItem.nutritionData.calories} kcal",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-
-                            InfoItem(
-                                icon = Icons.Default.Schedule,
-                                label = "Added on",
-                                value = foodItem.createdAt
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Nutrition section title
-                        Text(
-                            text = "Nutrition Information",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-
-                        // Nutrition cards
-                        NutritionCards(nutritionData = foodItem.nutritionData)
-                    }
-                }
+                FoodDetailsContent(
+                    foodItem = foodItem,
+                    modifier = modifier.padding(paddingValues),
+                    scrollState = scrollState,
+                    context = context
+                )
             } ?: run {
-                // Show error or empty state
+                // Error state
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Food details not available",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.ErrorOutline,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Food details not available",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -317,22 +211,631 @@ fun DetailFoodScreen(
 }
 
 @Composable
-fun MacronutrientDonutChart(
+fun FoodDetailsContent(
+    foodItem: com.yuch.snapcalfirebasegemini.data.api.response.FoodItem,
+    modifier: Modifier = Modifier,
+    scrollState: ScrollState,
+    context: Context
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+    ) {
+        // Image dengan teks overlay atau stylish header jika tidak ada gambar
+        FoodHeaderSection(foodItem, context)
+
+        // Main nutrition card dengan chart dan macros
+        NutritionInfoCard(foodItem)
+
+        // Fat breakdown card (termasuk saturated fat)
+        FatBreakdownCard(foodItem.nutritionData)
+
+        // Date info
+        DateInfoCard(foodItem.createdAt)
+    }
+}
+
+@Composable
+fun FoodHeaderSection(
+    foodItem: com.yuch.snapcalfirebasegemini.data.api.response.FoodItem,
+    context: Context
+) {
+    // Check if image URL is valid
+    val hasValidImage = foodItem.imageUrl?.let {
+        it.isNotEmpty() && it != "null" && it != "undefined"
+    } ?: false
+
+    if (hasValidImage) {
+        // Hero image with gradient overlay
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(foodItem.imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Food Image",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // Gradient overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.7f)
+                            ),
+                            startY = 300f,
+                            endY = 900f
+                        )
+                    )
+            )
+
+            // Food name and meal type
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = foodItem.foodName,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            offset = Offset(4f, 4f),
+                            blurRadius = 8f
+                        )
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.secondary)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = foodItem.mealType.uppercase(Locale.getDefault()),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+    } else {
+        // No image: enhanced stylish header
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+        ) {
+            // Gradient background
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                caloriesColor.copy(alpha = 0.8f),
+                                caloriesColor.copy(alpha = 0.4f)
+                            ),
+                            start = Offset(0f, 0f),
+                            end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                        )
+                    )
+            )
+
+            // Food icon
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                // Different icons based on meal type
+                val icon = when(foodItem.mealType.lowercase()) {
+                    "breakfast" -> Icons.Default.FreeBreakfast
+                    "dinner" -> Icons.Default.DinnerDining
+                    "lunch" -> Icons.Default.LunchDining
+                    "snack" -> Icons.Default.LocalCafe
+                    else -> Icons.Default.Restaurant
+                }
+
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+
+            // Pattern overlay for visual interest
+            Canvas(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                val dotSize = 2.dp.toPx()
+                val spacing = 20.dp.toPx()
+
+                for (x in 0..size.width.toInt() step spacing.toInt()) {
+                    for (y in 0..size.height.toInt() step spacing.toInt()) {
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.2f),
+                            radius = dotSize,
+                            center = Offset(x.toFloat(), y.toFloat())
+                        )
+                    }
+                }
+            }
+
+            // Food details
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.BottomStart)
+            ) {
+                Text(
+                    text = foodItem.foodName,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            offset = Offset(2f, 2f),
+                            blurRadius = 4f
+                        )
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.2f))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = foodItem.mealType.uppercase(Locale.getDefault()),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+
+        // Quick calorie summary below header
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .offset(y = (-16).dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp, horizontal = 24.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                CalorieCounter(foodItem.nutritionData.calories)
+
+                // Vertical divider
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(40.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+
+                // Primary macros summary
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MacroCounter("C", foodItem.nutritionData.carbs, carbsColor)
+                    MacroCounter("P", foodItem.nutritionData.protein, proteinColor)
+                    MacroCounter("F", foodItem.nutritionData.totalFat, fatColor)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CalorieCounter(calories: Double) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "$calories",
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = caloriesColor
+            )
+        )
+        Text(
+            text = "CALORIES",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun MacroCounter(label: String, value: Double, color: Color) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "$value",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+        )
+        Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(color.copy(alpha = 0.2f))
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = color
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun NutritionInfoCard(foodItem: com.yuch.snapcalfirebasegemini.data.api.response.FoodItem) {
+    // Check if image URL is valid to adjust layout accordingly
+    val hasValidImage = foodItem.imageUrl?.let {
+        it.isNotEmpty() && it != "null" && it != "undefined"
+    } ?: false
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                top = if (hasValidImage) 16.dp else 8.dp,
+                start = 16.dp,
+                end = 16.dp,
+                bottom = 16.dp
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Heading
+            Text(
+                text = "Nutrition Breakdown",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            // Only show calories headline if we have an image (otherwise it's in the counter above)
+            if (hasValidImage) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocalFireDepartment,
+                        contentDescription = null,
+                        tint = caloriesColor,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "${foodItem.nutritionData.calories}",
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = caloriesColor
+                            )
+                        )
+                        Text(
+                            text = "CALORIES",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // Macros with chart
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left: Chart
+                NutrientDonutChart(
+                    nutritionData = foodItem.nutritionData,
+                    modifier = Modifier
+                        .weight(1f)
+                        .size(160.dp)
+                )
+
+                // Right: Macronutrient values
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp)
+                ) {
+                    MacronutrientItem("Carbs", "${foodItem.nutritionData.carbs}g", carbsColor)
+                    MacronutrientItem("Protein", "${foodItem.nutritionData.protein}g", proteinColor)
+                    MacronutrientItem("Total Fat", "${foodItem.nutritionData.totalFat}g", fatColor)
+                    MacronutrientItem("Fiber", "${foodItem.nutritionData.fiber}g", fiberColor)
+                    MacronutrientItem("Sugar", "${foodItem.nutritionData.sugar}g", sugarColor)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FatBreakdownCard(nutritionData: NutritionData) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // Header with small icon
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.WaterDrop,
+                    contentDescription = null,
+                    tint = fatColor,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Fat Breakdown",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+
+            // Fat breakdown visualization
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Visual representation of fat breakdown
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(80.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                ) {
+                    // Background (total fat)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(fatColor.copy(alpha = 0.3f))
+                    )
+
+                    // Saturated fat portion
+                    val totalFat = nutritionData.totalFat.toFloat()
+                    val saturatedFat = nutritionData.saturatedFat.toFloat()
+                    val satFatRatio = if (totalFat > 0f) saturatedFat / totalFat else 0f
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(satFatRatio)
+                            .background(saturatedFatColor)
+                    )
+
+                    // Percentages
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${(satFatRatio * 100).toInt()}% Saturated",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                shadow = Shadow(
+                                    color = Color.Black.copy(alpha = 0.5f),
+                                    offset = Offset(1f, 1f),
+                                    blurRadius = 2f
+                                )
+                            )
+                        )
+                    }
+                }
+
+                // Values
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Total Fat:",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = "${nutritionData.totalFat}g",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = fatColor
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Saturated Fat:",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = "${nutritionData.saturatedFat}g",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = saturatedFatColor
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DateInfoCard(createdAt: String) {
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(
+        FormatStyle.MEDIUM)
+    val timeFormatter = DateTimeFormatter.ofLocalizedTime(
+        FormatStyle.SHORT)
+
+    val createdAtFormatted = try {
+        val zonedDateTime = Instant.parse(createdAt).atZone(
+            ZoneId.systemDefault())
+        "${zonedDateTime.format(dateFormatter)}, ${zonedDateTime.format(timeFormatter)}"
+    } catch (e: Exception) {
+        "Date not available"
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Schedule,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = "Added on",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = createdAtFormatted,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MacronutrientItem(label: String, value: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+        )
+    }
+}
+
+@Composable
+fun NutrientDonutChart(
     nutritionData: NutritionData,
     modifier: Modifier = Modifier
 ) {
     val total = nutritionData.carbs + nutritionData.protein + nutritionData.totalFat + nutritionData.fiber + nutritionData.sugar
 
-    if (total <= 0) return // Tidak tampilkan chart jika tidak ada data
+    if (total <= 0) return // Jangan tampilkan chart jika tidak ada data
 
-    // Warna makronutrien mengikuti MaterialTheme agar adaptif
-    val colors = listOf(
-        MaterialTheme.colorScheme.primary,       // Carbs
-        MaterialTheme.colorScheme.tertiary,      // Protein
-        MaterialTheme.colorScheme.secondary,     // Fat
-        Color(0xFF8BC34A), // Fiber (Hijau)
-        Color(0xFFFF9800)  // Sugar (Oranye)
-    )
+    val colors = listOf(carbsColor, proteinColor, fatColor, fiberColor, sugarColor)
+    val nutrientNames = listOf("Carbohydrates", "Protein", "Fat", "Fiber", "Sugar")
 
     val nutrientValues = listOf(
         nutritionData.carbs,
@@ -342,10 +845,12 @@ fun MacronutrientDonutChart(
         nutritionData.sugar
     )
 
-    val minAngle = 5f // Minimal sudut agar tetap terlihat
+    val minAngle = 5f
     var angles = nutrientValues.map { maxOf(360.0 * (it / total), minAngle.toDouble()) }
     val correctionFactor = 360f / angles.sum()
-    angles = angles.map { it * correctionFactor } // Koreksi agar total tetap 360°
+    angles = angles.map { it * correctionFactor }
+
+    var selectedIndex by remember { mutableStateOf<Int?>(null) }
 
     Box(
         modifier = modifier,
@@ -354,11 +859,32 @@ fun MacronutrientDonutChart(
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer(alpha = 0.99f)
+                .pointerInput(Unit) {
+                    detectTapGestures { tapOffset ->
+                        val center = Offset(
+                            (size.width / 2).toFloat(),
+                            (size.height / 2).toFloat()
+                        )
+                        val touchAngle = (atan2(
+                            tapOffset.y - center.y,
+                            tapOffset.x - center.x
+                        ) * (180 / Math.PI)).toFloat()
+
+                        val normalizedAngle = (touchAngle + 360) % 360
+                        var startAngle = -90f
+                        angles.forEachIndexed { index, angle ->
+                            if (normalizedAngle in startAngle..(startAngle + angle.toFloat())) {
+                                selectedIndex = index
+                                return@detectTapGestures
+                            }
+                            startAngle += angle.toFloat()
+                        }
+                    }
+                }
         ) {
-            val strokeWidth = size.width * 0.15f
-            val radius = (size.minDimension - strokeWidth) / 2
-            val center = size.center
+            val strokeWidth = size.width * 0.2f
+            val radius = (minOf(size.width, size.height) - strokeWidth) / 2
+            val center = Offset(size.width / 2, size.height / 2)
 
             var startAngle = -90f
 
@@ -376,220 +902,22 @@ fun MacronutrientDonutChart(
             }
         }
 
-        // Tampilkan kalori di tengah
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "${nutritionData.calories}",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                text = selectedIndex?.let {
+                    val percentage = (nutrientValues[it] / total) * 100
+                    "%.1f%%".format(percentage)
+                } ?: "${nutritionData.calories}",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    color = selectedIndex?.let { colors[it] } ?: caloriesColor
+                )
             )
             Text(
-                text = "kcal",
-                style = MaterialTheme.typography.bodySmall,
+                text = selectedIndex?.let { nutrientNames[it] } ?: "Calories",
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-    }
-
-    // Legend
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        listOf("Carbs", "Protein", "Fat", "Fiber", "Sugar").zip(nutrientValues.zip(colors)).forEach { (name, pair) ->
-            val (value, color) = pair
-            LegendItem(color = color, name = name, value = "${value}g")
-        }
-    }
-}
-
-
-@Composable
-fun LegendItem(color: Color, name: String, value: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(12.dp)
-                .clip(CircleShape)
-                .background(color)
-        )
-        Spacer(modifier = Modifier.padding(4.dp))
-        Text(
-            text = "$name: $value",
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Medium
-        )
-    }
-}
-
-@Composable
-fun InfoItem(
-    icon: ImageVector,
-    label: String,
-    value: String,
-    tint: Color = MaterialTheme.colorScheme.primary
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 4.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = tint,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.padding(4.dp))
-        Column {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold
-                )
-            )
-        }
-    }
-}
-
-@Composable
-fun NutritionCards(nutritionData: NutritionData) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        // Macronutrients row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            NutrientCard(
-                name = "Carbs",
-                value = "${nutritionData.carbs}g",
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.weight(1f)
-            )
-            NutrientCard(
-                name = "Protein",
-                value = "${nutritionData.protein}g",
-                color = MaterialTheme.colorScheme.tertiary,
-                modifier = Modifier.weight(1f)
-            )
-            NutrientCard(
-                name = "Fats",
-                value = "${nutritionData.totalFat}g",
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Detailed nutrition table
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            ),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "Detailed Nutrition",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                NutrientRow("Total Fat", "${nutritionData.totalFat}g")
-                NutrientRow("Saturated Fat", "${nutritionData.saturatedFat}g")
-                NutrientRow("Carbohydrates", "${nutritionData.carbs}g")
-                NutrientRow("Fiber", "${nutritionData.fiber}g")
-                NutrientRow("Sugar", "${nutritionData.sugar}g")
-                NutrientRow("Protein", "${nutritionData.protein}g")
-            }
-        }
-    }
-}
-
-@Composable
-fun NutrientCard(
-    name: String,
-    value: String,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = color.copy(alpha = 0.15f)
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Colored circle indicator
-            Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .clip(CircleShape)
-                    .background(color)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-
-            Text(
-                text = name,
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-@Composable
-fun NutrientRow(
-    label: String,
-    value: String
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold
-                )
-            )
-        }
-        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
     }
 }
