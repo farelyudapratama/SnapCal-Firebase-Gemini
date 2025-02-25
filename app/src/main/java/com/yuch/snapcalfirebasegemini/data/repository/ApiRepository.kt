@@ -60,32 +60,61 @@ class ApiRepository(
         return body
     }
 
-    suspend fun getFoodById(id: String): FoodItem? {
-        // Coba ambil dari database dulu
-        foodDao?.getFoodById(id)?.let { cachedFood ->
-            return FoodItem(
-                id = cachedFood.id,
-                userId = cachedFood.userId,
-                foodName = cachedFood.foodName,
-                mealType = cachedFood.mealType,
-                nutritionData = NutritionData(
-                    calories = cachedFood.calories,
-                    carbs = cachedFood.carbs,
-                    protein = cachedFood.protein,
-                    totalFat = cachedFood.totalFat,
-                    saturatedFat = cachedFood.saturatedFat,
-                    fiber = cachedFood.fiber,
-                    sugar = cachedFood.sugar
-                ),
-                imageUrl = cachedFood.imageUrl,
-                createdAt = parseCreatedAt(cachedFood.createdAt.toString()).toString()
-            )
+    suspend fun getFoodById(id: String, forceRefresh: Boolean = false): FoodItem? {
+        if (!forceRefresh) {
+            foodDao?.getFoodById(id)?.let { cachedFood ->
+                return FoodItem(
+                    id = cachedFood.id,
+                    userId = cachedFood.userId,
+                    foodName = cachedFood.foodName,
+                    mealType = cachedFood.mealType,
+                    nutritionData = NutritionData(
+                        calories = cachedFood.calories,
+                        carbs = cachedFood.carbs,
+                        protein = cachedFood.protein,
+                        totalFat = cachedFood.totalFat,
+                        saturatedFat = cachedFood.saturatedFat,
+                        fiber = cachedFood.fiber,
+                        sugar = cachedFood.sugar
+                    ),
+                    imageUrl = cachedFood.imageUrl,
+                    createdAt = parseCreatedAt(cachedFood.createdAt.toString()).toString()
+                )
+            }
         }
 
+        // Ambil data terbaru dari API
         return try {
             val response = apiService.getFoodById(id)
             if (response.isSuccessful && response.body()?.data != null) {
-                response.body()?.data // langsung return `FoodItem` dari API
+                response.body()?.data?.also { newData ->
+                    val createdAtMillis = parseCreatedAt(newData.createdAt)
+                    val sevenDaysAgo = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L
+                    if (createdAtMillis >= sevenDaysAgo) {
+                        // Simpan data terbaru ke Room agar cache diperbarui
+                        foodDao?.insertFoods(
+                            listOf(
+                                FoodEntity(
+                                    id = newData.id,
+                                    userId = newData.userId,
+                                    foodName = newData.foodName,
+                                    imageUrl = newData.imageUrl,
+                                    mealType = newData.mealType,
+                                    calories = newData.nutritionData.calories,
+                                    carbs = newData.nutritionData.carbs,
+                                    protein = newData.nutritionData.protein,
+                                    totalFat = newData.nutritionData.totalFat,
+                                    saturatedFat = newData.nutritionData.saturatedFat,
+                                    fiber = newData.nutritionData.fiber,
+                                    sugar = newData.nutritionData.sugar,
+                                    createdAt = parseCreatedAt(
+                                        newData.createdAt
+                                    )
+                                )
+                            )
+                        )
+                    }
+                }
             } else {
                 null
             }
@@ -93,7 +122,6 @@ class ApiRepository(
             null
         }
     }
-
 
     suspend fun getCachedFoods(): List<FoodEntity> {
         val sevenDaysAgo = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L

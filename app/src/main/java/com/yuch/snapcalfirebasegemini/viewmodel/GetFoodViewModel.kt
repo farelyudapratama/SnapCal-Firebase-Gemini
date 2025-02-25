@@ -6,7 +6,6 @@ import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
-import com.yuch.snapcalfirebasegemini.data.local.FoodEntity
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.utils.formatDateFromLong
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -99,13 +98,16 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
         }
     }
 
-    fun fetchFoodById(foodId: String) {
+    fun fetchFoodById(
+        foodId: String,
+        forceRefresh: Boolean
+    ) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
 
             try {
-                val foodData = repository.getFoodById(foodId)
+                val foodData = repository.getFoodById(foodId, forceRefresh)
                 if (foodData != null) {
                     _food.value = foodData
                 } else {

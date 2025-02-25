@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,12 +55,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -95,7 +92,18 @@ fun DetailFoodScreen(
     }
 
     LaunchedEffect(foodId) {
-        viewModel.fetchFoodById(foodId)
+        viewModel.fetchFoodById(
+            foodId,
+            true
+        )
+    }
+
+    LaunchedEffect(navController.currentBackStackEntry) {
+        val updated = navController.currentBackStackEntry?.savedStateHandle?.get<Boolean>("food_updated") ?: false
+        if (updated) {
+            viewModel.fetchFoodById(foodId, forceRefresh = true)
+            navController.currentBackStackEntry?.savedStateHandle?.set("food_updated", false)
+        }
     }
 
     Scaffold(

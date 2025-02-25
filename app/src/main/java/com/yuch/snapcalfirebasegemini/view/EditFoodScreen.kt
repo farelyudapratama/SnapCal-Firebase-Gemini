@@ -103,10 +103,11 @@ fun EditFoodScreen(
     LaunchedEffect(successMessage) {
         successMessage?.let { message ->
             scope.launch {
-                snackbarHostState.showSnackbar(message)
+                snackbarHostState.showSnackbar("$message (Redirecting in 2 seconds)")
                 viewModel.clearErrorMessage()
-                delay(2000) // Tunda navigasi agar pengguna bisa membaca pesan
-                onBack()
+                delay(2000)
+                navController.previousBackStackEntry?.savedStateHandle?.set("food_updated", true)
+                navController.popBackStack()
             }
         }
     }
