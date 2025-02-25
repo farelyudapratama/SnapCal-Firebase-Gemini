@@ -26,11 +26,13 @@ class ApiRepository(
     private val apiService: ApiService,
     private val foodDao: FoodDao?
 ) {
+
+    // TODO belom sempurna karena masih perlu refresh
     suspend fun getAllFood(page: Int): ApiResponse<FoodPage>? {
         val response = apiService.getAllFood(page)
         val body =
             response.body()
-                ?: return null // Jangan pakai `!!`, kembalikan null jika data tidak tersedia
+                ?: return null
 
         val foodEntities = body.data?.items?.map { food ->
             FoodEntity(

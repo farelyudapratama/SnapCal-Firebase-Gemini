@@ -25,6 +25,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +43,7 @@ import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
+import com.yuch.snapcalfirebasegemini.ui.theme.*
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
@@ -78,13 +80,10 @@ fun MainScreen(
     BackHandler {
         val currentTime = System.currentTimeMillis()
         if (currentTime - backPressedTime < 2000) {
-            // Jika dalam 2 detik ditekan lagi, keluar aplikasi
-            // Keluar aplikasi ketika tekan back di main screen
-            android.os.Process.killProcess(android.os.Process.myPid())
+            (context as? android.app.Activity)?.finishAffinity()
         } else {
-            // Jika tidak, berikan peringatan dulu
             backPressedTime = currentTime
-            Toast.makeText(context, "Tekan sekali lagi untuk keluar", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -264,14 +263,17 @@ fun NutritionDonutChart(nutritionData: NutritionData) {
                 PieEntry(nutritionData.carbs.toFloat(), "Carbs"),
                 PieEntry(nutritionData.protein.toFloat(), "Protein"),
                 PieEntry(nutritionData.totalFat.toFloat(), "Fat"),
-                PieEntry(nutritionData.fiber.toFloat(), "Fiber")
+                PieEntry(nutritionData.fiber.toFloat(), "Fiber"),
+                PieEntry(nutritionData.sugar.toFloat(), "Sugar")
             )
 
             val colors = listOf(
-                android.graphics.Color.rgb(255, 152, 0), // Orange untuk Carbs
-                android.graphics.Color.rgb(76, 175, 80), // Green untuk Protein
-                android.graphics.Color.rgb(33, 150, 243), // Blue untuk Fat
-                android.graphics.Color.rgb(156, 39, 176)  // Purple untuk Fiber
+                caloriesColor.toArgb(),
+                carbsColor.toArgb(),
+                proteinColor.toArgb(),
+                fatColor.toArgb(),
+                fiberColor.toArgb(),
+                sugarColor.toArgb()
             )
 
             val dataSet = PieDataSet(entries, "Nutrition").apply {
@@ -425,21 +427,5 @@ fun LoadingAndLoadMore(
                 Text("Load More")
             }
         }
-    }
-}
-
-fun handleBackPress(
-    context: Context,
-    updateBackPressedTime: (Long) -> Unit
-) {
-    val currentTime = System.currentTimeMillis()
-    val backPressedTime = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        .getLong("back_pressed_time", 0L)
-
-    if (currentTime - backPressedTime < 2000) {
-        android.os.Process.killProcess(android.os.Process.myPid())
-    } else {
-        updateBackPressedTime(currentTime)
-        Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
     }
 }
