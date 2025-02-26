@@ -21,4 +21,8 @@ interface FoodDao {
 
     @Query("DELETE FROM foods WHERE id = :id")
     suspend fun deleteFoodById(id: String)
+
+    // deleteFoodImageById
+    @Query("UPDATE foods SET imageUrl = null WHERE id = :id")
+    suspend fun deleteFoodImageById(id: String)
 }

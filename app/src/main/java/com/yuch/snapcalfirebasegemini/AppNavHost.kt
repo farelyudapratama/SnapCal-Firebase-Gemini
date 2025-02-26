@@ -128,8 +128,8 @@ fun AppNavHost(
             )
         ) { backStackEntry ->
             val foodId = backStackEntry.arguments?.getString("foodId")!!
-            val viewModel: GetFoodViewModel = getFoodViewModel
-            val foodItem by viewModel.food.collectAsStateWithLifecycle()
+            val viewModelGetFood: GetFoodViewModel = getFoodViewModel
+            val foodItem by viewModelGetFood.food.collectAsStateWithLifecycle()
             val foodViewModel: FoodViewModel = FoodViewModel() // Buat instance FoodViewModel
 
             EditFoodScreen(
@@ -140,7 +140,8 @@ fun AppNavHost(
                     foodViewModel.updateFood(id, imagePath, foodData) // Panggil ViewModel
                 },
                 onBack = { navController.popBackStack() },
-                viewModel = foodViewModel // Pass ViewModel ke screen
+                getFoodViewModel = viewModelGetFood,
+                foodViewModel = foodViewModel // Pass ViewModel ke screen
             )
         }
     }

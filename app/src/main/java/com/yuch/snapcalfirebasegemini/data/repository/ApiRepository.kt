@@ -137,6 +137,19 @@ class ApiRepository(
         }
     }
 
+    // Delete Image Food
+    suspend fun deleteFoodImage(id: String): ApiResponse<FoodItem>? {
+        return try {
+            val response = apiService.deleteFoodImage(id)
+            if (response.isSuccessful) {
+                foodDao?.deleteFoodImageById(id)
+            }
+            response.body()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun getCachedFoods(): List<FoodEntity> {
         val sevenDaysAgo = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L
         return foodDao?.getRecentFoods(sevenDaysAgo)

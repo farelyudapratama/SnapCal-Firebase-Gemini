@@ -58,6 +58,12 @@ interface ApiService {
         @Path("id") id: String
     ): Response<ApiResponse<FoodItem>>
 
+    //Delete Food Image
+    @DELETE("food/{id}/image")
+    suspend fun deleteFoodImage(
+        @Path("id") id: String
+    ): Response<ApiResponse<FoodItem>>
+
     @POST("api/chat/start")
     suspend fun sendMessage(
         @Body message: ChatRequest

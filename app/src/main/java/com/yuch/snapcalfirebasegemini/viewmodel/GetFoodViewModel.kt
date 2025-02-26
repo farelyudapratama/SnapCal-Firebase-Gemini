@@ -40,6 +40,9 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    private val _imageDeletedMessage = MutableStateFlow<String?>(null)
+    val imageDeletedMessage: StateFlow<String?> = _imageDeletedMessage
+
     init {
         // Ambil data dari halaman pertama
         fetchFood(page = 1)
@@ -149,6 +152,32 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
                 _isLoading.value = false
             }
         }
+    }
+
+    fun deleteFoodImageById(foodId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+
+            try {
+                val response = repository.deleteFoodImage(foodId)
+                if (response != null) {
+                    if (response.status == "success") {
+                        _food.value = _food.value?.copy(imageUrl = null)
+                        _imageDeletedMessage.value = "Food image deleted successfully"
+                    } else {
+                        _errorMessage.value = "Gagal menghapus gambar makanan"
+                    }
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Terjadi kesalahan"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    fun clearImageDeletedMessage() {
+        _imageDeletedMessage.value = null
     }
 
     /**
