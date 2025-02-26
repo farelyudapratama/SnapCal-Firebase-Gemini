@@ -95,6 +95,13 @@ fun DetailFoodScreen(
         }
     }
 
+    val isDeleted by viewModel.isDeleted.collectAsStateWithLifecycle()
+    LaunchedEffect(isDeleted) {
+        if (isDeleted) {
+            navController.popBackStack()
+        }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -189,24 +196,23 @@ fun DetailFoodScreen(
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Hapus Makanan") },
-            text = { Text("Apakah Anda yakin ingin menghapus makanan ini?") },
+            title = { Text("Delete Food") },
+            text = { Text("Are you sure you want to delete this food?") },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showDialog = false
                         viewModel.deleteFood(foodId) {
-                            Toast.makeText(context, "Makanan berhasil dihapus", Toast.LENGTH_SHORT).show()
-                            navController.popBackStack()
+                            Toast.makeText(context, "Food deleted", Toast.LENGTH_SHORT).show()
                         }
                     }
                 ) {
-                    Text("Hapus", color = MaterialTheme.colorScheme.error)
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDialog = false }) {
-                    Text("Batal")
+                    Text("Cancel")
                 }
             }
         )

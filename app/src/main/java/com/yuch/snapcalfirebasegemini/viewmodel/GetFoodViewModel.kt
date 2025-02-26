@@ -34,6 +34,9 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _isDeleted = MutableStateFlow(false)
+    val isDeleted: StateFlow<Boolean> = _isDeleted
+
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
@@ -123,7 +126,7 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
 
     fun deleteFood(
         foodId: String,
-        function: () -> Boolean
+        onComplete: () -> Unit
     ) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -134,6 +137,8 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
                 if (response != null) {
                     if (response.status == "success") {
                         _food.value = null
+                        _isDeleted.value = true
+                        onComplete()
                     } else {
                         _errorMessage.value = "Gagal menghapus makanan"
                     }
