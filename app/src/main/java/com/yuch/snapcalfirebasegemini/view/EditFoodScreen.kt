@@ -8,38 +8,54 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -52,8 +68,7 @@ import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(
-    ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditFoodScreen(
     foodId: String,
@@ -76,13 +91,18 @@ fun EditFoodScreen(
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val imageDeletedMessage by getFoodViewModel.imageDeletedMessage.collectAsState()
 
-    val context = LocalContext.current
+    // Focus controllers
+    val focusManager = LocalFocusManager.current
+    val foodNameFocus = remember { FocusRequester() }
+    val caloriesFocus = remember { FocusRequester() }
+    val carbsFocus = remember { FocusRequester() }
+    val proteinFocus = remember { FocusRequester() }
+    val totalFatFocus = remember { FocusRequester() }
+    val saturatedFatFocus = remember { FocusRequester() }
+    val fiberFocus = remember { FocusRequester() }
+    val sugarFocus = remember { FocusRequester() }
 
-//    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-//        uri?.let {
-//            selectedImageUri = uri.toString()
-//        }
-//    }
+    val context = LocalContext.current
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -91,7 +111,6 @@ fun EditFoodScreen(
             selectedImageUri = it
         }
     }
-
 
     val isLoading by foodViewModel.isLoading.collectAsState()
     val errorMessage by foodViewModel.errorMessage.collectAsState()
@@ -135,13 +154,23 @@ fun EditFoodScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Edit Food") },
+                title = {
+                    Text(
+                        "Edit Food",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         },
         floatingActionButton = {
@@ -169,134 +198,503 @@ fun EditFoodScreen(
                     } catch (e: Exception) {
                         Log.e("EditFoodScreen", "Error updating food: ${e.message}")
                     }
-                }
+                },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(Icons.Default.Save, contentDescription = "Save Changes")
             }
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Gambar makanan
-            if (selectedImageUri != null) {
-                Image(
-                    painter = rememberAsyncImagePainter(selectedImageUri),
-                    contentDescription = "Selected Food Image",
+            item {
+                Card(
                     modifier = Modifier
-                        .size(150.dp)
-                        .clip(
-                            RoundedCornerShape(8.dp)
-                        )
-                )
-            } else {
-                AsyncImage(
-                    model = foodItem?.imageUrl,
-                    contentDescription = "Food Image",
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Tombol pilih gambar
-            Row {
-                val imageAvailable = foodItem?.imageUrl != null || selectedImageUri != null
-                val buttonText = if (imageAvailable) "Change Image" else "Choose Image"
-                OutlinedButton(onClick = { galleryLauncher.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                ) }) {
-                    Text(buttonText)
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                var showDialog by remember { mutableStateOf(false) }
-                OutlinedButton(
-                    onClick = { showDialog = true },
-                    enabled = foodItem?.imageUrl != null,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color.Red,
-                        disabledContentColor = Color.Gray
-                    ),
-                    border = BorderStroke(1.dp, if (foodItem?.imageUrl != null) Color.Red else Color.Gray)
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Text("Delete Image")
-                }
-                if (showDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showDialog = false },
-                        title = { Text("Delete Image") },
-                        text = { Text("Are you sure you want to delete this image? This action cannot be undone.") },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    getFoodViewModel.deleteFoodImageById(foodId)
-                                    showDialog = false
-                                }
-                            ) {
-                                Text("Delete", color = Color.Red)
+                    Column(
+                        modifier = Modifier.padding(24.dp)
+                    ) {
+                        // Image Selection with Preview
+                        ImageSelectionPreview(
+                            selectedImageUri = selectedImageUri,
+                            currentImageUrl = foodItem?.imageUrl,
+                            onSelectImage = {
+                                galleryLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
                             }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showDialog = false }) {
-                                Text("Cancel")
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Image actions (Change/Delete buttons)
+                        ImageActionButtons(
+                            hasExistingImage = foodItem?.imageUrl != null || selectedImageUri != null,
+                            canDeleteImage = foodItem?.imageUrl != null,
+                            onSelectImage = {
+                                galleryLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            },
+                            onDeleteImage = {
+                                getFoodViewModel.deleteFoodImageById(foodId)
                             }
-                        }
-                    )
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Meal Type Selection
+                        MealTypeDropdown(
+                            selectedMealType = mealType,
+                            onMealTypeSelected = { mealType = it }
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Text(
+                            "Food Information",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        // Food Name Input
+                        TextField(
+                            value = foodName,
+                            onValueChange = { foodName = it },
+                            label = "Food Name",
+                            leadingIcon = { Icon(Icons.Default.Restaurant, "Food") },
+                            focusRequester = foodNameFocus,
+                            onNext = { caloriesFocus.requestFocus() }
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Nutrition Section
+                        Text(
+                            "Nutrition Information",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        // Nutrition Inputs
+                        NutritionField(
+                            label = "Calories",
+                            value = calories,
+                            onValueChange = { calories = it },
+                            focusRequester = caloriesFocus,
+                            onNext = { carbsFocus.requestFocus() },
+                            icon = Icons.Default.LocalFireDepartment
+                        )
+
+                        NutritionField(
+                            label = "Carbohydrates (g)",
+                            value = carbs,
+                            onValueChange = { carbs = it },
+                            focusRequester = carbsFocus,
+                            onNext = { proteinFocus.requestFocus() },
+                            icon = Icons.Default.Grain
+                        )
+
+                        NutritionField(
+                            label = "Protein (g)",
+                            value = protein,
+                            onValueChange = { protein = it },
+                            focusRequester = proteinFocus,
+                            onNext = { totalFatFocus.requestFocus() },
+                            icon = Icons.Default.FitnessCenter
+                        )
+
+                        NutritionField(
+                            label = "Total Fat (g)",
+                            value = totalFat,
+                            onValueChange = { totalFat = it },
+                            focusRequester = totalFatFocus,
+                            onNext = { saturatedFatFocus.requestFocus() },
+                            icon = Icons.Default.WaterDrop
+                        )
+
+                        NutritionField(
+                            label = "Saturated Fat (g)",
+                            value = saturatedFat,
+                            onValueChange = { saturatedFat = it },
+                            focusRequester = saturatedFatFocus,
+                            onNext = { fiberFocus.requestFocus() },
+                            icon = Icons.Default.WaterDrop
+                        )
+
+                        NutritionField(
+                            label = "Fiber (g)",
+                            value = fiber,
+                            onValueChange = { fiber = it },
+                            focusRequester = fiberFocus,
+                            onNext = { sugarFocus.requestFocus() },
+                            icon = Icons.Default.Grass
+                        )
+
+                        NutritionField(
+                            label = "Sugar (g)",
+                            value = sugar,
+                            onValueChange = { sugar = it },
+                            focusRequester = sugarFocus,
+                            onNext = { focusManager.clearFocus() },
+                            icon = Icons.Default.Cookie
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Nama makanan
-            OutlinedTextField(
-                value = foodName,
-                onValueChange = { foodName = it },
-                label = { Text("Food Name") },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-            )
-
-            // Meal Type
-            OutlinedTextField(
-                value = mealType,
-                onValueChange = { mealType = it },
-                label = { Text("Meal Type") },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-            )
-
-            // Input Nutrisi
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                NutrientInputField("Calories", calories) { calories = it }
-                NutrientInputField("Carbs", carbs) { carbs = it }
-                NutrientInputField("Protein", protein) { protein = it }
-                NutrientInputField("Total Fat", totalFat) { totalFat = it }
-                NutrientInputField("Saturated Fat", saturatedFat) { saturatedFat = it }
-                NutrientInputField("Fiber", fiber) { fiber = it }
-                NutrientInputField("Sugar", sugar) { sugar = it }
-            }
+            item { Spacer(modifier = Modifier.height(80.dp)) }
         }
+
         if (isLoading) {
             LoadingOverlay()
         }
     }
 }
 
-// Fungsi untuk input nutrisi
 @Composable
-fun NutrientInputField(label: String, value: String, onValueChange: (String) -> Unit) {
+private fun ImageSelectionPreview(
+    selectedImageUri: Uri?,
+    currentImageUrl: String?,
+    onSelectImage: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .background(
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable { onSelectImage() },
+        contentAlignment = Alignment.Center
+    ) {
+        if (selectedImageUri != null) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Image(
+                    painter = rememberAsyncImagePainter(selectedImageUri),
+                    contentDescription = "Selected Food Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .border(
+                            width = 2.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.2f))
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    Text(
+                        text = "Tap to change photo",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .offset(y = (15).dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        } else if (currentImageUrl != null) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                AsyncImage(
+                    model = currentImageUrl,
+                    contentDescription = "Food Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .border(
+                            width = 2.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.2f))
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    Text(
+                        text = "Tap to change photo",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .offset(y = (15).dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AddPhotoAlternate,
+                    contentDescription = "Add Food Image",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Tap to select image",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ImageActionButtons(
+    hasExistingImage: Boolean,
+    canDeleteImage: Boolean,
+    onSelectImage: () -> Unit,
+    onDeleteImage: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        val buttonText = if (hasExistingImage) "Change Image" else "Choose Image"
+        OutlinedButton(onClick = onSelectImage) {
+            Text(buttonText)
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        var showDialog by remember { mutableStateOf(false) }
+        OutlinedButton(
+            onClick = { showDialog = true },
+            enabled = canDeleteImage,
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = Color.Red,
+                disabledContentColor = Color.Gray
+            ),
+            border = BorderStroke(1.dp, if (canDeleteImage) Color.Red else Color.Gray)
+        ) {
+            Text("Delete Image")
+        }
+
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Delete Image") },
+                text = { Text("Are you sure you want to delete this image? This action cannot be undone.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            onDeleteImage()
+                            showDialog = false
+                        }
+                    ) {
+                        Text("Delete", color = Color.Red)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MealTypeDropdown(
+    selectedMealType: String?,
+    onMealTypeSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val mealTypes = listOf(
+        "breakfast" to Icons.Default.BreakfastDining,
+        "lunch" to Icons.Default.LunchDining,
+        "dinner" to Icons.Default.DinnerDining,
+        "snack" to Icons.Default.Icecream,
+        "drink" to Icons.Default.LocalCafe
+    )
+
+    Column {
+        Text(
+            "Meal Type",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        ) {
+            OutlinedTextField(
+                value = selectedMealType?.replaceFirstChar { it.uppercase() } ?: "",
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary
+                ),
+                placeholder = { Text("Select meal type") }
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                mealTypes.forEach { (type, icon) ->
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(type.replaceFirstChar { it.uppercase() })
+                            }
+                        },
+                        onClick = {
+                            onMealTypeSelected(type)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    focusRequester: FocusRequester,
+    onNext: () -> Unit,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
     OutlinedTextField(
         value = value,
-        onValueChange = { onValueChange(it) },
+        onValueChange = onValueChange,
         label = { Text(label) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        leadingIcon = leadingIcon,
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            focusedLeadingIconColor = MaterialTheme.colorScheme.primary
+        ),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = ImeAction.Next
+        ),
+        keyboardActions = KeyboardActions(
+            onNext = { onNext() }
+        ),
+        singleLine = true
+    )
+}
+
+@Composable
+private fun NutritionField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    focusRequester: FocusRequester,
+    onNext: () -> Unit,
+    icon: ImageVector
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { newValue ->
+            // Only allow numeric input
+            if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
+                onValueChange(newValue)
+            }
+        },
+        label = { Text(label) },
+        leadingIcon = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .focusRequester(focusRequester),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            focusedLeadingIconColor = MaterialTheme.colorScheme.primary
+        ),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Decimal,
+            imeAction = ImeAction.Next
+        ),
+        keyboardActions = KeyboardActions(
+            onNext = { onNext() }
+        ),
+        singleLine = true
     )
 }
 

@@ -3,6 +3,7 @@ package com.yuch.snapcalfirebasegemini
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
@@ -65,23 +66,43 @@ fun SnapCalApp(
                 }
             },
             floatingActionButton = {
-                if (currentRoute !in screensWithoutBottomBar) {
-                    FloatingActionButton(
-                        onClick = {
-                            showBottomSheet = true
-                        },
-                        containerColor = Color(0xFFFF5722),
-                        elevation = FloatingActionButtonDefaults.elevation(
-                            defaultElevation = 6.dp,
-                            pressedElevation = 12.dp
-                        ),
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.baseline_scan),
-                            contentDescription = "Scan",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
+                when (currentRoute) {
+                    Screen.Main.route -> {
+                        FloatingActionButton(
+                            onClick = { showBottomSheet = true },
+                            containerColor = Color(0xFFFF5722),
+                            elevation = FloatingActionButtonDefaults.elevation(
+                                defaultElevation = 6.dp,
+                                pressedElevation = 12.dp
+                            ),
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_scan),
+                                contentDescription = "Scan",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                    Screen.Message.route -> {
+                        FloatingActionButton(
+                            onClick = { /* Aksi ketika di Message */ },
+                            containerColor = Color(0xFF2196F3),
+                            elevation = FloatingActionButtonDefaults.elevation(
+                                defaultElevation = 6.dp,
+                                pressedElevation = 12.dp
+                            ),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Pesan Baru",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                    Screen.Profile.route -> {
+                        // FAB tidak muncul di halaman Profile
                     }
                 }
             },
