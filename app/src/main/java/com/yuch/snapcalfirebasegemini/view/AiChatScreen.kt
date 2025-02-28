@@ -36,7 +36,10 @@ import com.yuch.snapcalfirebasegemini.viewmodel.AiChatViewModel
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Calendar
@@ -62,7 +65,13 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
     val groupedMessages = remember(chatMessages) {
         chatMessages.reversed().groupBy { message ->
             try {
-                val zonedDateTime = Instant.parse(message.timestamp).atZone(ZoneId.systemDefault())
+                // Konversi timestamp ke zona waktu lokal
+                val zonedDateTime = OffsetDateTime.parse(message.timestamp)
+                    .withOffsetSameInstant(
+                        ZoneOffset.UTC) // Pastikan dari UTC
+                    .atZoneSameInstant(ZoneId.systemDefault()) // Sesuaikan dengan zona waktu perangkat
+
+                // Format tanggal untuk tampilan
                 val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
                 zonedDateTime.format(dateFormatter)
             } catch (e: Exception) {
@@ -72,11 +81,13 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
     }
 
     // Current date for comparison
-    val currentDate = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
+    val currentDate = remember {
+        ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
+    }
+
     val yesterdayDate = remember {
-        val calendar = Calendar.getInstance()
-        calendar.add(Calendar.DAY_OF_YEAR, -1)
-        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+        ZonedDateTime.now(ZoneId.systemDefault()).minusDays(1)
+            .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
     }
 
     LaunchedEffect(chatMessages.size) {
@@ -135,14 +146,7 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
                                 date = when (date) {
                                     currentDate -> "Today"
                                     yesterdayDate -> "Yesterday"
-                                    else -> {
-                                        try {
-                                            val parsedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(date)
-                                            SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(parsedDate)
-                                        } catch (e: Exception) {
-                                            date
-                                        }
-                                    }
+                                    else -> date
                                 }
                             )
                         }
@@ -189,7 +193,7 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
                                 CircularProgressIndicator(color = colorScheme.primary)
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Thinking...",
+                                    text = "Loading...",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
