@@ -1,6 +1,5 @@
 package com.yuch.snapcalfirebasegemini.view
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -20,25 +19,26 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatMessage
 import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
 import com.yuch.snapcalfirebasegemini.viewmodel.AiChatViewModel
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -62,8 +62,9 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
     val groupedMessages = remember(chatMessages) {
         chatMessages.reversed().groupBy { message ->
             try {
-                val timestamp = message.timestamp.toLong()
-                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(timestamp))
+                val zonedDateTime = Instant.parse(message.timestamp).atZone(ZoneId.systemDefault())
+                val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                zonedDateTime.format(dateFormatter)
             } catch (e: Exception) {
                 "Unknown Date"
             }
@@ -87,6 +88,13 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
     LaunchedEffect(usageInfo) {
         if (usageInfo == null) {
             aiChatViewModel.fetchChatUsage()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            aiChatViewModel.fetchChatUsage()
+            delay(30_000)
         }
     }
 
@@ -392,9 +400,9 @@ fun ChatBubble(message: AiChatMessage) {
 
     val timestampInfo = remember {
         try {
-            val timestamp = message.timestamp.toLong()
-            val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(timestamp))
-            time
+            val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+            val zonedTime = Instant.parse(message.timestamp).atZone(ZoneId.systemDefault())
+            zonedTime.format(timeFormatter)
         } catch (e: Exception) {
             ""
         }
@@ -656,6 +664,6 @@ fun ServiceInfoBar(selectedService: String, usageInfo: UsageAiChat?) {
     }
 }
 
-private fun String.capitalize(): String {
-    return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+private fun String.capitalizeFirst(): String {
+    return if (this.isNotEmpty()) this.replaceFirstChar { it.uppercaseChar() } else this
 }

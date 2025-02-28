@@ -243,7 +243,10 @@ fun BottomNavbar(
                 },
                 selected = currentRoute == Screen.Message.route,
                 onClick = {
-                    navController.navigate(Screen.Message.route)
+                    navController.navigate(Screen.Message.route) {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                        launchSingleTop = true
+                    }
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Color.Blue,
@@ -272,7 +275,10 @@ fun BottomNavbar(
                 },
                 selected = currentRoute == Screen.Profile.route,
                 onClick = {
-                    navController.navigate(Screen.Profile.route)
+                    navController.navigate(Screen.Profile.route){
+                        popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                        launchSingleTop = true
+                    }
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Color.Blue,
