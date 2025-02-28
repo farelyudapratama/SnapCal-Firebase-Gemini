@@ -10,8 +10,11 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
+import com.yuch.snapcalfirebasegemini.view.AiChatScreen
 import com.yuch.snapcalfirebasegemini.view.AnalyzeScreen
+import com.yuch.snapcalfirebasegemini.view.ChatListScreen
 import com.yuch.snapcalfirebasegemini.view.DetailFoodScreen
 import com.yuch.snapcalfirebasegemini.view.EditFoodScreen
 import com.yuch.snapcalfirebasegemini.view.LoginScreen
@@ -20,6 +23,7 @@ import com.yuch.snapcalfirebasegemini.view.ManualEntryScreen
 import com.yuch.snapcalfirebasegemini.view.ProfileScreen
 import com.yuch.snapcalfirebasegemini.view.RegisterScreen
 import com.yuch.snapcalfirebasegemini.view.camera.ScanScreen
+import com.yuch.snapcalfirebasegemini.viewmodel.AiChatViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
@@ -56,7 +60,7 @@ fun AppNavHost(
             ProfileScreen(modifier, navController, authViewModel)
         }
         composable(Screen.Message.route) {
-            //TODO Tambahkan navigasi ke MessageScreen di sini
+             ChatListScreen(navController, authViewModel)
         }
         composable(
             Screen.DetailFood.route,
@@ -142,6 +146,13 @@ fun AppNavHost(
                 onBack = { navController.popBackStack() },
                 getFoodViewModel = viewModelGetFood,
                 foodViewModel = foodViewModel // Pass ViewModel ke screen
+            )
+        }
+
+        composable(Screen.AiChat.route) {
+            AiChatScreen(
+                aiChatViewModel = AiChatViewModel(),
+                onBackClick = { navController.popBackStack() }
             )
         }
     }

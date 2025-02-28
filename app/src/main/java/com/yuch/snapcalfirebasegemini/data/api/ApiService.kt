@@ -1,12 +1,15 @@
 package com.yuch.snapcalfirebasegemini.data.api
 
+import com.yuch.snapcalfirebasegemini.data.api.response.AiChatDelete
+import com.yuch.snapcalfirebasegemini.data.api.response.AiChatMessage
+import com.yuch.snapcalfirebasegemini.data.api.response.AiChatRequest
+import com.yuch.snapcalfirebasegemini.data.api.response.AiChatResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
-import com.yuch.snapcalfirebasegemini.data.api.response.ChatRequest
-import com.yuch.snapcalfirebasegemini.data.api.response.ChatResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
+import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -64,10 +67,19 @@ interface ApiService {
         @Path("id") id: String
     ): Response<ApiResponse<FoodItem>>
 
-    @POST("api/chat/start")
-    suspend fun sendMessage(
-        @Body message: ChatRequest
-    ): Response<ChatResponse>
+    @POST("chat/start-ai")
+    suspend fun aiMessage(
+        @Body request: AiChatRequest
+    ): Response<ApiResponse<AiChatResponse>>
+
+    @GET("chat/history-ai")
+    suspend fun getAiChatHistory(): Response<ApiResponse<List<AiChatMessage>>>
+
+    @GET("chat/usage-ai")
+    suspend fun getAiChatUsage(): Response<ApiResponse<UsageAiChat>>
+
+    @DELETE("chat/history-ai")
+    suspend fun deleteAiChatHistory(): Response<ApiResponse<AiChatDelete>>
 
 //    @GET("api/chat/history")
 //    suspend fun getChatHistory(): Response<List<ChatMessage>>

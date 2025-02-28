@@ -1,26 +1,16 @@
 package com.yuch.snapcalfirebasegemini.data.repository
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.google.gson.Gson
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
-import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
-import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.data.local.FoodDao
 import com.yuch.snapcalfirebasegemini.data.local.FoodEntity
-import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
-import com.yuch.snapcalfirebasegemini.utils.ImageUtils
 import com.yuch.snapcalfirebasegemini.utils.parseCreatedAt
-import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.Response
 
 class ApiRepository(
     private val apiService: ApiService,

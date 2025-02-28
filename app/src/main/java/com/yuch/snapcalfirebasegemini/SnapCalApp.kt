@@ -46,7 +46,8 @@ fun SnapCalApp(
         Screen.Analyze.route,
         Screen.ManualEntry.route,
         Screen.DetailFood.route,
-        Screen.EditFood.route
+        Screen.EditFood.route,
+        Screen.AiChat.route
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -86,7 +87,9 @@ fun SnapCalApp(
                     }
                     Screen.Message.route -> {
                         FloatingActionButton(
-                            onClick = { /* Aksi ketika di Message */ },
+                            onClick = {
+                                navController.navigate(Screen.AiChat.route)
+                            },
                             containerColor = Color(0xFF2196F3),
                             elevation = FloatingActionButtonDefaults.elevation(
                                 defaultElevation = 6.dp,
