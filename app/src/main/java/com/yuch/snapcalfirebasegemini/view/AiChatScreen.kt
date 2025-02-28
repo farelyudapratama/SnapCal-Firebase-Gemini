@@ -16,15 +16,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -42,11 +44,9 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
     val chatMessages by aiChatViewModel.chatMessages.collectAsState()
@@ -109,13 +109,40 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
         }
     }
 
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Delete Chat History") },
+            text = { Text("Are you sure you want to delete all chat history? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        aiChatViewModel.deleteChatHistory()
+                        showDeleteConfirmation = false
+                    }
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteConfirmation = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             ChatTopBar(
                 selectedService = selectedService,
-                usageInfo = usageInfo,
                 onServiceSelected = { aiChatViewModel.setSelectedService(it) },
-                onBackClick = onBackClick
+                onBackClick = onBackClick,
+                onDeleteChatClick = { showDeleteConfirmation = true },
             )
         },
         containerColor = colorScheme.background
@@ -250,7 +277,13 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
                         value = userMessage,
                         onValueChange = { userMessage = it },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("Message ${selectedService.capitalize()}...") },
+                        placeholder = { Text("Message ${
+                            selectedService.replaceFirstChar {
+                                if (it.isLowerCase()) it.titlecase(
+                                    Locale.getDefault()
+                                ) else it.toString()
+                            }
+                        }...") },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
@@ -280,7 +313,7 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
                         modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Send,
+                            imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = "Send",
                             tint = colorScheme.onPrimary
                         )
@@ -303,29 +336,46 @@ fun DateHeader(date: String) {
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Divider(
-            modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+        HorizontalDivider(
+            modifier = Modifier.weight(
+                1f
+            ),
+            color = MaterialTheme.colorScheme.outline.copy(
+                alpha = 0.3f
+            )
         )
 
         Card(
-            modifier = Modifier.padding(horizontal = 12.dp),
+            modifier = Modifier.padding(
+                horizontal = 12.dp
+            ),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer
             ),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(
+                16.dp
+            )
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                modifier = Modifier.padding(
+                    horizontal = 12.dp,
+                    vertical = 6.dp
+                ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = Icons.Rounded.CalendarMonth,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(
+                        16.dp
+                    ),
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(
+                    modifier = Modifier.width(
+                        4.dp
+                    )
+                )
                 Text(
                     text = date,
                     style = MaterialTheme.typography.labelMedium,
@@ -335,9 +385,13 @@ fun DateHeader(date: String) {
             }
         }
 
-        Divider(
-            modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+        HorizontalDivider(
+            modifier = Modifier.weight(
+                1f
+            ),
+            color = MaterialTheme.colorScheme.outline.copy(
+                alpha = 0.3f
+            )
         )
     }
 }
@@ -369,7 +423,13 @@ fun WelcomeMessage(selectedService: String) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Start chatting with ${selectedService.capitalize()} AI to get assistance with your questions.",
+                text = "Start chatting with ${
+                    selectedService.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(
+                            Locale.getDefault()
+                        ) else it.toString()
+                    }
+                } AI to get assistance with your questions.",
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 8.dp)
@@ -429,7 +489,8 @@ fun ChatBubble(message: AiChatMessage) {
             modifier = Modifier
                 .padding(4.dp)
                 .widthIn(max = 280.dp)
-                .animateContentSize() // Animasi perubahan ukuran
+                .shadow(4.dp, RoundedCornerShape(16.dp))
+                .animateContentSize()
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
@@ -453,14 +514,10 @@ fun ChatBubble(message: AiChatMessage) {
 @Composable
 fun ChatTopBar(
     selectedService: String,
-    usageInfo: UsageAiChat?,
     onServiceSelected: (String) -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onDeleteChatClick: () -> Unit
 ) {
-    val currentDate = remember {
-        SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date())
-    }
-
     TopAppBar(
         title = {
             Column {
@@ -469,16 +526,12 @@ fun ChatTopBar(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    text = currentDate,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
             }
         },
         navigationIcon = {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
         },
         actions = {
@@ -486,7 +539,11 @@ fun ChatTopBar(
 
             // Current service display
             Text(
-                text = selectedService.capitalize(),
+                text = selectedService.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(
+                        Locale.getDefault()
+                    ) else it.toString()
+                },
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary
@@ -541,6 +598,30 @@ fun ChatTopBar(
                             expanded = false
                         }
                     )
+                    // Delete chat history
+                    DropdownMenuItem(
+                        modifier = Modifier.background(MaterialTheme.colorScheme.error),
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onError
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    "Delete Chat",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onError
+                                )
+                            }
+                        },
+                        onClick = {
+                            onDeleteChatClick()
+                            expanded = false
+                        }
+                    )
+
                 }
             }
         }
@@ -561,11 +642,6 @@ fun ServiceInfoBar(selectedService: String, usageInfo: UsageAiChat?) {
         label = "groqColor"
     )
 
-    // Current time display
-    val currentTime = remember {
-        SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-    }
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -580,24 +656,13 @@ fun ServiceInfoBar(selectedService: String, usageInfo: UsageAiChat?) {
                 .fillMaxWidth()
                 .padding(8.dp)
         ) {
-            // Current date and time display
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 4.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Current time: $currentTime",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-            }
 
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(
+                        vertical = 4.dp
+                    ),
                 color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
             )
 
@@ -609,7 +674,9 @@ fun ServiceInfoBar(selectedService: String, usageInfo: UsageAiChat?) {
             ) {
                 // Gemini quota
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(
+                        1f
+                    ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -619,29 +686,41 @@ fun ServiceInfoBar(selectedService: String, usageInfo: UsageAiChat?) {
                         fontWeight = FontWeight.Bold
                     )
                     LinearProgressIndicator(
-                        progress = (usageInfo?.gemini?.remainingQuota ?: 0) / 100f,
+                        progress = {
+                            ((usageInfo?.gemini?.remainingQuota ?: 0) / 10f).coerceIn(0f, 1f)
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
-                        color = geminiColor.value
+                        color = geminiColor.value,
                     )
                     Text(
                         text = "${usageInfo?.gemini?.remainingQuota ?: 0} remaining",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                            alpha = 0.7f
+                        )
                     )
                 }
 
-                Divider(
+                HorizontalDivider(
                     modifier = Modifier
-                        .height(32.dp)
-                        .width(1.dp),
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        .height(
+                            32.dp
+                        )
+                        .width(
+                            1.dp
+                        ),
+                    color = MaterialTheme.colorScheme.outline.copy(
+                        alpha = 0.3f
+                    )
                 )
 
                 // Groq quota
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(
+                        1f
+                    ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -651,23 +730,25 @@ fun ServiceInfoBar(selectedService: String, usageInfo: UsageAiChat?) {
                         fontWeight = FontWeight.Bold
                     )
                     LinearProgressIndicator(
-                        progress = (usageInfo?.groq?.remainingQuota ?: 0) / 100f,
+                        progress = {
+                            ((usageInfo?.gemini?.remainingQuota ?: 0) / 10f).coerceIn(0f, 1f)
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        color = groqColor.value
+                            .padding(
+                                horizontal = 16.dp
+                            ),
+                        color = groqColor.value,
                     )
                     Text(
                         text = "${usageInfo?.groq?.remainingQuota ?: 0} remaining",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                            alpha = 0.7f
+                        )
                     )
                 }
             }
         }
     }
-}
-
-private fun String.capitalizeFirst(): String {
-    return if (this.isNotEmpty()) this.replaceFirstChar { it.uppercaseChar() } else this
 }
