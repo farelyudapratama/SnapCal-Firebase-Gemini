@@ -5,18 +5,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -25,12 +19,12 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -43,7 +37,6 @@ import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
-import kotlin.random.Random
 
 @Composable
 fun RegisterScreen(
@@ -57,10 +50,23 @@ fun RegisterScreen(
     val authState = authViewModel.authState.observeAsState()
     val context = LocalContext.current
 
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+
+    val focusManager = LocalFocusManager.current
+
+    // Validasi sederhana
+    val isEmailValid = email.trim().matches(Regex("^[\\w.-]+@[\\w.-]+\\.\\w{2,}$"))
+    val isPasswordValid = password.length >= 6
+    val passwordsMatch = password == confirmPassword
+
+    val isFormValid = isEmailValid && isPasswordValid && passwordsMatch
+
     LaunchedEffect(authState.value) {
         when (authState.value) {
             is AuthState.Authenticated -> navController.navigate(Screen.Main.route) {
-                popUpTo(0) // Hapus semua layar sebelumnya
+                popUpTo(0)
             }
             is AuthState.Error -> Toast.makeText(
                 context,
@@ -100,7 +106,7 @@ fun RegisterScreen(
                     .padding(24.dp)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // **Judul Register**
                 Text(
@@ -129,16 +135,35 @@ fun RegisterScreen(
                         Icon(
                             imageVector = Icons.Default.Email,
                             contentDescription = "Email",
-                            tint = Color.White
+                            tint = if (isEmailValid) Color.White else Color(
+                                0xFFFF6363
+                            )
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
+                    textStyle = TextStyle(color = Color.White),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color.White,
                         unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
-                        cursorColor = Color.White
-                    )
+                        cursorColor = Color.White,
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    ),
+                    isError = !isEmailValid,
+                    supportingText = {
+                        if (!isEmailValid) {
+                            Text("Harap masukkan email yang valid", color = Color(
+                                0xFFFFCECE
+                            ))
+                        }
+                    }
                 )
 
                 // **Password Field**
@@ -147,21 +172,98 @@ fun RegisterScreen(
                     onValueChange = { password = it },
                     label = { Text("Password", color = Color.White) },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "Password",
-                            tint = Color.White
+                            Icons.Default.Lock,
+                            contentDescription = "Password Icon",
+                            tint = if (isPasswordValid) Color.White else Color(
+                                0xFFFF6363
+                            )
                         )
                     },
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = "Toggle Password Visibility",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    textStyle = TextStyle(color = Color.White),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color.White,
                         unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
-                        cursorColor = Color.White
-                    )
+                        cursorColor = Color.White,
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    ),
+                    isError = !isPasswordValid,
+                    supportingText = {
+                        if (!isPasswordValid) {
+                            Text("Password minimal 6 karakter", color = Color(
+                                0xFFFF6363
+                            ))
+                        }
+                    }
+                )
+
+                // **Confirm Password Field**
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text("Konfirmasi Password", color = Color.White) },
+                    singleLine = true,
+                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Lock,
+                            contentDescription = "Password Icon",
+                            tint = if (isPasswordValid) Color.White else Color(
+                                0xFFFF6363
+                            )
+                        )
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                            Icon(
+                                if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = "Toggle Password Visibility",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    textStyle = TextStyle(color = Color.White),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.White,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                        cursorColor = Color.White,
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    ),
+                    isError = !passwordsMatch,
+                    supportingText = {
+                        if (!passwordsMatch) {
+                            Text("Password tidak cocok", color = Color(
+                                0xFFFF6363
+                            ))
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -169,7 +271,7 @@ fun RegisterScreen(
                 // **Register Button**
                 Button(
                     onClick = { authViewModel.signup(email, password) },
-                    enabled = authState.value != AuthState.Loading,
+                    enabled = isFormValid && authState.value != AuthState.Loading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)

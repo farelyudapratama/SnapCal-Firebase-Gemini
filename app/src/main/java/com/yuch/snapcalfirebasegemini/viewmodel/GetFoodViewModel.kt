@@ -1,5 +1,6 @@
 package com.yuch.snapcalfirebasegemini.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
@@ -12,7 +13,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
+class GetFoodViewModel(
+    private val repository: ApiRepository
+) : ViewModel() {
     private val _foodList = MutableStateFlow<List<FoodItem>>(emptyList())
     val foodList: StateFlow<List<FoodItem>> = _foodList
 
@@ -54,6 +57,7 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
      */
     private fun fetchFood(page: Int = _currentPage.value) {
         viewModelScope.launch {
+            Log.d("GetFoodViewModel", "Fetching food data for page: $page")
             _isLoading.value = true
             _errorMessage.value = null
             try {
@@ -141,6 +145,7 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
                     if (response.status == "success") {
                         _food.value = null
                         _isDeleted.value = true
+                        refreshFood()
                         onComplete()
                     } else {
                         _errorMessage.value = "Gagal menghapus makanan"
@@ -164,6 +169,7 @@ class GetFoodViewModel(private val repository: ApiRepository) : ViewModel() {
                 if (response != null) {
                     if (response.status == "success") {
                         _food.value = _food.value?.copy(imageUrl = null)
+                        refreshFood()
                         _imageDeletedMessage.value = "Food image deleted successfully"
                     } else {
                         _errorMessage.value = "Gagal menghapus gambar makanan"

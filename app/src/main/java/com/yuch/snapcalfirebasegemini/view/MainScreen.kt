@@ -68,8 +68,8 @@ fun MainScreen(
     val context = LocalContext.current
     var backPressedTime by remember { mutableLongStateOf(0L) }
 
-    val foodList by foodViewModel.foodList.collectAsStateWithLifecycle()
-    val isLoading by foodViewModel.isLoading.collectAsStateWithLifecycle()
+    val foodList by foodViewModel.foodList.collectAsState()
+    val isLoading by foodViewModel.isLoading.collectAsState()
     val hasMoreData by foodViewModel.hasMoreData.collectAsStateWithLifecycle()
 
     var isRefreshing by remember { mutableStateOf(false) }
@@ -84,6 +84,12 @@ fun MainScreen(
         } else {
             backPressedTime = currentTime
             Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    LaunchedEffect(authState.value) {
+        if (authState.value is AuthState.Authenticated) {
+            foodViewModel.refreshFood()
         }
     }
 

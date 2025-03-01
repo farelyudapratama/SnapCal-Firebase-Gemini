@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -143,7 +144,8 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email") },
-                    keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     ),
                     singleLine = true,
@@ -178,6 +180,10 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                             tint = Color(0xFF1A237E)
                         )
                     },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Next
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
