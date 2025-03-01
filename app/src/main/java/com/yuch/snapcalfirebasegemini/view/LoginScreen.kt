@@ -1,23 +1,40 @@
 package com.yuch.snapcalfirebasegemini.view
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Games
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.materialIcon
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -47,19 +64,44 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF2196F3),
-                        Color(0xFF03A9F4)
+                        Color(0xFF1A237E), // Warna biru yang lebih gelap
+                        Color(0xFF3949AB)  // Warna biru medium
                     )
                 )
             )
     ) {
+        // Lingkaran dekoratif di background
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Background dengan efek visual tanpa menggunakan Canvas
+            repeat(15) {
+                Box(
+                    modifier = Modifier
+                        .size((80..140).random().dp)
+                        .offset(
+                            x = (-30..350).random().dp,
+                            y = (-30..700).random().dp
+                        )
+                        .background(
+                            color = Color.White.copy(alpha = 0.05f),
+                            shape = CircleShape
+                        )
+                )
+            }
+        }
+
         Card(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth()
-                .align(Alignment.Center),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+                .align(Alignment.Center)
+                .shadow(
+                    elevation = 8.dp,
+                    shape = RoundedCornerShape(20.dp),
+                    spotColor = Color(0x40000000)
+                ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            shape = RoundedCornerShape(20.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -68,61 +110,116 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Logo aplikasi
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .background(
+                            color = Color(0xFF1A237E),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Camera,
+                        contentDescription = "SnapCal Logo",
+                        tint = Color.White,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+
                 Text(
                     text = "Selamat Datang di SnapCal",
-                    fontSize = 28.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1976D2)
+                    color = Color(0xFF1A237E)
                 )
 
                 Text(
                     text = "Silahkan masuk untuk melanjutkan",
-                    fontSize = 16.sp,
-                    color = Color.Gray
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
+                // Email field
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email") },
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = "Email",
+                            tint = Color(0xFF1A237E)
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF1976D2),
-                        unfocusedBorderColor = Color.Gray
+                        focusedBorderColor = Color(0xFF1A237E),
+                        unfocusedBorderColor = Color.Gray,
+                        focusedLabelColor = Color(0xFF1A237E),
+                        cursorColor = Color(0xFF1A237E)
                     )
                 )
 
+                // Password field
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text("Password") },
+                    singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Password",
+                            tint = Color(0xFF1A237E)
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF1976D2),
-                        unfocusedBorderColor = Color.Gray
+                        focusedBorderColor = Color(0xFF1A237E),
+                        unfocusedBorderColor = Color.Gray,
+                        focusedLabelColor = Color(0xFF1A237E),
+                        cursorColor = Color(0xFF1A237E)
                     )
                 )
 
+                Text(
+                    text = "Lupa password?",
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .clickable { /* Navigasi ke halaman reset password */ },
+                    color = Color(0xFF1A237E),
+                    fontSize = 12.sp
+                )
+
+                // Login button
                 Button(
                     onClick = { authViewModel.login(email, password) },
                     enabled = authState.value != AuthState.Loading,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp)
-                        .clip(RoundedCornerShape(12.dp)),
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1976D2)
+                        containerColor = Color(0xFF1A237E),
+                        disabledContainerColor = Color(0xFF1A237E).copy(alpha = 0.5f)
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 4.dp,
+                        pressedElevation = 8.dp
                     )
                 ) {
                     if (authState.value == AuthState.Loading) {
                         CircularProgressIndicator(
                             color = Color.White,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
                         )
                     } else {
                         Text(
@@ -133,12 +230,101 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                     }
                 }
 
-                TextButton(
-                    onClick = { navController.navigate("register") }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Divider dengan teks
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Divider(
+                        modifier = Modifier.weight(1f),
+                        color = Color.LightGray
+                    )
+                    Text(
+                        text = "  Atau masuk dengan  ",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Divider(
+                        modifier = Modifier.weight(1f),
+                        color = Color.LightGray
+                    )
+                }
+
+                // Social login options
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    // Google login
+                    OutlinedButton(
+                        onClick = { /* Implementasi login Google */ },
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Color.LightGray),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFFDB4437)
+                        )
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+//                                painter = painterResource(id = R.drawable.ic_google),
+                                contentDescription = "Google",
+                                imageVector = Icons.Default.Games,
+                                tint = Color(0xFFDB4437),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text("Google", fontSize = 14.sp)
+                        }
+                    }
+
+                    // Anonymous login
+                    OutlinedButton(
+                        onClick = { /* Implementasi login anonim */ },
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Color.LightGray),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color.Gray
+                        )
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Anonymous",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text("Anonim", fontSize = 14.sp)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Register option
+                Row(
+                    modifier = Modifier
+                        .clickable { navController.navigate("register") }
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "Belum punya akun? Daftar disini",
-                        color = Color(0xFF1976D2)
+                        "Belum punya akun? ",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        "Daftar disini",
+                        color = Color(0xFF1A237E),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
                     )
                 }
             }
