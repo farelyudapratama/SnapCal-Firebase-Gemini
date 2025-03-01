@@ -2,42 +2,38 @@ package com.yuch.snapcalfirebasegemini.view
 
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Games
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.materialIcon
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
+import kotlin.random.Random
 
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, authViewModel: AuthViewModel) {
@@ -64,15 +60,14 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF1A237E), // Warna biru yang lebih gelap
-                        Color(0xFF3949AB)  // Warna biru medium
+                        Color(0xFF1A237E),
+                        Color(0xFF3949AB)
                     )
                 )
             )
     ) {
         // Lingkaran dekoratif di background
         Box(modifier = Modifier.fillMaxSize()) {
-            // Background dengan efek visual tanpa menggunakan Canvas
             repeat(15) {
                 Box(
                     modifier = Modifier
@@ -82,7 +77,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                             y = (-30..700).random().dp
                         )
                         .background(
-                            color = Color.White.copy(alpha = 0.05f),
+                            color = Color.White.copy(alpha = Random.nextFloat() * (0.08f - 0.03f) + 0.03f),
                             shape = CircleShape
                         )
                 )
@@ -94,21 +89,22 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                 .padding(16.dp)
                 .fillMaxWidth()
                 .align(Alignment.Center)
-                .shadow(
-                    elevation = 8.dp,
-                    shape = RoundedCornerShape(20.dp),
-                    spotColor = Color(0x40000000)
-                ),
+                .graphicsLayer {
+                    alpha = 0.8f
+                    shadowElevation = 8f
+                },
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White.copy(alpha = 0.9f)
+            ),
             shape = RoundedCornerShape(20.dp)
         ) {
             Column(
                 modifier = Modifier
-                    .padding(24.dp)
+                    .padding(10.dp)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Logo aplikasi
                 Box(
@@ -147,6 +143,9 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email") },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Next
+                    ),
                     singleLine = true,
                     leadingIcon = {
                         Icon(
@@ -237,7 +236,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier.weight(1f),
                         color = Color.LightGray
                     )
@@ -246,7 +245,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier.weight(1f),
                         color = Color.LightGray
                     )
