@@ -18,10 +18,12 @@ class AuthViewModel : ViewModel() {
     private val _firebaseToken = MutableLiveData<String?>()
     val firebaseToken: MutableLiveData<String?> = _firebaseToken
 
+    private val _userUid = MutableLiveData<String?>()
+    val userUid: LiveData<String?> = _userUid
+
     init {
         checkAuthStatus()
     }
-
 
     private fun checkAuthStatus(){
         if(auth.currentUser==null){
@@ -87,6 +89,22 @@ class AuthViewModel : ViewModel() {
                 }
             }
     }
+
+    // anonymous login
+    fun anonymousLogin() {
+        _authState.value = AuthState.Loading
+        auth.signInAnonymously()
+            .addOnCompleteListener { task -> // HAPUS `this`
+                if (task.isSuccessful) {
+                    _authState.value = AuthState.Authenticated
+                    _userUid.value = auth.currentUser?.uid  // Simpan UID
+                } else {
+                    _authState.value = AuthState.Error(task.exception?.message ?: "Authentication failed.")
+                }
+            }
+    }
+
+
 
     fun signout(){
         auth.signOut()

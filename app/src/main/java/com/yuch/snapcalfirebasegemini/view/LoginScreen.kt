@@ -288,7 +288,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
 
                     // Anonymous login
                     OutlinedButton(
-                        onClick = { /* Implementasi login anonim */ },
+                        onClick = { authViewModel.anonymousLogin() },
                         shape = RoundedCornerShape(12.dp),
                         border = BorderStroke(1.dp, Color.LightGray),
                         colors = ButtonDefaults.outlinedButtonColors(
