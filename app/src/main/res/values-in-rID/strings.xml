@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SnapCal</string>
+
+    <!-- TODO AuthViewModel -->
+    <string name="auth_empty_fields">Email atau password tidak boleh kosong</string>
+    <string name="auth_error">Terjadi kesalahan, coba lagi</string>
+    <string name="auth_invalid_email">Format email tidak valid</string>
+    <string name="auth_reset_password_success">Instruksi reset password telah dikirim</string>
+    <string name="auth_reset_password_failed">Reset password gagal</string>
+
+    <!-- Login Screen -->
+    <string name="welcome_login">Selamat datang di SnapCal</string>
+    <string name="login_subtitle">Silakan login untuk melanjutkan</string>
+    <string name="forgot_password">Lupa kata sandi?</string>
+    <string name="login_button">Masuk</string>
+    <string name="or_login_with">Atau masuk dengan</string>
+    <string name="dont_have_account">Belum punya akun?</string>
+    <string name="register_here">Daftar di sini</string>
+
+    <!-- Register Screen -->
+    <string name="register_title">Buat Akun Baru</string>
+    <string name="register_subtitle">Silakan daftar untuk menggunakan SnapCal</string>
+    <string name="register_confirm_password_label">Konfirmasi Password</string>
+    <string name="register_button">Daftar</string>
+    <string name="register_password_mismatch">Password tidak cocok</string>
+    <string name="register_invalid_email">Harap masukkan email yang valid</string>
+    <string name="register_password_error">Password minimal 6 karakter</string>
+    <string name="register_already_have_account">Sudah punya akun?</string>
+    <string name="register_login_here">Masuk di sini</string>
+
+</resources>

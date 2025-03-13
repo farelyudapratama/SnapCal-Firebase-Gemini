@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -127,14 +129,14 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                 }
 
                 Text(
-                    text = "Selamat Datang di SnapCal",
+                    text = stringResource(R.string.welcome_login),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1A237E)
                 )
 
                 Text(
-                    text = "Silahkan masuk untuk melanjutkan",
+                    text = stringResource(R.string.login_subtitle),
                     fontSize = 14.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
@@ -196,7 +198,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                 )
 
                 Text(
-                    text = "Lupa password?",
+                    text = stringResource(R.string.forgot_password),
                     modifier = Modifier
                         .align(Alignment.End)
                         .clickable { navController.navigate("forgot-password") },
@@ -229,7 +231,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                         )
                     } else {
                         Text(
-                            "Masuk",
+                            stringResource(R.string.login_button),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -248,7 +250,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                         color = Color.LightGray
                     )
                     Text(
-                        text = "  Atau masuk dengan  ",
+                        text = "  ${stringResource(R.string.or_login_with)}  ",
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
@@ -322,12 +324,12 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "Belum punya akun? ",
+                        stringResource(R.string.dont_have_account),
                         color = Color.Gray,
                         fontSize = 14.sp
                     )
                     Text(
-                        "Daftar disini",
+                        " ${stringResource(R.string.register_here)}",
                         color = Color(0xFF1A237E),
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.yuch.snapcalfirebasegemini.R
 
 class AuthViewModel : ViewModel() {
 
@@ -117,8 +118,8 @@ class AuthViewModel : ViewModel() {
                 } else {
                     val exception = resetTask.exception
                     val errorMessage = when (exception) {
-                        is FirebaseAuthInvalidCredentialsException -> "Format email tidak valid"
-                        else -> exception?.message ?: "Reset password gagal"
+                        is FirebaseAuthInvalidCredentialsException -> "Invalid email format"
+                        else -> exception?.message ?: "Password reset failed"
                     }
 
                     _authState.value = AuthState.Error(errorMessage)

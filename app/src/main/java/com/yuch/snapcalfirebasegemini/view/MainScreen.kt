@@ -76,6 +76,10 @@ fun MainScreen(
     val refreshState = rememberPullToRefreshState()
     val coroutineScope = rememberCoroutineScope()
 
+// Calendar selection state
+    var selectedDate by remember { mutableStateOf(LocalDateTime.now()) }
+    var showCalendarDialog by remember { mutableStateOf(false) }
+
     // Handle back button and auth state
     BackHandler {
         val currentTime = System.currentTimeMillis()
@@ -99,8 +103,27 @@ fun MainScreen(
         }
     }
 
+    if (showCalendarDialog) {
+        CalendarDialog(
+            selectedDate = selectedDate,
+            onDateSelected = {
+                selectedDate = it
+                showCalendarDialog = false
+            },
+            onDismiss = { showCalendarDialog = false }
+        )
+    }
+
     Scaffold(
-        topBar = { MainTopBar(email = email) }
+        topBar = {
+            CalendarTopBar(
+                selectedDate = selectedDate,
+                onDateClick = { showCalendarDialog = true },
+                onPreviousDay = { selectedDate = selectedDate.minusDays(1) },
+                onNextDay = { selectedDate = selectedDate.plusDays(1) },
+                email = email
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = modifier
@@ -169,7 +192,129 @@ fun MainTopBar(email: String) {
         )
     )
 }
+@Composable
+fun CalendarTopBar(
+    selectedDate: LocalDateTime,
+    onDateClick: () -> Unit,
+    onPreviousDay: () -> Unit,
+    onNextDay: () -> Unit,
+    email: String
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // App title and email
+        TopAppBar(
+            title = {
+                Column {
+                    Text(
+                        text = "SnapCal",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        text = email,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        )
 
+        // Calendar date selector bar
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onPreviousDay) {
+                    Icon(
+                        imageVector = Icons.Default.NavigateBefore,
+                        contentDescription = "Previous Day"
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .clickable(onClick = onDateClick)
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.DateRange,
+                        contentDescription = "Calendar",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    val dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d, yyyy")
+                    Text(
+                        text = selectedDate.format(dateFormatter),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                IconButton(onClick = onNextDay) {
+                    Icon(
+                        imageVector = Icons.Default.NavigateNext,
+                        contentDescription = "Next Day"
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CalendarDialog(
+    selectedDate: LocalDateTime,
+    onDateSelected: (LocalDateTime) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = selectedDate
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+    )
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            Button(onClick = {
+                datePickerState.selectedDateMillis?.let { millis ->
+                    val newDate = LocalDateTime.ofInstant(
+                        Instant.ofEpochMilli(millis),
+                        ZoneId.systemDefault()
+                    ).withHour(selectedDate.hour)
+                        .withMinute(selectedDate.minute)
+                    onDateSelected(newDate)
+                }
+            }) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    ) {
+        DatePicker(state = datePickerState)
+    }
+}
 @Composable
 fun FoodItemCard(
     food: FoodItem,

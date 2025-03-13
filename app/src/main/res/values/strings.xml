@@ -1,3 +1,31 @@
 <resources>
     <string name="app_name">SnapCal</string>
+
+    <!-- TODO AuthViewModel -->
+    <string name="auth_empty_fields">Email or password can\'t be empty</string>
+    <string name="auth_error">Something went wrong</string>
+    <string name="auth_invalid_email">Invalid email format</string>
+    <string name="auth_reset_password_success">Password reset instruction has been sent</string>
+    <string name="auth_reset_password_failed">Password reset failed</string>
+
+    <!-- Login Screen -->
+    <string name="welcome_login">Welcome to SnapCal</string>
+    <string name="login_subtitle">Please login to continue</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="login_button">Log in</string>
+    <string name="or_login_with">Or log in with</string>
+    <string name="dont_have_account">Don\'t have an account?</string>
+    <string name="register_here">Register here</string>
+
+    <!-- Register Screen -->
+    <string name="register_title">Create New Account</string>
+    <string name="register_subtitle">Please register to use SnapCal</string>
+    <string name="register_confirm_password_label">Confirm Password</string>
+    <string name="register_button">Register</string>
+    <string name="register_password_mismatch">Passwords do not match</string>
+    <string name="register_invalid_email">Please enter a valid email</string>
+    <string name="register_password_error">Password must be at least 6 characters</string>
+    <string name="register_already_have_account">Already have an account?</string>
+    <string name="register_login_here">Log in here</string>
+
 </resources>

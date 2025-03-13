@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -110,14 +112,14 @@ fun RegisterScreen(
             ) {
                 // **Judul Register**
                 Text(
-                    text = "Buat Akun Baru",
+                    text = stringResource(R.string.register_title),
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
 
                 Text(
-                    text = "Silakan daftar untuk menggunakan SnapCal",
+                    text = stringResource(R.string.register_subtitle),
                     fontSize = 14.sp,
                     color = Color.White.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
@@ -159,7 +161,7 @@ fun RegisterScreen(
                     isError = !isEmailValid,
                     supportingText = {
                         if (!isEmailValid) {
-                            Text("Harap masukkan email yang valid", color = Color(
+                            Text(stringResource(R.string.register_invalid_email), color = Color(
                                 0xFFFFCECE
                             ))
                         }
@@ -209,7 +211,7 @@ fun RegisterScreen(
                     isError = !isPasswordValid,
                     supportingText = {
                         if (!isPasswordValid) {
-                            Text("Password minimal 6 karakter", color = Color(
+                            Text(stringResource(R.string.register_password_error), color = Color(
                                 0xFFFF6363
                             ))
                         }
@@ -220,7 +222,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
-                    label = { Text("Konfirmasi Password", color = Color.White) },
+                    label = { Text(stringResource(R.string.register_confirm_password_label), color = Color.White) },
                     singleLine = true,
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     leadingIcon = {
@@ -259,7 +261,7 @@ fun RegisterScreen(
                     isError = !passwordsMatch,
                     supportingText = {
                         if (!passwordsMatch) {
-                            Text("Password tidak cocok", color = Color(
+                            Text(stringResource(R.string.register_password_mismatch), color = Color(
                                 0xFFFF6363
                             ))
                         }
@@ -290,7 +292,7 @@ fun RegisterScreen(
                         )
                     } else {
                         Text(
-                            "Daftar",
+                            stringResource(R.string.register_button),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -320,12 +322,12 @@ fun RegisterScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "Sudah punya akun? ",
+                        "${stringResource(R.string.register_already_have_account)} ",
                         color = Color.White,
                         fontSize = 14.sp
                     )
                     Text(
-                        "Masuk di sini",
+                        stringResource(R.string.register_login_here),
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
