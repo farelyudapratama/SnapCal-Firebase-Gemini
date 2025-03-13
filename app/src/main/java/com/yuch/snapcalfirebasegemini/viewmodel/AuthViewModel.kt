@@ -5,6 +5,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 
 class AuthViewModel : ViewModel() {
 
@@ -104,6 +106,25 @@ class AuthViewModel : ViewModel() {
             }
     }
 
+    // Reset Password
+    fun sendPasswordReset(email: String) {
+        _authState.value = AuthState.Loading
+
+        auth.sendPasswordResetEmail(email)
+            .addOnCompleteListener { resetTask ->
+                if (resetTask.isSuccessful) {
+                    _authState.value = AuthState.PasswordResetSent
+                } else {
+                    val exception = resetTask.exception
+                    val errorMessage = when (exception) {
+                        is FirebaseAuthInvalidCredentialsException -> "Format email tidak valid"
+                        else -> exception?.message ?: "Reset password gagal"
+                    }
+
+                    _authState.value = AuthState.Error(errorMessage)
+                }
+            }
+    }
 
 
     fun signout(){
@@ -111,13 +132,16 @@ class AuthViewModel : ViewModel() {
         _authState.value = AuthState.Unauthenticated
     }
 
-
+    fun resetState() {
+        _authState.value = AuthState.Unauthenticated
+    }
 }
 
 
 sealed class AuthState{
     data object Authenticated : AuthState()
     data object Unauthenticated : AuthState()
+    data object PasswordResetSent : AuthState()
     data object Loading : AuthState()
     data class Error(val message : String) : AuthState()
 }

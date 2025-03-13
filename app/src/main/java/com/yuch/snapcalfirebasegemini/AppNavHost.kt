@@ -17,6 +17,7 @@ import com.yuch.snapcalfirebasegemini.view.AnalyzeScreen
 import com.yuch.snapcalfirebasegemini.view.ChatListScreen
 import com.yuch.snapcalfirebasegemini.view.DetailFoodScreen
 import com.yuch.snapcalfirebasegemini.view.EditFoodScreen
+import com.yuch.snapcalfirebasegemini.view.ForgotPasswordScreen
 import com.yuch.snapcalfirebasegemini.view.LoginScreen
 import com.yuch.snapcalfirebasegemini.view.MainScreen
 import com.yuch.snapcalfirebasegemini.view.ManualEntryScreen
@@ -52,6 +53,9 @@ fun AppNavHost(
         }
         composable(Screen.Register.route) {
             RegisterScreen(modifier, navController, authViewModel)
+        }
+        composable(Screen.ForgotPassword.route) {
+            ForgotPasswordScreen(modifier, navController, authViewModel)
         }
         composable(Screen.Main.route) {
             MainScreen(modifier, navController, authViewModel, getFoodViewModel)

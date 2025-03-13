@@ -42,6 +42,7 @@ fun SnapCalApp(
     val screensWithoutBottomBar = listOf(
         Screen.Login.route,
         Screen.Register.route,
+        Screen.ForgotPassword.route,
         Screen.Scan.route,
         Screen.Analyze.route,
         Screen.ManualEntry.route,

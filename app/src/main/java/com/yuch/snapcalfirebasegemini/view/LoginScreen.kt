@@ -1,5 +1,6 @@
 package com.yuch.snapcalfirebasegemini.view
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -198,7 +199,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                     text = "Lupa password?",
                     modifier = Modifier
                         .align(Alignment.End)
-                        .clickable { /* Navigasi ke halaman reset password */ },
+                        .clickable { navController.navigate("forgot-password") },
                     color = Color(0xFF1A237E),
                     fontSize = 12.sp
                 )
