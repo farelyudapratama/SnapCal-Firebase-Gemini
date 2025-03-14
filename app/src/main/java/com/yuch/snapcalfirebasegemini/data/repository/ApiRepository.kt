@@ -52,6 +52,19 @@ class ApiRepository(
         return body
     }
 
+    suspend fun getFoodDate(date: String): ApiResponse<List<FoodItem>>? {
+        return try {
+            val response = apiService.getFoodEntries(date)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun getFoodById(id: String, forceRefresh: Boolean = false): FoodItem? {
         if (!forceRefresh) {
             foodDao?.getFoodById(id)?.let { cachedFood ->

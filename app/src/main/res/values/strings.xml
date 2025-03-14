@@ -1,6 +1,17 @@
 <resources>
     <string name="app_name">SnapCal</string>
 
+    <string name="text_ok">OK</string>
+    <string name="text_cancel">Cancel</string>
+
+    <!--  nutrient  -->
+    <string name="nutrient_calories">Calories</string>
+    <string name="nutrient_protein">Protein</string>
+    <string name="nutrient_fat">Fat</string>
+    <string name="nutrient_carbs">Carbs</string>
+    <string name="nutrient_fiber">Fiber</string>
+    <string name="nutrient_sugar">Sugar</string>
+
     <!-- TODO AuthViewModel -->
     <string name="auth_empty_fields">Email or password can\'t be empty</string>
     <string name="auth_error">Something went wrong</string>
@@ -27,5 +38,13 @@
     <string name="register_password_error">Password must be at least 6 characters</string>
     <string name="register_already_have_account">Already have an account?</string>
     <string name="register_login_here">Log in here</string>
+
+    <!--  Main Screen  -->
+    <string name="press_back_again_to_exit">Press back again to exit</string>
+    <string name="no_food_on_date">No food on this date</string>
+    <string name="empty_food_entry">No food entry</string>
+    <string name="all_entries">All Entries</string>
+    <string name="date_not_available">Date not available</string>
+    <string name="load_more">Load More</string>
 
 </resources>

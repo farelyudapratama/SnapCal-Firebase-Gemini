@@ -28,7 +28,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -41,6 +43,7 @@ import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.ui.theme.*
@@ -71,14 +74,18 @@ fun MainScreen(
     val foodList by foodViewModel.foodList.collectAsState()
     val isLoading by foodViewModel.isLoading.collectAsState()
     val hasMoreData by foodViewModel.hasMoreData.collectAsStateWithLifecycle()
+    val errorMessage by foodViewModel.errorMessage.collectAsState()
 
     var isRefreshing by remember { mutableStateOf(false) }
     val refreshState = rememberPullToRefreshState()
     val coroutineScope = rememberCoroutineScope()
 
-// Calendar selection state
-    var selectedDate by remember { mutableStateOf(LocalDateTime.now()) }
+    // Calendar selection state
+    var selectedDate by remember { mutableStateOf<LocalDateTime?>(null) }
     var showCalendarDialog by remember { mutableStateOf(false) }
+
+    // Filter state
+    var isFilterActive by remember { mutableStateOf(false) }
 
     // Handle back button and auth state
     BackHandler {
@@ -87,7 +94,15 @@ fun MainScreen(
             (context as? android.app.Activity)?.finishAffinity()
         } else {
             backPressedTime = currentTime
-            Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context,
+                context.getString(R.string.press_back_again_to_exit), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Show error messages if any
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -103,11 +118,21 @@ fun MainScreen(
         }
     }
 
+    // Calendar dialog
     if (showCalendarDialog) {
         CalendarDialog(
-            selectedDate = selectedDate,
-            onDateSelected = {
-                selectedDate = it
+            selectedDate = selectedDate ?: LocalDateTime.now(),
+            onDateSelected = { date ->
+                selectedDate = date
+                isFilterActive = true
+
+                // Format date to the required format (YYYY-MM-DD)
+                val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                val formattedDate = date.format(dateFormatter)
+
+                // Fetch food for the selected date
+                foodViewModel.fetchFoodDate(formattedDate)
+
                 showCalendarDialog = false
             },
             onDismiss = { showCalendarDialog = false }
@@ -116,11 +141,64 @@ fun MainScreen(
 
     Scaffold(
         topBar = {
-            CalendarTopBar(
+            TopBar(
                 selectedDate = selectedDate,
+                isFilterActive = isFilterActive,
                 onDateClick = { showCalendarDialog = true },
-                onPreviousDay = { selectedDate = selectedDate.minusDays(1) },
-                onNextDay = { selectedDate = selectedDate.plusDays(1) },
+                onPreviousDay = {
+                    if (selectedDate != null) {
+                        val newDate = selectedDate!!.minusDays(1)
+                        selectedDate = newDate
+
+                        // Format date
+                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                        val formattedDate = newDate.format(dateFormatter)
+
+                        // Fetch food for previous day
+                        foodViewModel.fetchFoodDate(formattedDate)
+                    } else {
+                        val newDate = LocalDateTime.now().minusDays(1)
+                        selectedDate = newDate
+                        isFilterActive = true
+
+                        // Format date
+                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                        val formattedDate = newDate.format(dateFormatter)
+
+                        // Fetch food for previous day
+                        foodViewModel.fetchFoodDate(formattedDate)
+                    }
+                },
+                onNextDay = {
+                    if (selectedDate != null) {
+                        val newDate = selectedDate!!.plusDays(1)
+                        selectedDate = newDate
+
+                        // Format date
+                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                        val formattedDate = newDate.format(dateFormatter)
+
+                        // Fetch food for next day
+                        foodViewModel.fetchFoodDate(formattedDate)
+                    } else {
+                        val newDate = LocalDateTime.now().plusDays(1)
+                        selectedDate = newDate
+                        isFilterActive = true
+
+                        // Format date
+                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                        val formattedDate = newDate.format(dateFormatter)
+
+                        // Fetch food for next day
+                        foodViewModel.fetchFoodDate(formattedDate)
+                    }
+                },
+                onClearFilter = {
+                    selectedDate = null
+                    isFilterActive = false
+                    // Refresh to get all data
+                    foodViewModel.refreshFood()
+                },
                 email = email
             )
         }
@@ -138,32 +216,81 @@ fun MainScreen(
                 onRefresh = {
                     coroutineScope.launch {
                         isRefreshing = true
-                        foodViewModel.refreshFood()
+                        if (isFilterActive && selectedDate != null) {
+                            // Format date
+                            val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                            val formattedDate = selectedDate!!.format(dateFormatter)
+
+                            // Refresh with date filter
+                            foodViewModel.fetchFoodDate(formattedDate)
+                        } else {
+                            // Refresh all data
+                            foodViewModel.refreshFood()
+                        }
                         isRefreshing = false
                     }
                 }
             ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(
-                        items = foodList,
-                        key = { it.id }
-                    ) { foodItem ->
-                        FoodItemCard(foodItem, navController)
+                if (foodList.isEmpty() && !isLoading) {
+                    // Empty state
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.NoFood,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = if (isFilterActive) stringResource(R.string.no_food_on_date) else stringResource(R.string.empty_food_entry),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
                     }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(
+                            items = foodList,
+                            key = { it.id }
+                        ) { foodItem ->
+                            FoodItemCard(foodItem, navController)
+                        }
 
-                    // Loading and Load More
-                    item {
-                        LoadingAndLoadMore(
-                            isLoading = isLoading,
-                            hasMoreData = hasMoreData,
-                            onLoadMore = { foodViewModel.loadNextPage() }
-                        )
+                        // Loading and Load More
+                        item {
+                            if (!isFilterActive) {
+                                LoadingAndLoadMore(
+                                    isLoading = isLoading,
+                                    hasMoreData = hasMoreData,
+                                    onLoadMore = { foodViewModel.loadNextPage() }
+                                )
+                            } else if (isLoading) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                        item { Spacer(modifier = Modifier.height(80.dp)) }
                     }
-                    item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
             }
         }
@@ -171,33 +298,13 @@ fun MainScreen(
 }
 
 @Composable
-fun MainTopBar(email: String) {
-    TopAppBar(
-        title = {
-            Column {
-                Text(
-                    text = "SnapCal",
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    text = email,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-    )
-}
-@Composable
-fun CalendarTopBar(
-    selectedDate: LocalDateTime,
+fun TopBar(
+    selectedDate: LocalDateTime?,
+    isFilterActive: Boolean,
     onDateClick: () -> Unit,
     onPreviousDay: () -> Unit,
     onNextDay: () -> Unit,
+    onClearFilter: () -> Unit,
     email: String
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -234,7 +341,10 @@ fun CalendarTopBar(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onPreviousDay) {
+                IconButton(
+                    onClick = onPreviousDay,
+                    enabled = true // Always enabled for better UX
+                ) {
                     Icon(
                         imageVector = Icons.Default.NavigateBefore,
                         contentDescription = "Previous Day"
@@ -257,15 +367,38 @@ fun CalendarTopBar(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    val dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d, yyyy")
-                    Text(
-                        text = selectedDate.format(dateFormatter),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
+                    if (isFilterActive && selectedDate != null) {
+                        val dateFormatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale("id", "ID"))
+                        Text(
+                            text = selectedDate.format(dateFormatter),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(
+                            onClick = onClearFilter,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear Filter",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = stringResource(R.string.all_entries),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
 
-                IconButton(onClick = onNextDay) {
+                IconButton(
+                    onClick = onNextDay,
+                    enabled = true // Always enabled for better UX
+                ) {
                     Icon(
                         imageVector = Icons.Default.NavigateNext,
                         contentDescription = "Next Day"
@@ -303,18 +436,19 @@ fun CalendarDialog(
                     onDateSelected(newDate)
                 }
             }) {
-                Text("OK")
+                Text(stringResource(R.string.text_ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.text_cancel))
             }
         }
     ) {
         DatePicker(state = datePickerState)
     }
 }
+
 @Composable
 fun FoodItemCard(
     food: FoodItem,
@@ -473,11 +607,11 @@ fun NutritionInfoRow(nutritionData: NutritionData) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        NutritionItem(Icons.Default.Grain, "${nutritionData.carbs}g", "Carbs")
-        NutritionItem(Icons.Default.FitnessCenter, "${nutritionData.protein}g", "Protein")
-        NutritionItem(Icons.Default.Water, "${nutritionData.totalFat}g", "Fat")
-        NutritionItem(Icons.Default.Grass, "${nutritionData.fiber}g", "Fiber")
-        NutritionItem(Icons.Default.Cookie, "${nutritionData.sugar}g", "Sugar")
+        NutritionItem(Icons.Default.Grain, "${nutritionData.carbs}g", stringResource(R.string.nutrient_calories))
+        NutritionItem(Icons.Default.FitnessCenter, "${nutritionData.protein}g", stringResource(R.string.nutrient_protein))
+        NutritionItem(Icons.Default.Water, "${nutritionData.totalFat}g", stringResource(R.string.nutrient_fat))
+        NutritionItem(Icons.Default.Grass, "${nutritionData.fiber}g", stringResource(R.string.nutrient_fiber))
+        NutritionItem(Icons.Default.Cookie, "${nutritionData.sugar}g", stringResource(R.string.nutrient_sugar))
     }
 }
 
@@ -519,7 +653,7 @@ fun FoodMetadata(food: FoodItem) {
         val zonedDateTime = Instant.parse(food.createdAt).atZone(ZoneId.systemDefault())
         "${zonedDateTime.format(dateFormatter)}, ${zonedDateTime.format(timeFormatter)}"
     } catch (e: Exception) {
-        "Date not available"
+        stringResource(R.string.date_not_available)
     }
 
     Row(
@@ -576,7 +710,7 @@ fun LoadingAndLoadMore(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
-                Text("Load More")
+                Text(stringResource(R.string.load_more))
             }
         }
     }

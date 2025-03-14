@@ -43,6 +43,9 @@ interface ApiService {
     @GET("food/all")
     suspend fun getAllFood(@Query("page") page: Int = 1): Response<ApiResponse<FoodPage>>
 
+    @GET("food")
+    suspend fun getFoodEntries(@Query("date") date: String): Response<ApiResponse<List<FoodItem>>>
+
     @GET("food/{id}")
     suspend fun getFoodById(@Path("id") id: String): Response<ApiResponse<FoodItem>>
 

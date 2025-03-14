@@ -2,6 +2,17 @@
 <resources>
     <string name="app_name">SnapCal</string>
 
+    <string name="text_ok">OK</string>
+    <string name="text_cancel">Batal</string>
+
+    <!--  nutrient  -->
+    <string name="nutrient_calories">Kalori</string>
+    <string name="nutrient_protein">Protein</string>
+    <string name="nutrient_fat">Lemak</string>
+    <string name="nutrient_carbs">Karbohidrat</string>
+    <string name="nutrient_fiber">Serat</string>
+    <string name="nutrient_sugar">Gula</string>
+
     <!-- TODO AuthViewModel -->
     <string name="auth_empty_fields">Email atau password tidak boleh kosong</string>
     <string name="auth_error">Terjadi kesalahan, coba lagi</string>
@@ -29,4 +40,12 @@
     <string name="register_already_have_account">Sudah punya akun?</string>
     <string name="register_login_here">Masuk di sini</string>
 
+    <!--  Main Screen  -->
+    <string name="press_back_again_to_exit">Tekan lagi untuk keluar</string>
+    <string name="no_food_on_date">Tidak ada makanan pada tanggal ini</string>
+    <string name="empty_food_entry">Belum ada entri makanan</string>
+    <string name="all_entries">Semua entri</string>
+    <string name="date_not_available">Tanggal tidak tersedia</string>
+    <string name="load_more">Muat lebih banyak</string>
 </resources>
+

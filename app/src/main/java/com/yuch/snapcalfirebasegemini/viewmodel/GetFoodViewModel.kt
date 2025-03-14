@@ -108,6 +108,26 @@ class GetFoodViewModel(
         }
     }
 
+    fun fetchFoodDate(date: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+
+            try {
+                val response = repository.getFoodDate(date)
+                if (response != null) {
+                    _foodList.value = response.data ?: emptyList()
+                } else {
+                    _errorMessage.value = "Data makanan tidak ditemukan"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Terjadi kesalahan"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     fun fetchFoodById(
         foodId: String,
         forceRefresh: Boolean
