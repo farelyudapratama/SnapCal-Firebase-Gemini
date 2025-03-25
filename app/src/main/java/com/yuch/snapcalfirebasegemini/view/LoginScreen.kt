@@ -268,6 +268,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                     // Google login
                     OutlinedButton(
                         onClick = { /* Implementasi login Google */ },
+                        enabled = false, // Disable button
                         shape = RoundedCornerShape(12.dp),
                         border = BorderStroke(1.dp, Color.LightGray),
                         colors = ButtonDefaults.outlinedButtonColors(
@@ -279,9 +280,8 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-//                                painter = painterResource(id = R.drawable.ic_google),
-                                contentDescription = "Google",
                                 imageVector = Icons.Default.Games,
+                                contentDescription = "Google",
                                 tint = Color(0xFFDB4437),
                                 modifier = Modifier.size(20.dp)
                             )

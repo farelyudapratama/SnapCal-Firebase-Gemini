@@ -121,6 +121,35 @@ class FoodViewModel(
         }
     }
 
+//    TODO CEK MY MODEL TFLITE
+//    fun analyzeWithTFLite(imagePath: String) {
+//    viewModelScope.launch {
+//        _isLoading.value = true
+//
+//        try {
+//            val bitmap = BitmapFactory.decodeFile(imagePath)
+//            val result = tfliteClassifier.classify(bitmap) // Fungsi untuk menjalankan model
+//
+//            analysisResult.value = ResultState.Success(
+//                AnalysisData(
+//                    foodName = result.foodName,
+//                    calories = result.calories,
+//                    carbs = result.carbs,
+//                    protein = result.protein,
+//                    totalFat = result.totalFat,
+//                    saturatedFat = result.saturatedFat,
+//                    fiber = result.fiber,
+//                    sugar = result.sugar
+//                )
+//            )
+//        } catch (e: Exception) {
+//            _errorMessage.value = "Error analyzing with TFLite: ${e.message}"
+//        } finally {
+//            _isLoading.value = false
+//        }
+//    }
+//}
+
     // TODO Update Food data
     fun updateFood(
         foodId: String, imagePath: String?, foodData: UpdateFoodData?
