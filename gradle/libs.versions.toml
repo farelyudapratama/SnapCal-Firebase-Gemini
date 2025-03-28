@@ -13,8 +13,8 @@ composeBom = "2025.01.00"
 material3 = "1.4.0-alpha06"
 runtimeLivedata = "1.7.6"
 navigationCompose = "2.8.5"
-tensorflowLiteSupport = "0.1.0"
-tensorflowLiteMetadata = "0.1.0"
+tensorflowLiteSupport = "0.4.4"
+tensorflowLiteMetadata = "0.4.4"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }

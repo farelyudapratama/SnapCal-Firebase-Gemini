@@ -34,7 +34,6 @@ fun AnalyzeScreen(
     onSuccessfulUpload: () -> Boolean,
 ) {
 
-
     var selectedService by remember { mutableStateOf<String?>(null) }
     val analysisResult by viewModel.analysisResult.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
@@ -188,6 +187,23 @@ fun AnalyzeScreen(
                             },
                             isLoading = isLoading
                         )
+                        Button(
+                            onClick = { viewModel.analyzeWithTFLite(imagePath, context) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondary,
+                                contentColor = MaterialTheme.colorScheme.onSecondary
+                            )
+                        ) {
+                            Text(
+                                "Analyze with TFLite",
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
                     }
                     else -> {
                         EditableAnalysisCard(

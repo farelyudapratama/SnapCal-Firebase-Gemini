@@ -1,5 +1,9 @@
 package com.yuch.snapcalfirebasegemini.viewmodel
 
+import android.R.attr.label
+import android.content.Context
+import android.graphics.BitmapFactory
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
@@ -11,6 +15,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
+import com.yuch.snapcalfirebasegemini.ml.BestWithMetadata
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -19,6 +24,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import retrofit2.Response
 import com.yuch.snapcalfirebasegemini.utils.ImageUtils
+import org.tensorflow.lite.support.image.TensorImage
 import java.io.IOException
 
 class FoodViewModel(
@@ -122,33 +128,61 @@ class FoodViewModel(
     }
 
 //    TODO CEK MY MODEL TFLITE
-//    fun analyzeWithTFLite(imagePath: String) {
-//    viewModelScope.launch {
-//        _isLoading.value = true
-//
-//        try {
-//            val bitmap = BitmapFactory.decodeFile(imagePath)
-//            val result = tfliteClassifier.classify(bitmap) // Fungsi untuk menjalankan model
-//
-//            analysisResult.value = ResultState.Success(
-//                AnalysisData(
-//                    foodName = result.foodName,
-//                    calories = result.calories,
-//                    carbs = result.carbs,
-//                    protein = result.protein,
-//                    totalFat = result.totalFat,
-//                    saturatedFat = result.saturatedFat,
-//                    fiber = result.fiber,
-//                    sugar = result.sugar
-//                )
-//            )
-//        } catch (e: Exception) {
-//            _errorMessage.value = "Error analyzing with TFLite: ${e.message}"
-//        } finally {
-//            _isLoading.value = false
-//        }
-//    }
-//}
+fun analyzeWithTFLite(imagePath: String, context: Context) {
+    viewModelScope.launch {
+        _isLoading.value = true
+
+        try {
+            // Load gambar sebagai Bitmap
+            val bitmap = BitmapFactory.decodeFile(imagePath)
+
+            // Load model TFLite
+            val model = BestWithMetadata.newInstance(context)
+
+            // Konversi ke format TensorImage
+            val image = TensorImage.fromBitmap(bitmap)
+
+            // Jalankan model
+            val outputs = model.process(image)
+
+            // Ambil hasil deteksi
+            val detectionResults = outputs.detectionResultList
+
+            if (detectionResults.isNotEmpty()) {
+                val firstResult = detectionResults[0]
+                val boundingBox = firstResult.locationAsRectF
+
+                Log.d("TFLite", "Detected bounding box: $boundingBox")
+
+                _analysisResult.value = ApiResponse(
+                    "success",
+                    "Food detected",
+                    AnalyzeResult(
+                        foodName = "Detected Food",
+                        calories = 100.0,
+                        carbs = 20.0,
+                        protein = 5.0,
+                        totalFat = 3.0,
+                        saturatedFat = 1.0,
+                        fiber = 2.0,
+                        sugar = 10.0
+                    )
+                )
+            } else {
+                _errorMessage.value = "No object detected."
+            }
+
+            // Tutup model
+            model.close()
+
+        } catch (e: Exception) {
+            _errorMessage.value = "Error analyzing with TFLite: ${e.message}"
+            Log.e("FoodViewModel", "Error analyzing with TFLite", e)
+        } finally {
+            _isLoading.value = false
+        }
+    }
+}
 
     // TODO Update Food data
     fun updateFood(
