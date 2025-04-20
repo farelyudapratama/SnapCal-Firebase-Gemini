@@ -58,7 +58,7 @@ fun SnapCalApp(
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
         Scaffold(
             bottomBar = {
                 if (currentRoute !in screensWithoutBottomBar) {

@@ -1,8 +1,9 @@
 package com.yuch.snapcalfirebasegemini.viewmodel
 
-import android.R.attr.label
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.RectF
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,7 +16,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
-import com.yuch.snapcalfirebasegemini.ml.BestWithMetadata
+import com.yuch.snapcalfirebasegemini.ml.ModelTeachable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -24,8 +25,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import retrofit2.Response
 import com.yuch.snapcalfirebasegemini.utils.ImageUtils
+import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.image.TensorImage
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class FoodViewModel(
     private val apiService: ApiService = ApiConfig.getApiService()
@@ -127,62 +132,92 @@ class FoodViewModel(
         }
     }
 
-//    TODO CEK MY MODEL TFLITE
-fun analyzeWithTFLite(imagePath: String, context: Context) {
-    viewModelScope.launch {
-        _isLoading.value = true
+    private fun convertBitmapToByteBuffer(bitmap: Bitmap): ByteBuffer {
+        val byteBuffer = ByteBuffer.allocateDirect(4 * 224 * 224 * 3)
+        byteBuffer.order(ByteOrder.nativeOrder())
 
-        try {
-            // Load gambar sebagai Bitmap
-            val bitmap = BitmapFactory.decodeFile(imagePath)
+        val intValues = IntArray(224 * 224)
+        bitmap.getPixels(intValues, 0, 224, 0, 0, 224, 224)
 
-            // Load model TFLite
-            val model = BestWithMetadata.newInstance(context)
+        for (pixel in intValues) {
+            val r = (pixel shr 16 and 0xFF) / 255.0f
+            val g = (pixel shr 8 and 0xFF) / 255.0f
+            val b = (pixel and 0xFF) / 255.0f
 
-            // Konversi ke format TensorImage
-            val image = TensorImage.fromBitmap(bitmap)
+            byteBuffer.putFloat(r)
+            byteBuffer.putFloat(g)
+            byteBuffer.putFloat(b)
+        }
 
-            // Jalankan model
-            val outputs = model.process(image)
+        return byteBuffer
+    }
 
-            // Ambil hasil deteksi
-            val detectionResults = outputs.detectionResultList
+    //    TODO CEK MY MODEL TFLITE
+    fun analyzeWithTFLite(imagePath: String, context: Context) {
+        viewModelScope.launch {
+            _isLoading.value = true
 
-            if (detectionResults.isNotEmpty()) {
-                val firstResult = detectionResults[0]
-                val boundingBox = firstResult.locationAsRectF
+            try {
+                // Load gambar sebagai Bitmap
+                val bitmap = BitmapFactory.decodeFile(imagePath)
+                val resizedBitmap = Bitmap.createScaledBitmap(bitmap, 224, 224, true)
 
-                Log.d("TFLite", "Detected bounding box: $boundingBox")
+                // Konversi ke ByteBuffer untuk model
+                val byteBuffer = convertBitmapToByteBuffer(resizedBitmap)
 
-                _analysisResult.value = ApiResponse(
-                    "success",
-                    "Food detected",
-                    AnalyzeResult(
-                        foodName = "Detected Food",
-                        calories = 100.0,
-                        carbs = 20.0,
-                        protein = 5.0,
-                        totalFat = 3.0,
-                        saturatedFat = 1.0,
-                        fiber = 2.0,
-                        sugar = 10.0
+                // Load model TFLite
+                val model = ModelTeachable.newInstance(context)
+
+                // Buat input untuk model
+                val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 224, 224, 3), DataType.FLOAT32)
+                inputFeature0.loadBuffer(byteBuffer)
+
+                // Jalankan model
+                val outputs = model.process(inputFeature0)
+                val outputFeature0 = outputs.outputFeature0AsTensorBuffer
+
+                // Ambil hasil klasifikasi
+                val scores = outputFeature0.floatArray
+                val maxIndex = scores.indices.maxByOrNull { scores[it] } ?: -1
+
+                // List label yang digunakan saat training di Teachable Machine
+                val labels = listOf("ayam_geprek", "bakso", "ketoprak", "lontong_sayur", "martabak_manis", "martabak_telur", "mie_goreng", "nasi_goreng", "nasi_padang", "nasi_uduk", "pecel_lele", "pempek", "rawon", "rendang", "sate", "siomay", "soto", "tahu_gejrot")  // Ganti dengan label yang sesuai
+
+                if (maxIndex != -1 && maxIndex < labels.size) {
+                    val detectedFood = labels[maxIndex]
+                    val confidence = scores[maxIndex]
+
+                    Log.d("TFLite", "Detected: $detectedFood ($confidence)")
+
+                    _analysisResult.value = ApiResponse(
+                        "success",
+                        "Detected Food: $detectedFood",
+                        AnalyzeResult(
+                            foodName = detectedFood,
+                            calories = 100.0,  // Bisa dikembangkan Ntar  moga semangat
+                            carbs = 20.0,
+                            protein = 5.0,
+                            totalFat = 3.0,
+                            saturatedFat = 1.0,
+                            fiber = 2.0,
+                            sugar = 10.0
+                        )
                     )
-                )
-            } else {
-                _errorMessage.value = "No object detected."
+                } else {
+                    _errorMessage.value = "No object detected."
+                }
+
+                // Tutup model
+                model.close()
+
+            } catch (e: Exception) {
+                _errorMessage.value = "Error analyzing with TFLite: ${e.message}"
+                Log.e("FoodViewModel", "Error analyzing with TFLite", e)
+            } finally {
+                _isLoading.value = false
             }
-
-            // Tutup model
-            model.close()
-
-        } catch (e: Exception) {
-            _errorMessage.value = "Error analyzing with TFLite: ${e.message}"
-            Log.e("FoodViewModel", "Error analyzing with TFLite", e)
-        } finally {
-            _isLoading.value = false
         }
     }
-}
 
     // TODO Update Food data
     fun updateFood(

@@ -14,10 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.android.volley.Request
-import com.android.volley.RequestQueue
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
+//import com.android.volley.Request
+//import com.android.volley.RequestQueue
+//import com.android.volley.toolbox.JsonObjectRequest
+//import com.android.volley.toolbox.Volley
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
@@ -32,7 +32,7 @@ fun ProfileScreen(
     val authState = authViewModel.authState.observeAsState()
     val email by authViewModel.userEmail.observeAsState("")
     val context  = LocalContext.current
-    val queue = remember { Volley.newRequestQueue(context) }
+//    val queue = remember { Volley.newRequestQueue(context) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(authState.value) {
@@ -69,7 +69,8 @@ fun ProfileScreen(
         // Tombol untuk mendownload model & label
         Button(onClick = {
             scope.launch {
-                fetchAndDownloadModel(context, queue)
+//                fetchAndDownloadModel(context, queue)
+
             }
         }) {
             Text("Download Model & Label")
@@ -77,30 +78,30 @@ fun ProfileScreen(
     }
 }
 
-// Fungsi untuk mengambil Signed URL & mendownload file
-fun fetchAndDownloadModel(context: Context, queue: RequestQueue) {
-    val apiUrl = "https://backendsnapcalmd.vercel.app/v1/download/model"
-
-    val request = JsonObjectRequest(
-        Request.Method.GET, apiUrl, null,
-        { response: JSONObject ->
-            try {
-                val modelUrl = response.getString("model_url")
-                val labelsUrl = response.getString("labels_url")
-
-                // Download Model & Label
-                downloadFile(context, modelUrl, "model_unquant.tflite")
-                downloadFile(context, labelsUrl, "labels.txt")
-
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        },
-        { error -> error.printStackTrace() }
-    )
-
-    queue.add(request)
-}
+//// Fungsi untuk mengambil Signed URL & mendownload file
+//fun fetchAndDownloadModel(context: Context, queue: RequestQueue) {
+//    val apiUrl = "https://backendsnapcalmd.vercel.app/v1/download/model"
+//
+//    val request = JsonObjectRequest(
+//        Request.Method.GET, apiUrl, null,
+//        { response: JSONObject ->
+//            try {
+//                val modelUrl = response.getString("model_url")
+//                val labelsUrl = response.getString("labels_url")
+//
+//                // Download Model & Label
+//                downloadFile(context, modelUrl, "model_unquant.tflite")
+//                downloadFile(context, labelsUrl, "labels.txt")
+//
+//            } catch (e: Exception) {
+//                e.printStackTrace()
+//            }
+//        },
+//        { error -> error.printStackTrace() }
+//    )
+//
+//    queue.add(request)
+//}
 
 // Fungsi untuk mendownload file dari URL menggunakan DownloadManager
 fun downloadFile(context: Context, fileUrl: String, fileName: String) {
