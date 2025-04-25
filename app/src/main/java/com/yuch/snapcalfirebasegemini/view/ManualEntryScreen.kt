@@ -73,7 +73,8 @@ fun ManualEntryScreen(
                 saturatedFat = "",
                 fiber = "",
                 sugar = "",
-                mealType = null
+                mealType = null,
+                weightInGrams = "100"
             )
         )
     }
@@ -247,6 +248,17 @@ fun ManualEntryScreen(
                             leadingIcon = { Icon(Icons.Default.Restaurant, "Food") },
                             focusRequester = foodNameFocus,
                             onNext = { caloriesFocus.requestFocus() }
+                        )
+
+                        // Weight Input
+                        TextField(
+                            value = foodData.weightInGrams,
+                            onValueChange = { foodData = foodData.copy(weightInGrams = it) },
+                            label = "Weight (g)",
+                            leadingIcon = { Icon(Icons.Default.Restaurant, "Weight") },
+                            focusRequester = FocusRequester(),
+                            onNext = { focusManager.clearFocus() },
+                            keyboardType = KeyboardType.Number
                         )
 
                         Spacer(modifier = modifier.height(24.dp))
