@@ -488,10 +488,11 @@ private fun EditableAnalysisCard(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            
-            Divider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                color = MaterialTheme.colorScheme.outlineVariant
+
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outline,
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 8.dp)
             )
             
             Text(
@@ -734,7 +735,6 @@ private fun ImagePreview(imagePath: String) {
                 contentScale = ContentScale.Crop
             )
             
-            // Add a subtle gradient overlay for better text readability if needed
             Box(
                 modifier = Modifier
                     .fillMaxSize()

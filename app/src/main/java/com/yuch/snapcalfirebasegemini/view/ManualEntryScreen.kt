@@ -53,6 +53,7 @@ import androidx.compose.ui.text.input.ImeAction
 import com.yuch.snapcalfirebasegemini.ui.components.ImagePermissionHandler
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +75,7 @@ fun ManualEntryScreen(
                 fiber = "",
                 sugar = "",
                 mealType = null,
-                weightInGrams = "100"
+                weightInGrams = ""
             )
         )
     }
@@ -222,8 +223,15 @@ fun ManualEntryScreen(
                             )
                         }
 
-
                         Spacer(modifier = modifier.height(24.dp))
+
+                        Text(
+                            "Nutrition Information",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
 
                         // Meal Type Selector
                         MealTypeDropdown(
@@ -231,23 +239,20 @@ fun ManualEntryScreen(
                             onMealTypeSelected = { foodData = foodData.copy(mealType = it) }
                         )
 
-                        Spacer(modifier = modifier.height(24.dp))
-
-                        Text(
-                            "Food Information",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-
                         // Food Name Input
-                        TextField(
+                        OutlinedTextField(
                             value = foodData.foodName,
                             onValueChange = { foodData = foodData.copy(foodName = it) },
-                            label = "Food Name",
-                            leadingIcon = { Icon(Icons.Default.Restaurant, "Food") },
-                            focusRequester = foodNameFocus,
-                            onNext = { caloriesFocus.requestFocus() }
+                            label = { Text("Food Name") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            )
                         )
 
                         // Weight Input
@@ -261,9 +266,20 @@ fun ManualEntryScreen(
                             keyboardType = KeyboardType.Number
                         )
 
-                        Spacer(modifier = modifier.height(24.dp))
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outline,
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
 
-                        // Nutrition Section
+                        Text(
+                            "Nutrition Values",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+
                         // Nutrition Inputs
                         NutritionField(
                             label = "Calories",
@@ -439,33 +455,27 @@ private fun MealTypeDropdown(
     )
 
     Column {
-        Text(
-            "Meal Type",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = it }
         ) {
             OutlinedTextField(
-                value = selectedMealType?.replaceFirstChar { it.uppercase() } ?: "",
+                value = selectedMealType?.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(Locale.getDefault())
+                    else it.toString()
+                } ?: "Select Meal Type",
                 onValueChange = {},
                 readOnly = true,
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                },
+                label = { Text("Meal Type") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(),
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary
-                ),
-                placeholder = { Text("Select meal type") }
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                )
             )
 
             ExposedDropdownMenu(
