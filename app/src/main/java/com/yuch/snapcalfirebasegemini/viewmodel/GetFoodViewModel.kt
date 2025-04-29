@@ -87,6 +87,7 @@ class GetFoodViewModel(
                         userId = it.userId,
                         foodName = it.foodName,
                         mealType = it.mealType,
+                        weightInGrams = it.weightInGrams.toString(),
                         nutritionData = NutritionData(
                             calories = it.calories,
                             carbs = it.carbs,

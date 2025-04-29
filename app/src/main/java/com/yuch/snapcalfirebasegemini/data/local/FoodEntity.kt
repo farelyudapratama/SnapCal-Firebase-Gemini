@@ -10,6 +10,7 @@ data class FoodEntity(
     val foodName: String,
     val imageUrl: String?,
     val mealType: String,
+    val weightInGrams: String? = null,
     // Nutrisi
     val calories: Double,
     val carbs: Double,

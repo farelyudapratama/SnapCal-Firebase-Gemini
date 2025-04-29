@@ -16,6 +16,7 @@ data class EditableFoodData (
 data class UpdateFoodData (
     val foodName: String?,
     val mealType: String?,
+    val weightInGrams: String?,
     val calories: Double?,
     val carbs: Double?,
     val protein: Double?,

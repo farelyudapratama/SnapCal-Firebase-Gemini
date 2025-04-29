@@ -37,6 +37,7 @@ interface ApiService {
         @Part image: MultipartBody.Part?,
         @Part("foodName") foodName: RequestBody,
         @Part("mealType") mealType: RequestBody,
+        @Part("weightInGrams") weightInGrams: RequestBody,
         @Part("nutritionData") nutritionData: RequestBody
     ): Response<ApiResponse<Food>>
 
@@ -55,6 +56,7 @@ interface ApiService {
         @Path("id") id: String,
         @Part image: MultipartBody.Part?,
         @Part("foodName") foodName: RequestBody?,
+        @Part("weightInGrams") weightInGrams: RequestBody?,
         @Part("nutritionData") nutritionData: RequestBody?,
         @Part("mealType") mealType: RequestBody?
     ): Response<ApiResponse<FoodItem>>

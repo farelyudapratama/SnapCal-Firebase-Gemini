@@ -31,6 +31,7 @@ class ApiRepository(
                 foodName = food.foodName,
                 imageUrl = food.imageUrl,
                 mealType = food.mealType,
+                weightInGrams = food.weightInGrams,
                 calories = food.nutritionData.calories,
                 carbs = food.nutritionData.carbs,
                 protein = food.nutritionData.protein,
@@ -73,6 +74,7 @@ class ApiRepository(
                     userId = cachedFood.userId,
                     foodName = cachedFood.foodName,
                     mealType = cachedFood.mealType,
+                    weightInGrams = cachedFood.weightInGrams.toString(),
                     nutritionData = NutritionData(
                         calories = cachedFood.calories,
                         carbs = cachedFood.carbs,
@@ -105,6 +107,7 @@ class ApiRepository(
                                     foodName = newData.foodName,
                                     imageUrl = newData.imageUrl,
                                     mealType = newData.mealType,
+                                    weightInGrams = newData.weightInGrams,
                                     calories = newData.nutritionData.calories,
                                     carbs = newData.nutritionData.carbs,
                                     protein = newData.nutritionData.protein,

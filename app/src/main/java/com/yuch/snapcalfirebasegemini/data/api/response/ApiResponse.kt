@@ -25,6 +25,7 @@ data class FoodItem(
 	val userId: String,
 	val foodName: String,
 	val mealType: String,
+	val weightInGrams: String,
 	val nutritionData: NutritionData,
 	val imageUrl: String?,
 	val createdAt: String
@@ -35,6 +36,7 @@ data class Food(
 	val userId: String,
 	val foodName: String,
 	val mealType: String,
+	val weightInGrams: String,
 	val nutritionData: NutritionData,
 	val imageUrl: String?,
 )

@@ -108,6 +108,7 @@ class FoodViewModel(
 
                 val foodNamePart = foodData.foodName.toRequestBody("text/plain".toMediaTypeOrNull())
                 val mealTypePart = foodData.mealType!!.toRequestBody("text/plain".toMediaTypeOrNull())
+                val weightPart = foodData.weightInGrams.toString().toRequestBody("text/plain".toMediaTypeOrNull())
                 val nutritionJson = Gson().toJson(
                     mapOf(
                         "calories" to foodData.calories,
@@ -121,7 +122,7 @@ class FoodViewModel(
                 )
                 val nutritionPart = nutritionJson.toRequestBody("application/json".toMediaTypeOrNull())
 
-                val response = apiService.uploadFood(imagePart, foodNamePart, mealTypePart, nutritionPart)
+                val response = apiService.uploadFood(imagePart, foodNamePart, mealTypePart, weightPart,nutritionPart)
 
                 handleFoodResponse(response)
             } catch (e: Exception) {
@@ -241,6 +242,7 @@ class FoodViewModel(
                 val foodNamePart =
                     foodData.foodName?.toRequestBody("text/plain".toMediaTypeOrNull())
                 val mealTypePart = foodData.mealType.toRequestBody("text/plain".toMediaTypeOrNull())
+                val weightPart = foodData.weightInGrams.toString().toRequestBody("text/plain".toMediaTypeOrNull())
 
                 val nutritionJson = Gson().toJson(
                     mapOf(
@@ -259,6 +261,7 @@ class FoodViewModel(
                     id = foodId,
                     foodName = foodNamePart,
                     mealType = mealTypePart,
+                    weightInGrams = weightPart,
                     nutritionData = nutritionPart,
                     image = imagePart
                 )

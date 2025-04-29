@@ -73,13 +73,14 @@ import kotlinx.coroutines.launch
 fun EditFoodScreen(
     foodId: String,
     navController: NavController,
-    foodItem: FoodItem?, // Data makanan yang akan diedit
+    foodItem: FoodItem?, // Data makanan yang akan diedit harusnya
     onUpdateFood: (String, String?, UpdateFoodData) -> Unit,
     onBack: () -> Unit,
     getFoodViewModel: GetFoodViewModel,
     foodViewModel: FoodViewModel
 ) {
     var foodName by remember { mutableStateOf(foodItem?.foodName ?: "") }
+    var weightInGrams by remember { mutableStateOf(foodItem?.weightInGrams?.toString() ?: "") }
     var mealType by remember { mutableStateOf(foodItem?.mealType ?: "") }
     var calories by remember { mutableStateOf(foodItem?.nutritionData?.calories?.toString() ?: "") }
     var carbs by remember { mutableStateOf(foodItem?.nutritionData?.carbs?.toString() ?: "") }
@@ -181,6 +182,7 @@ fun EditFoodScreen(
                             UpdateFoodData(
                                 foodName = foodName,
                                 mealType = mealType,
+                                weightInGrams = weightInGrams ?: "0",
                                 calories = calories.toDoubleOrNull() ?: 0.0,
                                 carbs = carbs.toDoubleOrNull() ?: 0.0,
                                 protein = protein.toDoubleOrNull() ?: 0.0,
@@ -266,6 +268,17 @@ fun EditFoodScreen(
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        // Weight Input
+                        TextField(
+                            value = weightInGrams,
+                            onValueChange = { weightInGrams = it },
+                            label = "Weight (g)",
+                            leadingIcon = { Icon(Icons.Default.Restaurant, "Weight") },
+                            focusRequester = FocusRequester(),
+                            onNext = { focusManager.clearFocus() },
+                            keyboardType = KeyboardType.Number
                         )
 
                         // Food Name Input
