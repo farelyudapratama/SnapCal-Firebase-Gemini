@@ -9,7 +9,7 @@ sealed class Screen(val route: String) {
     data object Analyze : Screen("analyze/{imagePath}")
     data object Profile : Screen("profile")
     data object ManualEntry : Screen("manual-entry")
-    data object Message : Screen("message")
+    data object Tracking : Screen("tracking")
     data object DetailFood : Screen("detail-food/{foodId}")
     data object EditFood : Screen("edit-food/{foodId}")
     data object AiChat : Screen("ai-chat")

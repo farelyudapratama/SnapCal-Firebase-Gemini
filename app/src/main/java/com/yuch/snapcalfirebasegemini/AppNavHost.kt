@@ -14,7 +14,7 @@ import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.view.AiChatScreen
 import com.yuch.snapcalfirebasegemini.view.AnalyzeScreen
-import com.yuch.snapcalfirebasegemini.view.ChatListScreen
+import com.yuch.snapcalfirebasegemini.view.NutriTrackScreen
 import com.yuch.snapcalfirebasegemini.view.DetailFoodScreen
 import com.yuch.snapcalfirebasegemini.view.EditFoodScreen
 import com.yuch.snapcalfirebasegemini.view.ForgotPasswordScreen
@@ -63,8 +63,8 @@ fun AppNavHost(
         composable(Screen.Profile.route) {
             ProfileScreen(modifier, navController, authViewModel)
         }
-        composable(Screen.Message.route) {
-             ChatListScreen(navController, authViewModel)
+        composable(Screen.Tracking.route) {
+            NutriTrackScreen(navController, authViewModel)
         }
         composable(
             Screen.DetailFood.route,

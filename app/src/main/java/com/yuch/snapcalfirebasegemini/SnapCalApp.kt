@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
@@ -16,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,14 +79,14 @@ fun SnapCalApp(
                             ),
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.baseline_scan),
-                                contentDescription = "Scan",
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add Meal",
                                 tint = Color.White,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
                     }
-                    Screen.Message.route -> {
+                    Screen.Tracking.route -> {
                         FloatingActionButton(
                             onClick = {
                                 navController.navigate(Screen.AiChat.route)
@@ -98,8 +98,8 @@ fun SnapCalApp(
                             ),
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Pesan Baru",
+                                imageVector = Icons.AutoMirrored.Filled.Message,
+                                contentDescription = "Message Ai",
                                 tint = Color.White,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -230,21 +230,21 @@ fun BottomNavbar(
             NavigationBarItem(
                 icon = {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Message,
-                        contentDescription = "Chat",
+                        imageVector = Icons.Filled.BarChart,
+                        contentDescription = "Tracking",
                         modifier = Modifier.size(24.dp)
                     )
                 },
                 label = {
                     Text(
-                        text = "Chat",
+                        text = "Lacak",
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center
                     )
                 },
-                selected = currentRoute == Screen.Message.route,
+                selected = currentRoute == Screen.Tracking.route,
                 onClick = {
-                    navController.navigate(Screen.Message.route) {
+                    navController.navigate(Screen.Tracking.route) {
                         popUpTo(navController.graph.startDestinationId) { inclusive = false }
                         launchSingleTop = true
                     }
