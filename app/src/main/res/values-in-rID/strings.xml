@@ -3,15 +3,25 @@
     <string name="app_name">SnapCal</string>
 
     <string name="text_ok">OK</string>
+    <string name="text_delete">Hapus</string>
     <string name="text_cancel">Batal</string>
 
     <!--  nutrient  -->
     <string name="nutrient_calories">Kalori</string>
     <string name="nutrient_protein">Protein</string>
     <string name="nutrient_fat">Lemak</string>
-    <string name="nutrient_carbs">Karbohidrat</string>
+    <string name="nutrient_carbs">Karbo</string>
     <string name="nutrient_fiber">Serat</string>
     <string name="nutrient_sugar">Gula</string>
+
+    <string name="weight_title">Berat</string>
+
+    <!--  meal types  -->
+    <string name="breakfast">Sarapan</string>
+    <string name="lunch">Makan siang</string>
+    <string name="dinner">Makan malam</string>
+    <string name="snack">Snack</string>
+    <string name="drink">Minuman</string>
 
     <!-- TODO AuthViewModel -->
     <string name="auth_empty_fields">Email atau password tidak boleh kosong</string>
@@ -47,5 +57,30 @@
     <string name="all_entries">Semua entri</string>
     <string name="date_not_available">Tanggal tidak tersedia</string>
     <string name="load_more">Muat lebih banyak</string>
+
+    <!--  DetailFoodScreen  -->
+    <string name="detail_food_title">Detail</string>
+    <string name="food_details_not_available">Detail makanan tidak tersedia</string>
+    <string name="delete_food">Hapus Makanan</string>
+    <string name="delete_food_confirmation">Apakah Anda yakin ingin menghapus makanan ini?</string>
+    <string name="delete_food_success">Makanan berhasil dihapus</string>
+    <string name="nutrition_breakdown">Rincian Nutrisi</string>
+
+    <!--  Food Entry Screen  -->
+    <string name="food_entry_added_successfully">Makanan berhasil ditambahkan!</string>
+    <string name="food_analysis_title">Analisis Food</string>
+    <string name="please_select_a_meal_type_before_saving">Harap pilih jenis makanan sebelum menyimpan</string>
+    <string name="analyzing_your_food">Sedang menganalisis…</string>
+    <string name="this_may_take_a_moment">Tunggu Sebentar</string>
+    <string name="choose_analysis_method">Pilih metode analisis</string>
+    <string name="analyze_with_ai">Analisis dengan AI</string>
+    <string name="nutrition_information">Informasi Nutrisi</string>
+    <string name="adjust_values_if_needed">Atur ulang jika diperlukan</string>
+    <string name="select_meal_type">Pilih jenis makanan</string>
+    <string name="meal_type">Jenis makanan</string>
+    <string name="food_name">Nama makanan</string>
+    <string name="weight_g">Berat (g)</string>
+    <string name="nutrition_values">Nilai nutrisi</string>
+
 </resources>
 

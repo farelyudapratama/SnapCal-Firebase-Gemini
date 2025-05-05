@@ -4,7 +4,6 @@
 
 package com.yuch.snapcalfirebasegemini.view
 
-import android.content.Context
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -16,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -30,9 +28,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -126,11 +122,9 @@ fun MainScreen(
                 selectedDate = date
                 isFilterActive = true
 
-                // Format date to the required format (YYYY-MM-DD)
                 val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
                 val formattedDate = date.format(dateFormatter)
 
-                // Fetch food for the selected date
                 foodViewModel.fetchFoodDate(formattedDate)
 
                 showCalendarDialog = false
@@ -368,7 +362,14 @@ fun TopBar(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     if (isFilterActive && selectedDate != null) {
-                        val dateFormatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale("id", "ID"))
+                        val locale = Locale.getDefault()
+                        val pattern = if (locale.language == "id") {
+                            "EEEE, d MMMM yyyy"
+                        } else {
+                            "EEEE, MMMM d, yyyy"
+                        }
+
+                        val dateFormatter = DateTimeFormatter.ofPattern(pattern, locale)
                         Text(
                             text = selectedDate.format(dateFormatter),
                             style = MaterialTheme.typography.titleMedium,
@@ -607,7 +608,7 @@ fun NutritionInfoRow(nutritionData: NutritionData) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        NutritionItem(Icons.Default.Grain, "${nutritionData.carbs}g", stringResource(R.string.nutrient_calories))
+        NutritionItem(Icons.Default.Grain, "${nutritionData.carbs}g", stringResource(R.string.nutrient_carbs))
         NutritionItem(Icons.Default.FitnessCenter, "${nutritionData.protein}g", stringResource(R.string.nutrient_protein))
         NutritionItem(Icons.Default.Water, "${nutritionData.totalFat}g", stringResource(R.string.nutrient_fat))
         NutritionItem(Icons.Default.Grass, "${nutritionData.fiber}g", stringResource(R.string.nutrient_fiber))

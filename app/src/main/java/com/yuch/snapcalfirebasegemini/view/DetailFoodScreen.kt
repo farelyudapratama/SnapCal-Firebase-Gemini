@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -108,7 +110,7 @@ fun DetailFoodScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Food Details",
+                        stringResource(R.string.detail_food_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -183,7 +185,7 @@ fun DetailFoodScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Food details not available",
+                            text = stringResource(R.string.food_details_not_available),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -196,23 +198,23 @@ fun DetailFoodScreen(
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Delete Food") },
-            text = { Text("Are you sure you want to delete this food?") },
+            title = { Text(stringResource(R.string.delete_food)) },
+            text = { Text(stringResource(R.string.delete_food_confirmation)) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showDialog = false
                         viewModel.deleteFood(foodId) {
-                            Toast.makeText(context, "Food deleted", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.delete_food_success, Toast.LENGTH_SHORT).show()
                         }
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.text_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.text_cancel))
                 }
             }
         )
@@ -508,7 +510,7 @@ fun CalorieCounter(calories: Double) {
             )
         )
         Text(
-            text = "CALORIES",
+            text = stringResource(R.string.nutrient_calories),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -569,7 +571,7 @@ fun NutritionInfoCard(foodItem: com.yuch.snapcalfirebasegemini.data.api.response
         Column(modifier = Modifier.padding(16.dp)) {
             // Heading
             Text(
-                text = "Nutrition Breakdown",
+                text = stringResource(R.string.nutrition_breakdown),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -597,7 +599,7 @@ fun NutritionInfoCard(foodItem: com.yuch.snapcalfirebasegemini.data.api.response
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = "Calories",
+                                text = stringResource(R.string.nutrient_calories),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -631,7 +633,7 @@ fun NutritionInfoCard(foodItem: com.yuch.snapcalfirebasegemini.data.api.response
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = "Weight",
+                                text = stringResource(R.string.weight_title),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -673,11 +675,11 @@ fun NutritionInfoCard(foodItem: com.yuch.snapcalfirebasegemini.data.api.response
                         .weight(1f)
                         .padding(start = 8.dp)
                 ) {
-                    MacronutrientItem("Carbs", "${foodItem.nutritionData.carbs}g", carbsColor)
-                    MacronutrientItem("Protein", "${foodItem.nutritionData.protein}g", proteinColor)
-                    MacronutrientItem("Total Fat", "${foodItem.nutritionData.totalFat}g", fatColor)
-                    MacronutrientItem("Fiber", "${foodItem.nutritionData.fiber}g", fiberColor)
-                    MacronutrientItem("Sugar", "${foodItem.nutritionData.sugar}g", sugarColor)
+                    MacronutrientItem(stringResource(R.string.nutrient_carbs), "${foodItem.nutritionData.carbs}g", carbsColor)
+                    MacronutrientItem(stringResource(R.string.nutrient_protein), "${foodItem.nutritionData.protein}g", proteinColor)
+                    MacronutrientItem(stringResource(R.string.nutrient_fat), "${foodItem.nutritionData.totalFat}g", fatColor)
+                    MacronutrientItem(stringResource(R.string.nutrient_fiber), "${foodItem.nutritionData.fiber}g", fiberColor)
+                    MacronutrientItem(stringResource(R.string.nutrient_sugar), "${foodItem.nutritionData.sugar}g", sugarColor)
                 }
             }
         }

@@ -21,11 +21,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import kotlinx.coroutines.launch
@@ -111,7 +113,7 @@ fun AnalyzeScreen(
         if (uploadSuccess) {
             Toast.makeText(
                 context,
-                "Food entry added successfully!",
+                context.getString(R.string.food_entry_added_successfully),
                 Toast.LENGTH_SHORT
             ).show()
 
@@ -136,7 +138,7 @@ fun AnalyzeScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Food Analysis",
+                        stringResource(R.string.food_analysis_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.SemiBold
                         )
@@ -167,7 +169,7 @@ fun AnalyzeScreen(
                             } else {
                                 coroutineScope.launch {
                                     snackbarHostState.showSnackbar(
-                                        message = "Please select a meal type before saving",
+                                        message = context.getString(R.string.please_select_a_meal_type_before_saving),
                                         duration = SnackbarDuration.Short
                                     )
                                 }
@@ -266,12 +268,12 @@ private fun LoadingContent() {
                 strokeWidth = 5.dp
             )
             Text(
-                "Analyzing your food...",
+                stringResource(R.string.analyzing_your_food),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                "This may take a moment",
+                stringResource(R.string.this_may_take_a_moment),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
             )
@@ -303,18 +305,11 @@ private fun ServiceSelectionCard(
                 .fillMaxWidth()
         ) {
             Text(
-                "Choose Analysis Method",
+                stringResource(R.string.choose_analysis_method),
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold
                 ),
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-            
-            Text(
-                "Select a service to analyze your food image",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Row(
@@ -329,7 +324,7 @@ private fun ServiceSelectionCard(
                 )
 
                 ServiceButton(
-                    text = "Groq",
+                    text = "Llama",
                     isSelected = selectedService == "groq",
                     onClick = { onServiceSelected("groq") },
                     modifier = Modifier.weight(1f)
@@ -358,7 +353,7 @@ private fun ServiceSelectionCard(
                     )
                 } else {
                     Text(
-                        "Analyze with AI",
+                        stringResource(R.string.analyze_with_ai),
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
                     )
                 }
@@ -407,7 +402,7 @@ private fun EditableAnalysisCard(
                 .fillMaxWidth()
         ) {
             Text(
-                "Nutrition Information",
+                stringResource(R.string.nutrition_information),
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -415,10 +410,17 @@ private fun EditableAnalysisCard(
             )
             
             Text(
-                "Adjust values if needed",
+                stringResource(R.string.adjust_values_if_needed),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 modifier = Modifier.padding(bottom = 16.dp)
+            )
+            val mealTypeMap = mapOf(
+                "breakfast" to stringResource(R.string.breakfast),
+                "lunch" to stringResource(R.string.lunch),
+                "dinner" to stringResource(R.string.dinner),
+                "snack" to stringResource(R.string.snack),
+                "drink" to stringResource(R.string.drink)
             )
 
             var expanded by remember { mutableStateOf(false) }
@@ -427,17 +429,23 @@ private fun EditableAnalysisCard(
                 onExpandedChange = { expanded = !expanded }
             ) {
                 OutlinedTextField(
-                    value = foodData.mealType?.replaceFirstChar {
-                        if (it.isLowerCase()) it.titlecase(Locale.getDefault())
-                        else it.toString()
-                    } ?: "Select Meal Type",
+                    value = foodData.mealType
+                        ?.let { mealTypeMap[it] }
+                        ?.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase(Locale.getDefault())
+                            else it.toString()
+                        }
+                        ?: stringResource(R.string.select_meal_type),
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Meal Type") },
+                    label = { Text(stringResource(R.string.meal_type)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor(),
+                        .menuAnchor(
+                            type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                            enabled = true
+                        ),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -449,21 +457,28 @@ private fun EditableAnalysisCard(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
-                    listOf("breakfast", "lunch", "dinner", "snack", "drink").forEach { mealType ->
+                    listOf(
+                        stringResource(R.string.breakfast) to "breakfast",
+                        stringResource(R.string.lunch) to "lunch",
+                        stringResource(R.string.dinner) to "dinner",
+                        stringResource(R.string.snack) to "snack",
+                        stringResource(R.string.drink) to "drink"
+                    ).forEach { (label, value) ->
                         DropdownMenuItem(
                             text = {
-                                Text(mealType.replaceFirstChar {
+                                Text(label.replaceFirstChar {
                                     if (it.isLowerCase()) it.titlecase(Locale.ROOT)
                                     else it.toString()
                                 })
                             },
                             onClick = {
-                                onValueChange(foodData.copy(mealType = mealType))
+                                onValueChange(foodData.copy(mealType = value))
                                 expanded = false
                             }
                         )
                     }
                 }
+
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -471,7 +486,7 @@ private fun EditableAnalysisCard(
             OutlinedTextField(
                 value = foodData.foodName,
                 onValueChange = { onValueChange(foodData.copy(foodName = it)) },
-                label = { Text("Food Name") },
+                label = { Text(stringResource(R.string.food_name)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
@@ -483,7 +498,7 @@ private fun EditableAnalysisCard(
                 )
             )
 
-            EditableNutritionRow("Weight (g)", foodData.weightInGrams) {
+            EditableNutritionRow(stringResource(R.string.weight_g), foodData.weightInGrams) {
                 onValueChange(foodData.copy(weightInGrams = it))
             }
 
@@ -496,7 +511,7 @@ private fun EditableAnalysisCard(
             )
             
             Text(
-                "Nutrition Values",
+                stringResource(R.string.nutrition_values),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
@@ -504,13 +519,13 @@ private fun EditableAnalysisCard(
             )
 
             val nutritionFields = listOf(
-                "calories" to "Calories (kcal)",
-                "carbs" to "Carbs (g)",
-                "protein" to "Protein (g)",
-                "totalFat" to "Total Fat (g)",
+                "calories" to stringResource(R.string.nutrient_calories) + " (kcal)",
+                "carbs" to stringResource(R.string.nutrient_carbs) + " (g)",
+                "protein" to stringResource(R.string.nutrient_protein) + " (g)",
+                "totalFat" to stringResource(R.string.nutrient_fat) + " (g)",
                 "saturatedFat" to "Saturated Fat (g)",
-                "fiber" to "Fiber (g)",
-                "sugar" to "Sugar (g)"
+                "fiber" to stringResource(R.string.nutrient_fiber) + " (g)",
+                "sugar" to stringResource(R.string.nutrient_sugar) + " (g)"
             )
 
             nutritionFields.forEach { (key, label) ->
@@ -597,7 +612,7 @@ private fun CompositionSectionPlaceholder(
                     modifier = Modifier.padding(top = 16.dp)
                 ) {
                     Text(
-                        "This section will display detailed ingredients and composition " +
+                        "Nanti mungkin nambah komposisi " +
                         "information for the analyzed food item.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
