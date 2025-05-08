@@ -80,5 +80,7 @@
     <string name="food_name">Food Name</string>
     <string name="weight_g">Weight (g)</string>
     <string name="nutrition_values">Nutrition Values</string>
+    <string name="add_food_entry">Add Food Entry</string>
+    <string name="please_fill_in_food_name_and_select_meal_type">Please fill in food name and select meal type</string>
 
 </resources>

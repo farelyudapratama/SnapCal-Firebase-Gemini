@@ -157,7 +157,7 @@ fun EditFoodScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Edit Food",
+                        "Edit",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Medium
                         )

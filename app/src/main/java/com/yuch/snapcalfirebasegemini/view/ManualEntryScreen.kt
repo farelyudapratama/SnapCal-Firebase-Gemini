@@ -50,7 +50,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.ui.components.ImagePermissionHandler
 import java.io.File
 import java.io.FileOutputStream
@@ -129,7 +131,7 @@ fun ManualEntryScreen(
         if (uploadSuccess) {
             Toast.makeText(
                 context,
-                "Food entry added successfully!",
+                context.getString(R.string.food_entry_added_successfully),
                 Toast.LENGTH_SHORT
             ).show()
 
@@ -145,7 +147,7 @@ fun ManualEntryScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Add Food Entry",
+                        stringResource(R.string.add_food_entry),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Medium
                         )
@@ -173,7 +175,7 @@ fun ManualEntryScreen(
                     } else {
                         coroutineScope.launch {
                             snackbarHostState.showSnackbar(
-                                message = "Please fill in food name and select meal type",
+                                message = context.getString(R.string.please_fill_in_food_name_and_select_meal_type),
                                 duration = SnackbarDuration.Short
                             )
                         }
@@ -232,7 +234,7 @@ fun ManualEntryScreen(
                         Spacer(modifier = modifier.height(24.dp))
 
                         Text(
-                            "Nutrition Information",
+                            stringResource(R.string.nutrition_information),
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold
                             ),
@@ -249,7 +251,7 @@ fun ManualEntryScreen(
                         OutlinedTextField(
                             value = foodData.foodName,
                             onValueChange = { foodData = foodData.copy(foodName = it) },
-                            label = { Text("Food Name") },
+                            label = { Text(stringResource(R.string.food_name)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp),
@@ -265,7 +267,7 @@ fun ManualEntryScreen(
                         TextField(
                             value = foodData.weightInGrams,
                             onValueChange = { foodData = foodData.copy(weightInGrams = it) },
-                            label = "Weight (g)",
+                            label = stringResource(R.string.weight_g),
                             leadingIcon = { Icon(Icons.Default.Restaurant, "Weight") },
                             focusRequester = FocusRequester(),
                             onNext = { focusManager.clearFocus() },
@@ -279,7 +281,7 @@ fun ManualEntryScreen(
                         )
 
                         Text(
-                            "Nutrition Values",
+                            stringResource(R.string.nutrition_values),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.SemiBold
                             ),
@@ -288,7 +290,7 @@ fun ManualEntryScreen(
 
                         // Nutrition Inputs
                         NutritionField(
-                            label = "Calories",
+                            label = stringResource(R.string.nutrient_calories) + " (kcal)",
                             value = foodData.calories,
                             onValueChange = { foodData = foodData.copy(calories = it) },
                             focusRequester = caloriesFocus,
@@ -297,7 +299,7 @@ fun ManualEntryScreen(
                         )
 
                         NutritionField(
-                            label = "Carbohydrates (g)",
+                            label = stringResource(R.string.nutrient_carbs) + " (g)",
                             value = foodData.carbs,
                             onValueChange = { foodData = foodData.copy(carbs = it) },
                             focusRequester = carbsFocus,
@@ -306,7 +308,7 @@ fun ManualEntryScreen(
                         )
 
                         NutritionField(
-                            label = "Protein (g)",
+                            label = stringResource(R.string.nutrient_protein) + " (g)",
                             value = foodData.protein,
                             onValueChange = { foodData = foodData.copy(protein = it) },
                             focusRequester = proteinFocus,
@@ -315,7 +317,7 @@ fun ManualEntryScreen(
                         )
 
                         NutritionField(
-                            label = "Total Fat (g)",
+                            label = stringResource(R.string.nutrient_fat) + " (g)",
                             value = foodData.totalFat,
                             onValueChange = { foodData = foodData.copy(totalFat = it) },
                             focusRequester = totalFatFocus,
@@ -333,7 +335,7 @@ fun ManualEntryScreen(
                         )
 
                         NutritionField(
-                            label = "Fiber (g)",
+                            label = stringResource(R.string.nutrient_fiber) + " (g)",
                             value = foodData.fiber,
                             onValueChange = { foodData = foodData.copy(fiber = it) },
                             focusRequester = fiberFocus,
@@ -342,7 +344,7 @@ fun ManualEntryScreen(
                         )
 
                         NutritionField(
-                            label = "Sugar (g)",
+                            label = stringResource(R.string.nutrient_sugar) + " (g)",
                             value = foodData.sugar,
                             onValueChange = { foodData = foodData.copy(sugar = it) },
                             focusRequester = sugarFocus,
@@ -459,24 +461,30 @@ private fun MealTypeDropdown(
         "snack" to Icons.Default.Icecream,
         "drink" to Icons.Default.LocalCafe
     )
-
+    val mealTypeLabels = mapOf(
+        "breakfast" to stringResource(R.string.breakfast),
+        "lunch" to stringResource(R.string.lunch),
+        "dinner" to stringResource(R.string.dinner),
+        "snack" to stringResource(R.string.snack),
+        "drink" to stringResource(R.string.drink)
+    )
     Column {
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = it }
         ) {
             OutlinedTextField(
-                value = selectedMealType?.replaceFirstChar {
-                    if (it.isLowerCase()) it.titlecase(Locale.getDefault())
-                    else it.toString()
-                } ?: "Select Meal Type",
+                value = mealTypeLabels[selectedMealType] ?: stringResource(R.string.select_meal_type),
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Meal Type") },
+                label = { Text(stringResource(R.string.select_meal_type)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
+                    .menuAnchor(
+                        type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
+                        enabled = true
+                    ),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -500,7 +508,7 @@ private fun MealTypeDropdown(
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary
                                 )
-                                Text(type.replaceFirstChar { it.uppercase() })
+                                Text(mealTypeLabels[type] ?: type)
                             }
                         },
                         onClick = {
