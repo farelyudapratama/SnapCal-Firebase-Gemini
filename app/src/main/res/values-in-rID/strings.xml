@@ -74,7 +74,7 @@
     <string name="this_may_take_a_moment">Tunggu Sebentar</string>
     <string name="choose_analysis_method">Pilih metode analisis</string>
     <string name="analyze_with_ai">Analisis dengan AI</string>
-    <string name="nutrition_information">Informasi Nutrisi</string>
+    <string name="food_information">Informasi</string>
     <string name="adjust_values_if_needed">Atur ulang jika diperlukan</string>
     <string name="select_meal_type">Pilih jenis makanan</string>
     <string name="meal_type">Jenis makanan</string>
@@ -83,6 +83,10 @@
     <string name="nutrition_values">Nilai nutrisi</string>
     <string name="add_food_entry">Tambah entri</string>
     <string name="please_fill_in_food_name_and_select_meal_type">Mohon isi nama manakan dan pilih jenis makanan</string>
+    <string name="selected_food_image">Pilih gambar</string>
+    <string name="tap_to_change_photo">Ganti gambar</string>
+    <string name="delete_image">Hapus gambar</string>
+    <string name="are_you_sure_you_want_to_delete_this_image_this_action_cannot_be_undone">Yakin mau hapus gambar? Ini ga bisa di undo loh.</string>
 
 </resources>
 

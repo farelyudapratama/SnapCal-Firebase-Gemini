@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
@@ -402,7 +401,7 @@ private fun EditableAnalysisCard(
                 .fillMaxWidth()
         ) {
             Text(
-                stringResource(R.string.nutrition_information),
+                stringResource(R.string.food_information),
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -817,5 +816,6 @@ fun updateField(food: EditableFoodData, field: String, value: String): EditableF
 fun calculatePortionValue(valuePer100g: String, weight: String): String {
     val value = valuePer100g.toFloatOrNull() ?: 0f
     val grams = weight.toFloatOrNull() ?: 100f
-    return ((value / 100f) * grams).toString()
+    val result =  ((value / 100f) * grams)
+    return String.format(Locale.getDefault(), "%.2f", result)
 }

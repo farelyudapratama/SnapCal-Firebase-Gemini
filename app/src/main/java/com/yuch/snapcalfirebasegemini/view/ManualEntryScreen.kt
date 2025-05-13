@@ -56,7 +56,6 @@ import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.ui.components.ImagePermissionHandler
 import java.io.File
 import java.io.FileOutputStream
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -234,7 +233,7 @@ fun ManualEntryScreen(
                         Spacer(modifier = modifier.height(24.dp))
 
                         Text(
-                            stringResource(R.string.nutrition_information),
+                            stringResource(R.string.food_information),
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold
                             ),

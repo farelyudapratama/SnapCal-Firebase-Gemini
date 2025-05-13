@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -61,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
@@ -264,7 +266,7 @@ fun EditFoodScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Text(
-                            "Food Information",
+                            stringResource(R.string.food_information),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(bottom = 16.dp)
@@ -274,7 +276,7 @@ fun EditFoodScreen(
                         TextField(
                             value = weightInGrams,
                             onValueChange = { weightInGrams = it },
-                            label = "Weight (g)",
+                            label = stringResource(R.string.weight_g),
                             leadingIcon = { Icon(Icons.Default.Restaurant, "Weight") },
                             focusRequester = FocusRequester(),
                             onNext = { focusManager.clearFocus() },
@@ -285,7 +287,7 @@ fun EditFoodScreen(
                         TextField(
                             value = foodName,
                             onValueChange = { foodName = it },
-                            label = "Food Name",
+                            label = stringResource(R.string.food_name),
                             leadingIcon = { Icon(Icons.Default.Restaurant, "Food") },
                             focusRequester = foodNameFocus,
                             onNext = { caloriesFocus.requestFocus() }
@@ -295,7 +297,7 @@ fun EditFoodScreen(
 
                         // Nutrition Section
                         Text(
-                            "Nutrition Information",
+                            stringResource(R.string.nutrition_values),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(bottom = 16.dp)
@@ -303,7 +305,7 @@ fun EditFoodScreen(
 
                         // Nutrition Inputs
                         NutritionField(
-                            label = "Calories",
+                            label = stringResource(R.string.nutrient_calories) + " (kcal)",
                             value = calories,
                             onValueChange = { calories = it },
                             focusRequester = caloriesFocus,
@@ -312,7 +314,7 @@ fun EditFoodScreen(
                         )
 
                         NutritionField(
-                            label = "Carbohydrates (g)",
+                            label = stringResource(R.string.nutrient_carbs) + " (g)",
                             value = carbs,
                             onValueChange = { carbs = it },
                             focusRequester = carbsFocus,
@@ -321,7 +323,7 @@ fun EditFoodScreen(
                         )
 
                         NutritionField(
-                            label = "Protein (g)",
+                            label = stringResource(R.string.nutrient_protein) + " (g)",
                             value = protein,
                             onValueChange = { protein = it },
                             focusRequester = proteinFocus,
@@ -330,7 +332,7 @@ fun EditFoodScreen(
                         )
 
                         NutritionField(
-                            label = "Total Fat (g)",
+                            label = stringResource(R.string.nutrient_fat) + " (g)",
                             value = totalFat,
                             onValueChange = { totalFat = it },
                             focusRequester = totalFatFocus,
@@ -348,7 +350,7 @@ fun EditFoodScreen(
                         )
 
                         NutritionField(
-                            label = "Fiber (g)",
+                            label = stringResource(R.string.nutrient_fiber) + " (g)",
                             value = fiber,
                             onValueChange = { fiber = it },
                             focusRequester = fiberFocus,
@@ -357,7 +359,7 @@ fun EditFoodScreen(
                         )
 
                         NutritionField(
-                            label = "Sugar (g)",
+                            label = stringResource(R.string.nutrient_sugar) + " (g)",
                             value = sugar,
                             onValueChange = { sugar = it },
                             focusRequester = sugarFocus,
@@ -398,7 +400,7 @@ private fun ImageSelectionPreview(
             Box(modifier = Modifier.fillMaxSize()) {
                 Image(
                     painter = rememberAsyncImagePainter(selectedImageUri),
-                    contentDescription = "Selected Food Image",
+                    contentDescription = stringResource(R.string.selected_food_image),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
@@ -423,7 +425,7 @@ private fun ImageSelectionPreview(
                     verticalArrangement = Arrangement.Bottom
                 ) {
                     Text(
-                        text = "Tap to change photo",
+                        text = stringResource(R.string.tap_to_change_photo),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier
@@ -465,7 +467,7 @@ private fun ImageSelectionPreview(
                     verticalArrangement = Arrangement.Bottom
                 ) {
                     Text(
-                        text = "Tap to change photo",
+                        text = stringResource(R.string.tap_to_change_photo),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier
@@ -491,7 +493,7 @@ private fun ImageSelectionPreview(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Tap to select image",
+                    text = stringResource(R.string.selected_food_image),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -511,7 +513,7 @@ private fun ImageActionButtons(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
     ) {
-        val buttonText = if (hasExistingImage) "Change Image" else "Choose Image"
+        val buttonText = if (hasExistingImage) stringResource(R.string.tap_to_change_photo) else stringResource(R.string.selected_food_image)
         OutlinedButton(onClick = onSelectImage) {
             Text(buttonText)
         }
@@ -528,14 +530,14 @@ private fun ImageActionButtons(
             ),
             border = BorderStroke(1.dp, if (canDeleteImage) Color.Red else Color.Gray)
         ) {
-            Text("Delete Image")
+            Text(stringResource(R.string.delete_image))
         }
 
         if (showDialog) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
-                title = { Text("Delete Image") },
-                text = { Text("Are you sure you want to delete this image? This action cannot be undone.") },
+                title = { Text(stringResource(R.string.delete_image)) },
+                text = { Text(stringResource(R.string.are_you_sure_you_want_to_delete_this_image_this_action_cannot_be_undone)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -543,12 +545,12 @@ private fun ImageActionButtons(
                             showDialog = false
                         }
                     ) {
-                        Text("Delete", color = Color.Red)
+                        Text(stringResource(R.string.text_delete), color = Color.Red)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDialog = false }) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.text_cancel))
                     }
                 }
             )
