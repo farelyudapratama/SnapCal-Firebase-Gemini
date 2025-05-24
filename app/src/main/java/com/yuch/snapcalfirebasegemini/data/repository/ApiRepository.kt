@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
+import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
@@ -161,6 +162,20 @@ class ApiRepository(
         return foodDao?.getRecentFoods(sevenDaysAgo)
             ?: throw Exception("Database tidak tersedia")
     }
+
+    suspend fun getSummaryToday(): ApiResponse<DailySummaryResponse>? {
+        return try {
+            val response = apiService.getSummaryToday()
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
 }
 
 class ViewModelFactory(private val repository: ApiRepository) : ViewModelProvider.Factory {

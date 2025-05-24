@@ -19,6 +19,7 @@ data class FoodPage(
 	val totalItems: Int,
 	val items: List<FoodItem>
 )
+
 data class FoodItem(
 	@SerializedName("_id")
 	val id: String,
@@ -62,16 +63,6 @@ data class AnalyzeResult(
 	val sugar: Double
 )
 
-data class DailySummary(
-	val totalCalories: Double,
-	val totalCarbs: Double,
-	val totalProtein: Double,
-	val totalFat: Double,
-	val totalSaturatedFat: Double,
-	val totalFiber: Double,
-	val totalSugar: Double
-)
-
 data class AiChatResponse(
 	val aiResponse: String
 )
@@ -97,4 +88,37 @@ data class UsageAiChatDetails(
 	val dailyCount: Int,
 	val lastUsed: String,
 	val remainingQuota: Int
+)
+
+data class DailySummaryResponse(
+	val date: String,
+	val data: DailySummary?,
+	val goals: Goals,
+	val foods: List<FoodBrief>,
+	val feedback: List<String>
+)
+
+data class Goals(
+	val calories: Double,
+	val carbs: Double,
+	val protein: Double,
+	val fat: Double
+)
+
+data class FoodBrief(
+	val mealType: String,
+	val calories: Double,
+	val time: String
+)
+
+data class DailySummary(
+	@SerializedName("_id")
+	val id: String? = null,
+	val totalCalories: Double,
+	val totalCarbs: Double,
+	val totalProtein: Double,
+	val totalFat: Double,
+	val totalSaturatedFat: Double,
+	val totalFiber: Double,
+	val totalSugar: Double
 )

@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
+import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
@@ -45,6 +46,10 @@ class GetFoodViewModel(
 
     private val _imageDeletedMessage = MutableStateFlow<String?>(null)
     val imageDeletedMessage: StateFlow<String?> = _imageDeletedMessage
+
+    // Daily summary
+    private val _dailySummary = MutableStateFlow<DailySummaryResponse?>(null)
+    val dailySummary: StateFlow<DailySummaryResponse?> = _dailySummary
 
     init {
         // Ambil data dari halaman pertama
@@ -205,6 +210,18 @@ class GetFoodViewModel(
     }
     fun clearImageDeletedMessage() {
         _imageDeletedMessage.value = null
+    }
+
+    fun fetchDailySummary() {
+        viewModelScope.launch {
+            val result = repository.getSummaryToday()
+            if (result != null && result.status == "success") {
+                _dailySummary.value = result.data
+            } else {
+                _dailySummary.value = null
+                _errorMessage.value = result?.message ?: "Failed to fetch daily summary"
+            }
+        }
     }
 
     /**

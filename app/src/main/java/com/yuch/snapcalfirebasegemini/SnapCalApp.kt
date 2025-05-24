@@ -226,7 +226,7 @@ fun BottomNavbar(
                 )
             )
 
-            // Chat Item
+            // Track Item
             NavigationBarItem(
                 icon = {
                     Icon(

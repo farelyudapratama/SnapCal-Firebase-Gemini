@@ -12,19 +12,28 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.rounded.DirectionsRun
 import androidx.compose.material.icons.rounded.WaterDrop
+import androidx.compose.material.icons.rounded.LocalFireDepartment
+import androidx.compose.material.icons.rounded.Grain
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -62,7 +71,11 @@ data class WeeklyProgress(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun NutriTrackScreen(navController: NavController, authViewModel: AuthViewModel) {
+fun NutriTrackScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel,
+    viewModel: GetFoodViewModel
+) {
     val authState = authViewModel.authState.observeAsState()
     LaunchedEffect(authState.value) {
         when(authState.value){
@@ -70,6 +83,11 @@ fun NutriTrackScreen(navController: NavController, authViewModel: AuthViewModel)
             else -> Unit
         }
     }
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchDailySummary()
+    }
+    val dailySummary by viewModel.dailySummary.collectAsState()
 
     // State variables
     // Dummy data
@@ -159,10 +177,8 @@ fun NutriTrackScreen(navController: NavController, authViewModel: AuthViewModel)
             item { HeaderSection() }
 
             item {
-                SummaryCardsRow(
-                    nutritionSummary = nutritionSummary,
-                    weeklyProgress = weeklyProgress
-                )
+                // Updated Summary Section with API data
+                EnhancedSummarySection(dailySummary = dailySummary)
             }
 
             item {
@@ -192,6 +208,382 @@ fun NutriTrackScreen(navController: NavController, authViewModel: AuthViewModel)
                     exerciseCalories = exerciseCaloriesBurned
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun EnhancedSummarySection(dailySummary: DailySummaryResponse?) {
+    Column(
+        modifier = Modifier.padding(vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Main Daily Overview Card
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
+        ) {
+            Box {
+                // Gradient background
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
+                                )
+                            )
+                        )
+                )
+
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Text(
+                        "Today's Summary",
+                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Main Nutrition Stats
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        MainNutrientCard(
+                            icon = Icons.Rounded.LocalFireDepartment,
+                            label = "Calories",
+                            current = dailySummary?.data?.totalCalories?.toInt() ?: 0,
+                            goal = dailySummary?.goals?.calories?.toInt() ?: 2000,
+                            unit = "kcal",
+                            color = Color(0xFFFF6B35),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        MainNutrientCard(
+                            icon = Icons.Rounded.FitnessCenter,
+                            label = "Protein",
+                            current = dailySummary?.data?.totalProtein?.toInt() ?: 0,
+                            goal = dailySummary?.goals?.protein?.toInt() ?: 100,
+                            unit = "g",
+                            color = Color(0xFF4CAF50),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Macro Nutrients Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            MacroNutrientCard(
+                icon = Icons.Rounded.Grain,
+                label = "Carbs",
+                current = dailySummary?.data?.totalCarbs?.toInt() ?: 0,
+                goal = dailySummary?.goals?.carbs?.toInt() ?: 250,
+                unit = "g",
+                color = Color(0xFF2196F3),
+                modifier = Modifier.weight(1f)
+            )
+
+            MacroNutrientCard(
+                icon = Icons.Rounded.Restaurant,
+                label = "Fat",
+                current = dailySummary?.data?.totalFat?.toInt() ?: 0,
+                goal = dailySummary?.goals?.fat?.toInt() ?: 70,
+                unit = "g",
+                color = Color(0xFFFF9800),
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        // Feedback Section
+        dailySummary?.feedback?.let { feedback ->
+            if (feedback.isNotEmpty()) {
+                FeedbackCard(feedback = feedback)
+            }
+        }
+
+        // Today's Meals Preview
+        dailySummary?.foods?.let { foods ->
+            if (foods.isNotEmpty()) {
+                TodaysMealsPreview(foods = foods)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainNutrientCard(
+    icon: ImageVector,
+    label: String,
+    current: Int,
+    goal: Int,
+    unit: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    val progress = if (goal > 0) (current.toFloat() / goal).coerceIn(0f, 1f) else 0f
+
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = color,
+                modifier = Modifier.size(32.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "$current",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = color
+                )
+            )
+
+            Text(
+                text = "/ $goal $unit",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp)),
+                color = color,
+                trackColor = color.copy(alpha = 0.2f)
+            )
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun MacroNutrientCard(
+    icon: ImageVector,
+    label: String,
+    current: Int,
+    goal: Int,
+    unit: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    val progress = if (goal > 0) (current.toFloat() / goal).coerceIn(0f, 1f) else 0f
+
+    ElevatedCard(
+        modifier = modifier,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = color.copy(alpha = 0.05f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = color,
+                modifier = Modifier.size(24.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "$current/$goal",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = color
+                )
+            )
+
+            Text(
+                text = "$unit $label",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp)),
+                color = color,
+                trackColor = color.copy(alpha = 0.2f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun FeedbackCard(feedback: List<String>) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.LocalFireDepartment,
+                    contentDescription = "Feedback",
+                    tint = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Daily Insights",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            feedback.forEach { feedbackText ->
+                Row(
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "• ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = feedbackText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TodaysMealsPreview(foods: List<com.yuch.snapcalfirebasegemini.data.api.response.FoodBrief>) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Today's Meals",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            foods.forEach { food ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        MealTypeIcon(mealType = food.mealType)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = food.mealType.capitalize(),
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                            Text(
+                                text = food.time,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "${food.calories.toInt()} kcal",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MealTypeIcon(mealType: String) {
+    val (color, emoji) = when (mealType.lowercase()) {
+        "breakfast" -> Pair(Color(0xFFFFC107), "🌅")
+        "lunch" -> Pair(Color(0xFF4CAF50), "☀️")
+        "dinner" -> Pair(Color(0xFFFF5722), "🌙")
+        "snack" -> Pair(Color(0xFF9C27B0), "🍎")
+        else -> Pair(MaterialTheme.colorScheme.primary, "🍽️")
+    }
+
+    Surface(
+        color = color.copy(alpha = 0.15f),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.size(40.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = emoji,
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
     }
 }
@@ -282,13 +674,13 @@ private fun SummaryCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-        Text(
-            title,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        content()
-    }
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            content()
+        }
     }
 }
 
@@ -496,178 +888,79 @@ private fun NutritionBreakdownSection(nutritionSummary: NutritionSummary) {
 
             val nutrients = listOf(
                 NutrientProgressData("Carbs", nutritionSummary.carbs, nutritionSummary.carbsGoal, Color(0xFFFF9800)),
-                NutrientProgressData("Protein", nutritionSummary.protein, nutritionSummary.proteinGoal, Color(0xFF00C853)),
-                NutrientProgressData("Fat", nutritionSummary.fat, nutritionSummary.fatGoal, Color(0xFFE91E63)),
+                NutrientProgressData("Protein", nutritionSummary.protein, nutritionSummary.proteinGoal, Color(0xFF4CAF50)),
+                NutrientProgressData("Fat", nutritionSummary.fat, nutritionSummary.fatGoal, Color(0xFF2196F3)),
                 NutrientProgressData("Fiber", nutritionSummary.fiber, nutritionSummary.fiberGoal, Color(0xFF9C27B0))
             )
-
-            nutrients.forEach { data ->
-                NutrientProgressRow(
-                    label = data.label,
-                    current = data.current,
-                    goal = data.goal,
-                    color = data.color
+            nutrients.forEach { nutrient ->
+                NutrientProgress(
+                    label = nutrient.label,
+                    current = nutrient.current,
+                    goal = nutrient.goal,
+                    color = nutrient.color,
+                    unit = "g"
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 }
 
+data class NutrientItem(val label: String, val value: String, val color: Color)
+data class NutrientProgressData(val label: String, val current: Int, val goal: Int, val color: Color)
 @Composable
-fun NutrientProgressRow(label: String, current: Int, goal: Int, color: Color) {
+private fun HydrationExerciseRow(
+    waterGlasses: MutableState<Int>,
+    exerciseCalories: Int
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium)
-        Text("$current/$goal", style = MaterialTheme.typography.bodyMedium)
+        HydrationTracker(waterGlasses)
+        ExerciseTracker(exerciseCalories)
     }
-    LinearProgressIndicator(
-        progress = current.toFloat() / goal,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(8.dp)
-            .clip(RoundedCornerShape(4.dp)),
-        color = color,
-        trackColor = color.copy(alpha = 0.2f)
-    )
 }
 
 @Composable
-private fun HydrationExerciseRow(waterGlasses: MutableState<Int>, exerciseCalories: Int) {
+private fun HydrationTracker(waterGlasses: MutableState<Int>) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        HydrationCard(waterGlasses, modifier = Modifier.weight(1f))
-        ExerciseCard(exerciseCalories, modifier = Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun HydrationCard(waterGlasses: MutableState<Int>, modifier: Modifier = Modifier) {
-    ElevatedCard(modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                Icons.Rounded.WaterDrop,
-                contentDescription = "Water",
-                tint = Color(0xFF2196F3),
-                modifier = Modifier.size(32.dp))
-
-            Text(
-                "${waterGlasses.value}/8",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2196F3)
-                ),
-                modifier = Modifier.padding(vertical = 8.dp))
-
-            Text(
-                "Glasses of Water",
-                style = MaterialTheme.typography.bodyMedium)
-
-            WaterControls(waterGlasses)
-        }
-    }
-}
-
-@Composable
-private fun WaterControls(waterGlasses: MutableState<Int>) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        IconButton(
-            onClick = { if (waterGlasses.value > 0) waterGlasses.value-- },
-            colors = IconButtonDefaults.iconButtonColors(
-                containerColor = Color.LightGray.copy(alpha = 0.2f))
-        ) {
-            Icon(Icons.Default.Remove, "Decrease")
+        Icon(
+            imageVector = Icons.Rounded.WaterDrop,
+            contentDescription = "Water Intake",
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "${waterGlasses.value} glasses",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        IconButton(onClick = { if (waterGlasses.value > 0) waterGlasses.value-- }) {
+            Icon(Icons.Default.Remove, contentDescription = "Decrease Water Intake")
         }
-
-        WaterLevelIndicator(glasses = waterGlasses.value)
-
-        IconButton(
-            onClick = { if (waterGlasses.value < 8) waterGlasses.value++ },
-            colors = IconButtonDefaults.iconButtonColors(
-                containerColor = Color(0xFF2196F3).copy(alpha = 0.2f))
-        ) {
-            Icon(Icons.Default.Add, "Increase", tint = Color(0xFF2196F3))
+        IconButton(onClick = { waterGlasses.value++ }) {
+            Icon(Icons.Default.Add, contentDescription = "Increase Water Intake")
         }
     }
 }
 
 @Composable
-private fun WaterLevelIndicator(glasses: Int) {
+private fun ExerciseTracker(caloriesBurned: Int) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        repeat(8) { index ->
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(24.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(
-                        if (index < glasses) Color(0xFF2196F3)
-                        else MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
-                    )
-            )
-        }
+        Icon(
+            imageVector = Icons.Rounded.DirectionsRun,
+            contentDescription = "Calories Burned",
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "$caloriesBurned kcal burned",
+            style = MaterialTheme.typography.bodyLarge
+        )
     }
 }
-
-@Composable
-private fun ExerciseCard(calories: Int, modifier: Modifier = Modifier) {
-    ElevatedCard(modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                Icons.Rounded.DirectionsRun,
-                contentDescription = "Exercise",
-                tint = Color(0xFF4CAF50),
-                modifier = Modifier.size(32.dp))
-
-            Text(
-                "$calories kcal",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF4CAF50)
-                ),
-                modifier = Modifier.padding(vertical = 8.dp))
-
-            Text(
-                "Calories Burned",
-                style = MaterialTheme.typography.bodyMedium)
-            Text(
-                "Today",
-                style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-}
-data class NutrientProgressData(
-    val label: String,
-    val current: Int,
-    val goal: Int,
-    val color: Color
-)
-data class NutrientItem(
-    val label: String,
-    val value: String,
-    val color: Color
-)

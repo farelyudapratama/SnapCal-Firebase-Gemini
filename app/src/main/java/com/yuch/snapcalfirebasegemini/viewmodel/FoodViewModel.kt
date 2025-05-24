@@ -182,7 +182,7 @@ class FoodViewModel(
                 val maxIndex = scores.indices.maxByOrNull { scores[it] } ?: -1
 
                 // List label yang digunakan saat training di Teachable Machine
-                val labels = listOf("ayam_geprek", "bakso", "ketoprak", "lontong_sayur", "martabak_manis", "martabak_telur", "mie_goreng", "nasi_goreng", "nasi_padang", "nasi_uduk", "pecel_lele", "pempek", "rawon", "rendang", "sate", "siomay", "soto", "tahu_gejrot")  // Ganti dengan label yang sesuai
+                val labels = listOf("ayam_geprek", "bakso", "ketoprak", "lontong_sayur", "martabak_manis", "martabak_telur", "mie_goreng", "nasi_goreng", "nasi_padang", "nasi_uduk", "pecel_lele", "pempek", "rawon", "rendang", "siomay", "sate", "soto", "tahu_gejrot")  // Ganti dengan label yang sesuai
 
                 if (maxIndex != -1 && maxIndex < labels.size) {
                     val detectedFood = labels[maxIndex]

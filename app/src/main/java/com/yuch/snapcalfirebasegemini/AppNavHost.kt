@@ -64,7 +64,7 @@ fun AppNavHost(
             ProfileScreen(modifier, navController, authViewModel)
         }
         composable(Screen.Tracking.route) {
-            NutriTrackScreen(navController, authViewModel)
+            NutriTrackScreen(navController, authViewModel, getFoodViewModel)
         }
         composable(
             Screen.DetailFood.route,
