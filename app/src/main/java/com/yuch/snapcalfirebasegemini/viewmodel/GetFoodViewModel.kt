@@ -8,6 +8,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
+import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.utils.formatDateFromLong
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +51,10 @@ class GetFoodViewModel(
     // Daily summary
     private val _dailySummary = MutableStateFlow<DailySummaryResponse?>(null)
     val dailySummary: StateFlow<DailySummaryResponse?> = _dailySummary
+
+    // Weekly summary
+    private val _weeklySummary = MutableStateFlow<WeeklySummaryResponse?>(null)
+    val weeklySummary: StateFlow<WeeklySummaryResponse?> = _weeklySummary
 
     init {
         // Ambil data dari halaman pertama
@@ -220,6 +225,18 @@ class GetFoodViewModel(
             } else {
                 _dailySummary.value = null
                 _errorMessage.value = result?.message ?: "Failed to fetch daily summary"
+            }
+        }
+    }
+
+    fun fetchWeeklySummary() {
+        viewModelScope.launch {
+            val result = repository.getSummaryWeek()
+            if (result != null && result.status == "success") {
+                _weeklySummary.value = result.data
+            } else {
+                _weeklySummary.value = null
+                _errorMessage.value = result?.message ?: "Failed to fetch weekly summary"
             }
         }
     }

@@ -11,6 +11,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
+import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -89,6 +90,9 @@ interface ApiService {
 
     @GET("food/summary")
     suspend fun getSummaryToday(): Response<ApiResponse<DailySummaryResponse>>
+
+    @GET("food/summaryweekly")
+    suspend fun getSummaryWeekly(): Response<ApiResponse<WeeklySummaryResponse>>
 
 //    @GET("api/chat/history")
 //    suspend fun getChatHistory(): Response<List<ChatMessage>>

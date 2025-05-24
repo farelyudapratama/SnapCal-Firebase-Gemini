@@ -92,6 +92,7 @@ data class UsageAiChatDetails(
 
 data class DailySummaryResponse(
 	val date: String,
+	@SerializedName("nutritionTotals")
 	val data: DailySummary?,
 	val goals: Goals,
 	val foods: List<FoodBrief>,
@@ -121,4 +122,30 @@ data class DailySummary(
 	val totalSaturatedFat: Double,
 	val totalFiber: Double,
 	val totalSugar: Double
+)
+
+data class WeeklySummaryResponse(
+	val weekStart: String,
+	val weekEnd: String,
+	val dailyGoal: NutrientGoal,
+	val summaries: List<DailyNutritionSummary>
+)
+
+data class NutrientGoal(
+	val calories: Double,
+	val carbs: Double,
+	val protein: Double,
+	val fat: Double,
+	val fiber: Double,
+	val sugar: Double
+)
+
+data class DailyNutritionSummary(
+	val date: String,
+	val calories: Double,
+	val carbs: Double,
+	val protein: Double,
+	val fat: Double,
+	val fiber: Double,
+	val sugar: Double
 )
