@@ -138,18 +138,18 @@ fun SnapCalApp(
                             navController.navigate(Screen.Scan.route)
                             showBottomSheet = false
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium
                     ) {
                         Icon(
                             imageVector = Icons.Default.CameraAlt,
                             contentDescription = "Scan",
                             modifier = Modifier.size(24.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Scan",
+                            text = "Pindai Makanan (AI)",
                             fontSize = 16.sp,
-                            textAlign = TextAlign.Center
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -167,7 +167,7 @@ fun SnapCalApp(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Isi Manual",
+                            text = "Input Manual",
                             fontSize = 16.sp,
                             textAlign = TextAlign.Center
                         )
@@ -218,11 +218,11 @@ fun BottomNavbar(
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.Blue,
-                    selectedTextColor = Color.Blue,
-                    unselectedIconColor = Color.Gray,
-                    unselectedTextColor = Color.Gray,
-                    indicatorColor = Color.White
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    indicatorColor = MaterialTheme.colorScheme.secondaryContainer
                 )
             )
 

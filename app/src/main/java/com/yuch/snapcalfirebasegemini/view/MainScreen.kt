@@ -398,7 +398,7 @@ fun TopBar(
 
                 IconButton(
                     onClick = onNextDay,
-                    enabled = true // Always enabled for better UX
+                    enabled = true
                 ) {
                     Icon(
                         imageVector = Icons.Default.NavigateNext,

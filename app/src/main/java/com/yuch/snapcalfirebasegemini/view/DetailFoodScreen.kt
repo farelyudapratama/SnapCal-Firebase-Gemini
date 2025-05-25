@@ -23,9 +23,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -931,7 +933,7 @@ fun NutrientDonutChart(
     angles = angles.map { it * correctionFactor }
 
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
-
+    val haptic = LocalHapticFeedback.current
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
@@ -954,11 +956,20 @@ fun NutrientDonutChart(
                         var startAngle = -90f
                         angles.forEachIndexed { index, angle ->
                             if (normalizedAngle in startAngle..(startAngle + angle.toFloat())) {
+                                if (selectedIndex != index) {
+                                    haptic.performHapticFeedback(
+                                        HapticFeedbackType.TextHandleMove)
+                                }
                                 selectedIndex = index
                                 return@detectTapGestures
                             }
                             startAngle += angle.toFloat()
                         }
+                        // Jika tap di luar area slice, reset
+                        if (selectedIndex != null) {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
+                        selectedIndex = null
                     }
                 }
         ) {
