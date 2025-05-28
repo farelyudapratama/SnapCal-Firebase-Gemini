@@ -94,7 +94,7 @@ fun NutriTrackScreen(
         if (isLoading && dailySummary == null) {
             LoadingScreen()
         } else if (dailySummary != null) {
-            EnhancedNutriContent(
+            NutriContent(
                 summary = dailySummary!!,
                 weeklySummary = weeklySummary
             )
@@ -108,7 +108,7 @@ fun NutriTrackScreen(
 }
 
 @Composable
-fun EnhancedNutriContent(
+fun NutriContent(
     summary: DailySummaryResponse,
     weeklySummary: WeeklySummaryResponse?
 ) {
@@ -289,7 +289,7 @@ fun DailyOverviewPage(summary: DailySummaryResponse) {
         }
 
         items(summary.foods) { food ->
-            ModernFoodCard(food)
+            FoodCard(food)
         }
 
         if (summary.feedback.isNotEmpty()) {
@@ -465,7 +465,7 @@ fun MacroItem(name: String, value: Double, color: Color, icon: ImageVector) {
 }
 
 @Composable
-fun ModernFoodCard(food: FoodBrief) {
+fun FoodCard(food: FoodBrief) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),

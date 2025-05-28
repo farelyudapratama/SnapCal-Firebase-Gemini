@@ -24,16 +24,12 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -148,24 +144,57 @@ fun MainScreen(
                 isFilterActive = isFilterActive,
                 onDateClick = { showCalendarDialog = true },
                 onPreviousDay = {
-                    val newDate = (selectedDate ?: LocalDateTime.now()).minusDays(1)
-                    selectedDate = newDate
-                    isFilterActive = true
+                    if (selectedDate != null) {
+                        val newDate = selectedDate!!.minusDays(1)
+                        selectedDate = newDate
 
-                    val formattedDate = newDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                    foodViewModel.fetchFoodDate(formattedDate)
+                        // Format date
+                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                        val formattedDate = newDate.format(dateFormatter)
+
+                        // Fetch food for previous day
+                        foodViewModel.fetchFoodDate(formattedDate)
+                    } else {
+                        val newDate = LocalDateTime.now().minusDays(1)
+                        selectedDate = newDate
+                        isFilterActive = true
+
+                        // Format date
+                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                        val formattedDate = newDate.format(dateFormatter)
+
+                        // Fetch food for previous day
+                        foodViewModel.fetchFoodDate(formattedDate)
+                    }
                 },
                 onNextDay = {
-                    val newDate = (selectedDate ?: LocalDateTime.now()).plusDays(1)
-                    selectedDate = newDate
-                    isFilterActive = true
+                    if (selectedDate != null) {
+                        val newDate = selectedDate!!.plusDays(1)
+                        selectedDate = newDate
 
-                    val formattedDate = newDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                    foodViewModel.fetchFoodDate(formattedDate)
+                        // Format date
+                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                        val formattedDate = newDate.format(dateFormatter)
+
+                        // Fetch food for next day
+                        foodViewModel.fetchFoodDate(formattedDate)
+                    } else {
+                        val newDate = LocalDateTime.now().plusDays(1)
+                        selectedDate = newDate
+                        isFilterActive = true
+
+                        // Format date
+                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                        val formattedDate = newDate.format(dateFormatter)
+
+                        // Fetch food for next day
+                        foodViewModel.fetchFoodDate(formattedDate)
+                    }
                 },
                 onClearFilter = {
                     selectedDate = null
                     isFilterActive = false
+                    // Refresh to get all data
                     foodViewModel.refreshFood()
                 },
                 email = email
@@ -238,96 +267,110 @@ fun TopBar(
     onClearFilter: () -> Unit,
     email: String
 ) {
-    val locale = Locale.getDefault()
-    val pattern = if (locale.language == "id") {
-        "EEEE, d MMMM yyyy"
-    } else {
-        "EEEE, MMMM d, yyyy"
-    }
-
-    val dateText = if (isFilterActive && selectedDate != null) {
-        selectedDate.format(DateTimeFormatter.ofPattern(pattern, locale))
-    } else {
-        stringResource(R.string.all_entries)
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp)
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(DarkGreenPrimary, MediumGreenSecondary)
-                )
+    Column(modifier = Modifier.fillMaxWidth().height(120.dp)) {
+        // App title and email
+        TopAppBar(
+            title = {
+                Column {
+                    Text(
+                        text = "SnapCal",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        text = email,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
             )
-            .padding(horizontal = 20.dp, vertical = 16.dp)
-    ) {
-        // Title + Email
-        Text(
-            text = "NutriTrack",
-            color = TextOnDark,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = email,
-            color = TextOnDark.copy(alpha = 0.7f),
-            fontSize = 14.sp
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Date Navigation Row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+        // Calendar date selector bar
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            IconButton(onClick = onPreviousDay) {
-                Icon(
-                    imageVector = Icons.Default.NavigateBefore,
-                    contentDescription = "Previous Day",
-                    tint = TextOnDark
-                )
-            }
-
             Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .clickable(onClick = onDateClick)
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.Center,
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = dateText,
-                    color = TextOnDark,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
+                IconButton(
+                    onClick = onPreviousDay,
+                    enabled = true // Always enabled for better UX
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.NavigateBefore,
+                        contentDescription = "Previous Day"
+                    )
+                }
 
-                if (isFilterActive) {
-                    Spacer(modifier = Modifier.width(4.dp))
-                    IconButton(
-                        onClick = onClearFilter,
-                        modifier = Modifier.size(20.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear Filter",
-                            tint = Color.Red
+                Row(
+                    modifier = Modifier
+                        .clickable(onClick = onDateClick)
+                        .padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.DateRange,
+                        contentDescription = "Calendar",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    if (isFilterActive && selectedDate != null) {
+                        val locale = Locale.getDefault()
+                        val pattern = if (locale.language == "id") {
+                            "EEEE, d MMMM yyyy"
+                        } else {
+                            "EEEE, MMMM d, yyyy"
+                        }
+
+                        val dateFormatter = DateTimeFormatter.ofPattern(pattern, locale)
+                        Text(
+                            text = selectedDate.format(dateFormatter),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(
+                            onClick = onClearFilter,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear Filter",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = stringResource(R.string.all_entries),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
-            }
 
-            IconButton(onClick = onNextDay) {
-                Icon(
-                    imageVector = Icons.Default.NavigateNext,
-                    contentDescription = "Next Day",
-                    tint = TextOnDark
-                )
+                IconButton(
+                    onClick = onNextDay,
+                    enabled = true
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.NavigateNext,
+                        contentDescription = "Next Day"
+                    )
+                }
             }
         }
     }
