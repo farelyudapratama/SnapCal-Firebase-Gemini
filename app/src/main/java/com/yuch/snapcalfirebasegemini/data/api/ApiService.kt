@@ -4,12 +4,14 @@ import com.yuch.snapcalfirebasegemini.data.api.response.AiChatDelete
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatMessage
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatResponse
+import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeByMyModelResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
+import com.yuch.snapcalfirebasegemini.data.api.response.ImageUploadRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
 import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
 import okhttp3.MultipartBody
@@ -32,6 +34,12 @@ interface ApiService {
         @Part image: MultipartBody.Part,
         @Part("service") service: RequestBody
     ): Response<ApiResponse<AnalyzeResult>>
+
+    // Analisis food pake model sendiri
+    @POST("food/analyze-by-mymodel")
+    suspend fun analyzeFoodByMyModel(
+        @Body request: ImageUploadRequest
+    ): Response<ApiResponse<AnalyzeByMyModelResponse>>
 
     @Multipart
     @POST("food/upload")

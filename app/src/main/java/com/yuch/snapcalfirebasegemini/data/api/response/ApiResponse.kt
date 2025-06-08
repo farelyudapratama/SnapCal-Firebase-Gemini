@@ -63,6 +63,28 @@ data class AnalyzeResult(
 	val sugar: Double
 )
 
+// Response untuk analisis makanan dengan model sendiri
+data class AnalyzeByMyModelResponse(
+	val results: List<FoodDetectionByMyModelResult>
+)
+
+data class FoodDetectionByMyModelResult(
+	@SerializedName("class_id")
+	val classId: Int,
+
+	@SerializedName("class_name")
+	val className: String,
+
+	val confidence: Float,
+
+	val bbox: List<Float>
+)
+// Request untuk upload gambar makanan pada model sendiri
+data class ImageUploadRequest(
+	val image: String,
+)
+// Akhir inisialisasi data class untuk model sendiri
+
 data class AiChatResponse(
 	val aiResponse: String
 )

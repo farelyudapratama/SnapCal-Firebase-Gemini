@@ -1,12 +1,15 @@
 package com.yuch.snapcalfirebasegemini.utils
 
 import android.graphics.BitmapFactory
+import android.util.Base64
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.ByteArrayOutputStream
 import java.io.File
+import android.graphics.Bitmap
+import androidx.core.graphics.scale
 
 object ImageUtils {
 
@@ -62,4 +65,45 @@ object ImageUtils {
     fun prepareImageForUpdate(imagePath: String): Pair<MultipartBody.Part, String> {
         return prepareImageForUpload(imagePath) // Bisa menggunakan fungsi yang sama untuk prepare image
     }
+
+    fun prepareImageForBase64(imagePath: String, maxWidth: Int = 1024, maxHeight: Int = 1024, quality: Int = 80): String {
+        // Load bitmap dari file
+        val originalBitmap = BitmapFactory.decodeFile(imagePath)
+
+        // Hitung scale untuk resize dengan menjaga aspect ratio
+        val width = originalBitmap.width
+        val height = originalBitmap.height
+        var newWidth = width
+        var newHeight = height
+
+        if (width > maxWidth || height > maxHeight) {
+            val widthRatio = maxWidth.toFloat() / width
+            val heightRatio = maxHeight.toFloat() / height
+            val scale = minOf(widthRatio, heightRatio)
+            newWidth = (width * scale).toInt()
+            newHeight = (height * scale).toInt()
+        }
+
+        // Resize bitmap kalau perlu
+        val resizedBitmap =
+            originalBitmap.scale(
+                newWidth,
+                newHeight
+            )
+
+        // Compress bitmap ke JPEG ke ByteArrayOutputStream
+        val outputStream = ByteArrayOutputStream()
+        resizedBitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+
+        // Dapatkan byte array hasil kompres
+        val byteArray = outputStream.toByteArray()
+
+        // Bersihkan bitmap asli dan resize untuk mencegah memory leak
+        originalBitmap.recycle()
+        resizedBitmap.recycle()
+
+        // Encode ke base64 tanpa line wrap
+        return Base64.encodeToString(byteArray, Base64.NO_WRAP)
+    }
+
 }

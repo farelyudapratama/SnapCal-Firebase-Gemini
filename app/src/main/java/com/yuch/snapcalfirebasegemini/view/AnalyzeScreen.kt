@@ -220,7 +220,10 @@ fun AnalyzeScreen(
                                 viewModel.analyzeImage(imagePath, service)
                             },
                             onTFLiteClick = { viewModel.analyzeWithTFLite(imagePath, context) },
-                            isLoading = isLoading
+                            isLoading = isLoading,
+                            onMyModelClick = {
+                                viewModel.analyzeFoodByMyModel(imagePath)
+                            }
                         )
                     }
                     else -> {
@@ -286,7 +289,8 @@ private fun ServiceSelectionCard(
     onServiceSelected: (String) -> Unit,
     onAnalyzeClick: (String) -> Unit,
     onTFLiteClick: () -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
+    onMyModelClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -374,6 +378,25 @@ private fun ServiceSelectionCard(
             ) {
                 Text(
                     "Quick Analysis (TFLite)",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onMyModelClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ),
+                elevation = ButtonDefaults.buttonElevation(2.dp)
+            ) {
+                Text(
+                    "Analyze with My Model",
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
                 )
             }

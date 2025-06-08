@@ -10,13 +10,14 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
+import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeByMyModelResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
+import com.yuch.snapcalfirebasegemini.data.api.response.ImageUploadRequest
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
-import com.yuch.snapcalfirebasegemini.ml.ModelTeachable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -31,6 +32,14 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import android.graphics.*
+import org.tensorflow.lite.Interpreter
+import java.io.FileInputStream
+import java.nio.MappedByteBuffer
+import java.nio.channels.FileChannel
+import com.yuch.snapcalfirebasegemini.ml.ModelWithMetadata
+import androidx.core.graphics.get
+import com.yuch.snapcalfirebasegemini.ml.ModelTeachable
 
 class FoodViewModel(
     private val apiService: ApiService = ApiConfig.getApiService()
@@ -38,6 +47,9 @@ class FoodViewModel(
 
     private val _analysisResult = MutableStateFlow<ApiResponse<AnalyzeResult>>(ApiResponse("error", "error", null))
     val analysisResult = _analysisResult.asStateFlow()
+
+    private val _customModelResult = MutableStateFlow<ApiResponse<AnalyzeByMyModelResponse>>(ApiResponse("idle", "Idle"))
+    val customModelResult = _customModelResult.asStateFlow()
 
     private val _uploadResult = MutableStateFlow<ApiResponse<Food>>(ApiResponse("error", "error", null))
     val uploadResult = _uploadResult.asStateFlow()
@@ -83,6 +95,56 @@ class FoodViewModel(
 
             } catch (e: Exception) {
                 handleError(e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    // Analyze food using custom model with post base64
+    fun analyzeFoodByMyModel(imagePath: String) {
+        _customModelResult.value = ApiResponse("loading", "Loading")
+        _errorMessage.value = null
+
+        viewModelScope.launch {
+            try {
+                val validationError = ImageUtils.validateImageFile(imagePath)
+                if (validationError != null) throw Exception(validationError)
+
+                _isLoading.value = true
+
+                val base64Image = ImageUtils.prepareImageForBase64(imagePath)
+                val requestBody = ImageUploadRequest(base64Image)
+
+                val response = apiService.analyzeFoodByMyModel(requestBody)
+
+                if(response.isSuccessful){
+                    response.body()?.let { apiResponse ->
+                        when (apiResponse.status) {
+                            "success" -> {
+                                _customModelResult.value = ApiResponse(
+                                    status = "success",
+                                    message = "Food analyzed successfully",
+                                    data = apiResponse.data
+                                )
+                                _errorMessage.value = null
+                            }
+                            "error" -> {
+                                val statusCode = response.code()
+                                _errorMessage.value = "[Code: $statusCode] ${apiResponse.message}"
+                            }
+                        }
+                    } ?: run {
+                        _errorMessage.value = "[Code: ${response.code()}] Empty response from server"
+                    }
+                    Log.d("CustomModel", "Response: ${response.body()}")
+                } else {
+                    _customModelResult.value = ApiResponse("error", "Request failed: ${response.code()}")
+                }
+
+            } catch (e: Exception) {
+                handleError(e)
+                _customModelResult.value = ApiResponse("error", e.message ?: "Unknown error")
             } finally {
                 _isLoading.value = false
             }
