@@ -140,7 +140,12 @@ fun ProfileOnboardingScreen(
                         when (step) {
                             0 -> WelcomeStep { onboardingViewModel.nextStep() }
                             1 -> PersonalInfoStep(formData.personalInfo) { onboardingViewModel.updatePersonalInfo(it) }
-                            2 -> HealthStep(
+                            2 -> GoalsStep(
+                                initialData = formData.dailyGoals,
+                                onDataChange = { onboardingViewModel.updateDailyGoals(it) },
+                                personalInfo = formData.personalInfo
+                            )
+                            3 -> HealthStep(
                                 selectedConditions = formData.healthConditions,
                                 selectedAllergies = formData.allergies,
                                 onConditionToggle = { onboardingViewModel.toggleHealthCondition(it) },
@@ -148,11 +153,11 @@ fun ProfileOnboardingScreen(
                                 onAddCustomCondition = { onboardingViewModel.addCustomHealthCondition(it) },
                                 onAddCustomAllergy = { onboardingViewModel.addCustomAllergy(it) }
                             )
-                            3 -> DietStep(
+                            4 -> DietStep(
                                 selectedDiets = formData.dietaryRestrictions,
                                 onDietToggle = { onboardingViewModel.toggleDietaryRestriction(it) }
                             )
-                            4 -> FoodPreferencesStep(
+                            5 -> FoodPreferencesStep(
                                 likedFoods = formData.likedFoods,
                                 dislikedFoods = formData.dislikedFoods,
                                 onLikeToggle = { onboardingViewModel.toggleLikedFood(it) },
@@ -385,7 +390,113 @@ fun SelectableCard(title: String, subtitle: String, isSelected: Boolean, onClick
         }
     }
 }
+@Composable
+fun GoalsStep(
+    initialData: DailyGoals?,
+    onDataChange: (DailyGoals) -> Unit,
+    personalInfo: PersonalInfoReq? // Menerima data dari langkah sebelumnya
+) {
+    // State lokal untuk setiap input
+    var calories by remember { mutableStateOf(initialData?.calories?.toString() ?: "") }
+    var protein by remember { mutableStateOf(initialData?.protein?.toString() ?: "") }
+    var carbs by remember { mutableStateOf(initialData?.carbs?.toString() ?: "") }
+    var fat by remember { mutableStateOf(initialData?.fat?.toString() ?: "") }
+    var fiber by remember { mutableStateOf(initialData?.fiber?.toString() ?: "") }
+    var sugar by remember { mutableStateOf(initialData?.sugar?.toString() ?: "") }
 
+    // Memanggil callback saat ada perubahan
+    LaunchedEffect(calories, protein, carbs, fat, fiber, sugar) {
+        onDataChange(
+            DailyGoals(
+                calories = calories.toIntOrNull(),
+                protein = protein.toIntOrNull(),
+                carbs = carbs.toIntOrNull(),
+                fat = fat.toIntOrNull(),
+                fiber = fiber.toIntOrNull(),
+                sugar = sugar.toIntOrNull()
+            )
+        )
+    }
+
+    // Kalkulasi Rekomendasi Kalori (TDEE)
+    val recommendedCalories = remember(personalInfo) {
+        calculateRecommendedCalories(personalInfo)
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        SectionTitle("Your Daily Goals")
+        Text(
+            "Set your daily nutrition targets. You can use our recommendation or set your own.",
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        // Tampilkan Card Rekomendasi
+        if (recommendedCalories != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Our Recommendation", fontWeight = FontWeight.Bold)
+                        Text("$recommendedCalories kcal / day", style = MaterialTheme.typography.titleLarge)
+                    }
+                    Button(onClick = { calories = recommendedCalories.toString() }) {
+                        Text("Use This")
+                    }
+                }
+            }
+        }
+
+        // Form Input untuk setiap Goal
+        OutlinedTextField(
+            value = calories,
+            onValueChange = { calories = it },
+            label = { Text("Calories (kcal)") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(value = protein, onValueChange = { protein = it }, label = { Text("Protein (g)") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+            OutlinedTextField(value = carbs, onValueChange = { carbs = it }, label = { Text("Carbs (g)") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(value = fat, onValueChange = { fat = it }, label = { Text("Fat (g)") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+            OutlinedTextField(value = fiber, onValueChange = { fiber = it }, label = { Text("Fiber (g)") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+        }
+    }
+}
+
+// Fungsi helper untuk kalkulasi TDEE, bisa ditaruh di file terpisah (misal: util/NutritionCalculator.kt)
+fun calculateRecommendedCalories(info: PersonalInfoReq?): Int? {
+    if (info?.age == null || info.height == null || info.weight == null || info.gender == null || info.activityLevel == null) {
+        return null // Tidak bisa menghitung jika data tidak lengkap
+    }
+
+    // Formula Harris-Benedict untuk BMR
+    val bmr = if (info.gender.lowercase() == "male") {
+        88.362 + (13.397 * info.weight) + (4.799 * info.height) - (5.677 * info.age)
+    } else { // female
+        447.593 + (9.247 * info.weight) + (3.098 * info.height) - (4.330 * info.age)
+    }
+
+    // Multiplier TDEE berdasarkan tingkat aktivitas
+    val activityMultiplier = when (info.activityLevel) {
+        "sedentary" -> 1.2
+        "light" -> 1.375
+        "moderate" -> 1.55
+        "active" -> 1.725
+        "very-active" -> 1.9
+        else -> 1.2
+    }
+
+    // TDEE = BMR * Activity Multiplier
+    return (bmr * activityMultiplier).toInt()
+}
 // Bottom Bar Composable dari kode sebelumnya (sedikit modifikasi)
 @Composable
 fun OnboardingBottomBar(currentStep: Int, totalSteps: Int, onNext: () -> Unit, onFinish: () -> Unit, isLoading: Boolean) {
