@@ -12,6 +12,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.ImageUploadRequest
+import com.yuch.snapcalfirebasegemini.data.api.response.ProfileRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
@@ -105,6 +106,11 @@ interface ApiService {
 
     @GET("profile")
     suspend fun getProfile(): Response<ApiResponse<UserPreferences>>
+
+    @POST("profile")
+    suspend fun postProfile(
+        @Body request: ProfileRequest
+    ): Response<ApiResponse<UserPreferences>>
 //    @GET("api/chat/history")
 //    suspend fun getChatHistory(): Response<List<ChatMessage>>
 }
