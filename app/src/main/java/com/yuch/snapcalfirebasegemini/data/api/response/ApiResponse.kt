@@ -171,3 +171,23 @@ data class DailyNutritionSummary(
 	val fiber: Double,
 	val sugar: Double
 )
+
+data class PersonalInfo(
+	val age: Int,
+	val gender: String,
+	val height: Int,
+	val weight: Int,
+	val activityLevel: String,
+)
+
+data class UserPreferences(
+	val personalInfo: PersonalInfo,
+	val dailyGoals: NutrientGoal?,
+	val allergies: List<String>,
+	val customAllergies: List<String>,
+	val customHealthConditions: List<String>,
+	val dietaryRestrictions: List<String>,
+	val dislikedFoods: List<String>,
+	val healthConditions: List<String>,
+	val likedFoods: List<String>
+)

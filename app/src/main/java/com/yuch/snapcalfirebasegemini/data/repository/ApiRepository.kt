@@ -8,6 +8,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
+import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.local.FoodDao
 import com.yuch.snapcalfirebasegemini.data.local.FoodEntity
@@ -180,6 +181,19 @@ class ApiRepository(
     suspend fun getSummaryWeek(): ApiResponse<WeeklySummaryResponse>? {
         return try {
             val response = apiService.getSummaryWeekly()
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun getProfile(): ApiResponse<UserPreferences>? {
+        return try {
+            val response = apiService.getProfile()
             if (response.isSuccessful) {
                 response.body()
             } else {

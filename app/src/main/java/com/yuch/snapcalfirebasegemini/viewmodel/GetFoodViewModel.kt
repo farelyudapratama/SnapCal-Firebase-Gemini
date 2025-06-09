@@ -8,6 +8,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
+import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.utils.formatDateFromLong
@@ -55,6 +56,10 @@ class GetFoodViewModel(
     // Weekly summary
     private val _weeklySummary = MutableStateFlow<WeeklySummaryResponse?>(null)
     val weeklySummary: StateFlow<WeeklySummaryResponse?> = _weeklySummary
+
+    // Profiele preferences
+    private val _userPreferences = MutableStateFlow<UserPreferences?>(null)
+    val userPreferences: StateFlow<UserPreferences?> = _userPreferences
 
     init {
         // Ambil data dari halaman pertama
@@ -237,6 +242,21 @@ class GetFoodViewModel(
             } else {
                 _weeklySummary.value = null
                 _errorMessage.value = result?.message ?: "Failed to fetch weekly summary"
+            }
+        }
+    }
+
+    fun fetchUserPreferences() {
+        viewModelScope.launch {
+            try {
+                val response = repository.getProfile()
+                if (response != null && response.status == "success") {
+                    _userPreferences.value = response.data
+                } else {
+                    _errorMessage.value = response?.message ?: "Failed to fetch user preferences"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Terjadi kesalahan saat mengambil preferensi pengguna"
             }
         }
     }
