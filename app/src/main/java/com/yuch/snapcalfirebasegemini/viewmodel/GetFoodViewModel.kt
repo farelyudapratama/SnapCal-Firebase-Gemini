@@ -248,6 +248,8 @@ class GetFoodViewModel(
 
     fun fetchUserPreferences() {
         viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
             try {
                 val response = repository.getProfile()
                 if (response != null && response.status == "success") {
@@ -257,6 +259,8 @@ class GetFoodViewModel(
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Terjadi kesalahan saat mengambil preferensi pengguna"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
