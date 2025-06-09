@@ -81,7 +81,7 @@ fun ProfileScreen(
                     EmptyStateCard(
                         message = "Personal info kamu belum diisi. Yuk lengkapi sekarang!",
                         onActionClick = {
-                            // navController.navigate("edit_personal_info")
+                             navController.navigate("profile_onboarding")
                         },
                         actionLabel = "Isi Sekarang"
                     )
@@ -98,53 +98,53 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
 
-//                        item {
-//                            Divider(modifier = Modifier.padding(vertical = 8.dp))
-//                            SectionHeader("Overview")
-//                        }
-//                        userPreferences?.personalInfo?.let { info ->
-//                            item {
-//                                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-//                                    StatCard(
-//                                        modifier = Modifier.weight(1f),
-//                                        icon = Icons.Default.FitnessCenter,
-//                                        label = "Weight",
-//                                        value = "${info.weight}",
-//                                        unit = "kg",
-//                                        color = Color(0xFF2563EB)
-//                                    )
-//                                    StatCard(
-//                                        modifier = Modifier.weight(1f),
-//                                        icon = Icons.Default.Height,
-//                                        label = "Height",
-//                                        value = "${info.height}",
-//                                        unit = "cm",
-//                                        color = Color(0xFF16A34A)
-//                                    )
-//                                }
-//                            }
-//                            item {
-//                                BMICard(height = info.height, weight = info.weight)
-//                            }
-//                        }
-//                        item {
-//                            Divider(modifier = Modifier.padding(vertical = 8.dp))
-//                            SectionHeader("Daily Goals")
-//                        }
-//                        item {
-//                            GoalsCard(userPreferences = userPreferences, onEditClick = {
-//                                // navController.navigate("edit_goals_screen")
-//                            })
-//                        }
-//                        item {
-//                            Divider(modifier = Modifier.padding(vertical = 8.dp))
-//                            SectionHeader("My Preferences")
-//                        }
-//                        item {
-//                            AllPreferencesCard(userPreferences = userPreferences, onEditClick = {
-//                                // navController.navigate("edit_preferences_screen")
-//                            })
-//                        }
+                        item {
+                            Divider(modifier = Modifier.padding(vertical = 8.dp))
+                            SectionHeader("Overview")
+                        }
+                        userPreferences?.personalInfo?.let { info ->
+                            item {
+                                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    StatCard(
+                                        modifier = Modifier.weight(1f),
+                                        icon = Icons.Default.FitnessCenter,
+                                        label = "Weight",
+                                        value = "${info.weight}",
+                                        unit = "kg",
+                                        color = Color(0xFF2563EB)
+                                    )
+                                    StatCard(
+                                        modifier = Modifier.weight(1f),
+                                        icon = Icons.Default.Height,
+                                        label = "Height",
+                                        value = "${info.height}",
+                                        unit = "cm",
+                                        color = Color(0xFF16A34A)
+                                    )
+                                }
+                            }
+                            item {
+                                BMICard(height = info.height, weight = info.weight)
+                            }
+                        }
+                        item {
+                            Divider(modifier = Modifier.padding(vertical = 8.dp))
+                            SectionHeader("Daily Goals")
+                        }
+                        item {
+                            GoalsCard(userPreferences = userPreferences, onEditClick = {
+                                // navController.navigate("edit_goals_screen")
+                            })
+                        }
+                        item {
+                            Divider(modifier = Modifier.padding(vertical = 8.dp))
+                            SectionHeader("My Preferences")
+                        }
+                        item {
+                            AllPreferencesCard(userPreferences = userPreferences, onEditClick = {
+                                // navController.navigate("edit_preferences_screen")
+                            })
+                        }
                     }
                 }
             }

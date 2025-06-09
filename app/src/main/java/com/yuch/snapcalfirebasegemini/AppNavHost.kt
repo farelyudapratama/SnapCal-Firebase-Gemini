@@ -21,6 +21,7 @@ import com.yuch.snapcalfirebasegemini.view.ForgotPasswordScreen
 import com.yuch.snapcalfirebasegemini.view.LoginScreen
 import com.yuch.snapcalfirebasegemini.view.MainScreen
 import com.yuch.snapcalfirebasegemini.view.ManualEntryScreen
+import com.yuch.snapcalfirebasegemini.view.ProfileOnboardingScreen
 import com.yuch.snapcalfirebasegemini.view.ProfileScreen
 import com.yuch.snapcalfirebasegemini.view.RegisterScreen
 import com.yuch.snapcalfirebasegemini.view.camera.ScanScreen
@@ -30,12 +31,16 @@ import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 
 @Composable
 fun AppNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel,
+    profileViewModel: ProfileViewModel,
+    onboardingViewModel: OnboardingViewModel,
     cameraViewModel: CameraViewModel,
     getFoodViewModel: GetFoodViewModel
     ) {
@@ -157,6 +162,15 @@ fun AppNavHost(
             AiChatScreen(
                 aiChatViewModel = AiChatViewModel(),
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable("profile_onboarding") {
+            ProfileOnboardingScreen(
+                navController = navController,
+                authViewModel = authViewModel,
+                profileViewModel = profileViewModel,
+                onboardingViewModel = onboardingViewModel,
             )
         }
     }

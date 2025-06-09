@@ -6,14 +6,19 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.ViewModel
 import androidx.room.Room
 import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.yuch.snapcalfirebasegemini.data.local.AppDatabase
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
+import com.yuch.snapcalfirebasegemini.data.repository.ProfileRepository
+import com.yuch.snapcalfirebasegemini.data.repository.ProfileViewModelFactory
 import com.yuch.snapcalfirebasegemini.data.repository.ViewModelFactory
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -31,13 +36,18 @@ class MainActivity : ComponentActivity() {
             )
         )
     }
+    private val profileViewModel: ProfileViewModel by viewModels {
+        ProfileViewModelFactory(ApiConfig.getApiService())
+    }
+    private val onboardingViewModel: OnboardingViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             MaterialTheme {
-                SnapCalApp(authViewModel = authViewModel, cameraViewModel = cameraViewModel, getFoodViewModel = getFoodViewModel)
+                SnapCalApp(authViewModel = authViewModel, cameraViewModel = cameraViewModel, getFoodViewModel = getFoodViewModel,
+                           profileViewModel = profileViewModel, onboardingViewModel = onboardingViewModel)
             }
         }
     }

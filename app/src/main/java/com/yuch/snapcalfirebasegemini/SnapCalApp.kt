@@ -27,6 +27,8 @@ import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 
 @OptIn(
     ExperimentalMaterial3Api::class
@@ -35,7 +37,9 @@ import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 fun SnapCalApp(
     authViewModel: AuthViewModel,
     cameraViewModel: CameraViewModel,
-    getFoodViewModel: GetFoodViewModel
+    getFoodViewModel: GetFoodViewModel,
+    profileViewModel: ProfileViewModel,
+    onboardingViewModel: OnboardingViewModel
 ) {
     val navController = rememberNavController()
 
@@ -48,7 +52,8 @@ fun SnapCalApp(
         Screen.ManualEntry.route,
         Screen.DetailFood.route,
         Screen.EditFood.route,
-        Screen.AiChat.route
+        Screen.AiChat.route,
+        Screen.ProfileOnboarding.route
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -118,7 +123,9 @@ fun SnapCalApp(
                 modifier = Modifier.padding(innerPadding),
                 authViewModel = authViewModel,
                 cameraViewModel = cameraViewModel,
-                getFoodViewModel = getFoodViewModel
+                getFoodViewModel = getFoodViewModel,
+                profileViewModel = profileViewModel,
+                onboardingViewModel = onboardingViewModel
             )
         }
         if (showBottomSheet) {

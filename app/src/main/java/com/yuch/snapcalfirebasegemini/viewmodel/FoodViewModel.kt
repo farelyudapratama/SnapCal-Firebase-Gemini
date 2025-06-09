@@ -16,6 +16,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.ImageUploadRequest
+import com.yuch.snapcalfirebasegemini.data.api.response.ProfileRequest
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,13 +33,6 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import android.graphics.*
-import org.tensorflow.lite.Interpreter
-import java.io.FileInputStream
-import java.nio.MappedByteBuffer
-import java.nio.channels.FileChannel
-import com.yuch.snapcalfirebasegemini.ml.ModelWithMetadata
-import androidx.core.graphics.get
 import com.yuch.snapcalfirebasegemini.ml.ModelTeachable
 
 class FoodViewModel(
@@ -282,7 +276,7 @@ class FoodViewModel(
         }
     }
 
-    // TODO Update Food data
+    // Update Food data
     fun updateFood(
         foodId: String, imagePath: String?, foodData: UpdateFoodData?
     ) {
@@ -348,6 +342,58 @@ class FoodViewModel(
                     }
                 } else {
                     handleErrorResponse(response)
+                }
+            } catch (e: Exception) {
+                handleError(e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun postProfileRequest(
+        profileData: ProfileRequest
+    ) {
+        _isLoading.value = true
+        _errorMessage.value = null
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.postProfile(profileData)
+
+                if (response.isSuccessful) {
+                    response.body()?.let { apiResponse ->
+                        when (apiResponse.status) {
+                            "success" -> {
+                                _successMessage.value = "Profile updated successfully."
+                                _errorMessage.value = null
+                            }
+                            "error" -> {
+                                _errorMessage.value = "[Code: ${response.code()}] ${apiResponse.message}"
+                            }
+                        }
+                    } ?: run {
+                        _errorMessage.value = "[Code: ${response.code()}] Empty response from server"
+                    }
+                } else {
+                    if (response.isSuccessful) {
+                        response.body()
+                            ?.let { apiResponse ->
+                                _errorMessage.value = "[Code: ${response.code()}] ${apiResponse.message}"
+                            } ?: run {
+                                _errorMessage.value = "[Code: ${response.code()}] Empty response from server"
+                            }
+                    } else if (response.errorBody() != null) {
+                        try {
+                            val errorBody = response.errorBody()?.string()
+                            val errorResponse = Gson().fromJson(errorBody, ApiResponse::class.java)
+                            _errorMessage.value = "[Code: ${response.code()}] ${errorResponse.message}"
+                        } catch (e: Exception) {
+                            _errorMessage.value = "[Code: ${response.code()}] ${response.message()}"
+                        }
+                    } else {
+                        _errorMessage.value = "[Code: ${response.code()}] ${response.message()}"
+                    }
                 }
             } catch (e: Exception) {
                 handleError(e)

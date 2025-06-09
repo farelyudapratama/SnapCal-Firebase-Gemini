@@ -13,4 +13,5 @@ sealed class Screen(val route: String) {
     data object DetailFood : Screen("detail-food/{foodId}")
     data object EditFood : Screen("edit-food/{foodId}")
     data object AiChat : Screen("ai-chat")
+    data object ProfileOnboarding : Screen("profile_onboarding")
 }
