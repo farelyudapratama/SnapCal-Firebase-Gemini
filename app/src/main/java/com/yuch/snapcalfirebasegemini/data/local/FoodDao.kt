@@ -16,6 +16,9 @@ interface FoodDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFoods(foods: List<FoodEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFood(food: FoodEntity)
+
     @Query("DELETE FROM foods WHERE createdAt < :threshold")
     suspend fun deleteOldFoods(threshold: Long)
 
@@ -25,4 +28,8 @@ interface FoodDao {
     // deleteFoodImageById
     @Query("UPDATE foods SET imageUrl = null WHERE id = :id")
     suspend fun deleteFoodImageById(id: String)
+
+    // Get all foods for cache
+    @Query("SELECT * FROM foods ORDER BY createdAt DESC")
+    suspend fun getAllFoods(): List<FoodEntity>
 }

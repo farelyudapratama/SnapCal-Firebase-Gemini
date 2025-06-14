@@ -10,7 +10,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.view.AiChatScreen
 import com.yuch.snapcalfirebasegemini.view.AnalyzeScreen
@@ -30,7 +29,6 @@ import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 
@@ -42,15 +40,15 @@ fun AppNavHost(
     profileViewModel: ProfileViewModel,
     onboardingViewModel: OnboardingViewModel,
     cameraViewModel: CameraViewModel,
-    getFoodViewModel: GetFoodViewModel
-    ) {
+    foodViewModel: FoodViewModel,
+    aiChatViewModel: AiChatViewModel
+) {
     val authState = authViewModel.authState.observeAsState()
 
     val startDestination = when (authState.value) {
         is AuthState.Authenticated -> Screen.Main.route
         else -> Screen.Login.route
     }
-
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Login.route) {
@@ -63,13 +61,13 @@ fun AppNavHost(
             ForgotPasswordScreen(modifier, navController, authViewModel)
         }
         composable(Screen.Main.route) {
-            MainScreen(modifier, navController, authViewModel, getFoodViewModel)
+            MainScreen(modifier, navController, authViewModel, foodViewModel)
         }
         composable(Screen.Profile.route) {
-            ProfileScreen(modifier, navController, authViewModel, getFoodViewModel)
+            ProfileScreen(modifier, navController, authViewModel, profileViewModel)
         }
         composable(Screen.Tracking.route) {
-            NutriTrackScreen(navController, authViewModel, getFoodViewModel)
+            NutriTrackScreen(navController, authViewModel, foodViewModel)
         }
         composable(
             Screen.DetailFood.route,
@@ -85,7 +83,7 @@ fun AppNavHost(
             DetailFoodScreen(
                 foodId = foodId,
                 onBack = { navController.popBackStack() },
-                viewModel = getFoodViewModel,
+                viewModel = foodViewModel,
                 modifier = modifier,
                 navController = navController,
                 authViewModel = authViewModel
@@ -93,7 +91,7 @@ fun AppNavHost(
         }
         composable(Screen.Scan.route) {
             ScanScreen(
-                modifier, navController, authViewModel, viewModel = CameraViewModel(),
+                modifier, navController, authViewModel, viewModel = cameraViewModel,
                 onBack = { navController.popBackStack() },
             )
         }
@@ -112,7 +110,7 @@ fun AppNavHost(
             AnalyzeScreen(
                 imagePath = imagePath,
                 onBack = { navController.popBackStack() },
-                viewModel = FoodViewModel(),
+                viewModel = foodViewModel,
                 onSuccessfulUpload = {
                     navController.popBackStack(
                         route = Screen.Main.route,
@@ -125,7 +123,7 @@ fun AppNavHost(
             ManualEntryScreen(
                 modifier,
                 onBack = { navController.popBackStack() },
-                viewModel = FoodViewModel(),
+                viewModel = foodViewModel,
                 onSuccessfulUpload = {
                     navController.popBackStack(
                         route = Screen.Main.route,
@@ -141,26 +139,23 @@ fun AppNavHost(
             )
         ) { backStackEntry ->
             val foodId = backStackEntry.arguments?.getString("foodId")!!
-            val viewModelGetFood: GetFoodViewModel = getFoodViewModel
-            val foodItem by viewModelGetFood.food.collectAsStateWithLifecycle()
-            val foodViewModel: FoodViewModel = FoodViewModel() // Buat instance FoodViewModel
+            val foodItem by foodViewModel.food.collectAsStateWithLifecycle()
 
             EditFoodScreen(
                 foodId = foodId,
                 navController = navController,
                 foodItem = foodItem,
                 onUpdateFood = { id, imagePath, foodData ->
-                    foodViewModel.updateFood(id, imagePath, foodData) // Panggil ViewModel
+                    foodViewModel.updateFood(id, imagePath, foodData)
                 },
                 onBack = { navController.popBackStack() },
-                getFoodViewModel = viewModelGetFood,
-                foodViewModel = foodViewModel // Pass ViewModel ke screen
+                foodViewModel = foodViewModel
             )
         }
 
         composable(Screen.AiChat.route) {
             AiChatScreen(
-                aiChatViewModel = AiChatViewModel(),
+                aiChatViewModel = aiChatViewModel,
                 onBackClick = { navController.popBackStack() }
             )
         }

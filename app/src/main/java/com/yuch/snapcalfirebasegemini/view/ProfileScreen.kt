@@ -30,7 +30,8 @@ import androidx.navigation.compose.rememberNavController
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 import java.util.Locale
 import kotlin.math.pow
 
@@ -40,12 +41,12 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
-    getFoodViewModel: GetFoodViewModel
+    profileViewModel: ProfileViewModel
 ) {
     val authState = authViewModel.authState.observeAsState()
     val email by authViewModel.userEmail.observeAsState("")
-    val userPreferences by getFoodViewModel.userPreferences.collectAsState()
-    val isLoading by getFoodViewModel.isLoading.collectAsState()
+    val userPreferences by profileViewModel.userPreferences.collectAsState()
+    val isLoading by profileViewModel.isLoading.collectAsState()
 
     LaunchedEffect(authState.value) {
         if (authState.value is AuthState.Unauthenticated) {
@@ -53,7 +54,7 @@ fun ProfileScreen(
         }
     }
     LaunchedEffect(Unit) {
-        getFoodViewModel.fetchUserPreferences()
+        profileViewModel.fetchUserPreferences()
     }
 
     Box(
