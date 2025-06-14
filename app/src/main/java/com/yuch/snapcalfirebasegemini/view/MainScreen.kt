@@ -46,7 +46,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.ui.theme.*
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
@@ -61,7 +61,7 @@ fun MainScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
-    foodViewModel: GetFoodViewModel
+    foodViewModel: FoodViewModel
 ) {
     val authState = authViewModel.authState.observeAsState()
     val email by authViewModel.userEmail.observeAsState("")
@@ -103,9 +103,35 @@ fun MainScreen(
         }
     }
 
+    // Refresh when authenticated
     LaunchedEffect(authState.value) {
         if (authState.value is AuthState.Authenticated) {
             foodViewModel.refreshFood()
+        }
+    }
+    
+    // Auto-refresh mechanism when returning to this screen
+    LaunchedEffect(navController.currentBackStackEntry) {
+        if (authState.value is AuthState.Authenticated) {
+            // Refresh data when returning to this screen
+            foodViewModel.refreshFood()
+        }
+    }
+
+    // Observe data updates
+    val dataUpdated by foodViewModel.dataUpdated.collectAsStateWithLifecycle()
+    LaunchedEffect(dataUpdated) {
+        if (dataUpdated) {
+            // Refresh data when it's been updated elsewhere in the app
+            if (isFilterActive && selectedDate != null) {
+                val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                val formattedDate = selectedDate!!.format(dateFormatter)
+                foodViewModel.fetchFoodDate(formattedDate)
+            } else {
+                foodViewModel.refreshFood()
+            }
+            // Reset the flag
+            foodViewModel.resetState()
         }
     }
 
@@ -204,10 +230,9 @@ fun MainScreen(
             PullToRefreshBox(
                 modifier = Modifier.fillMaxWidth(),
                 state = refreshState,
-                isRefreshing = isRefreshing,
+                isRefreshing = isLoading,
                 onRefresh = {
                     coroutineScope.launch {
-                        isRefreshing = true
                         if (isFilterActive && selectedDate != null) {
                             // Format date
                             val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -219,7 +244,6 @@ fun MainScreen(
                             // Refresh all data
                             foodViewModel.refreshFood()
                         }
-                        isRefreshing = false
                     }
                 }
             ) {
@@ -383,7 +407,7 @@ fun FoodListByDate(
     isFilterActive: Boolean,
     isLoading: Boolean,
     hasMoreData: Boolean,
-    foodViewModel: GetFoodViewModel
+    foodViewModel: FoodViewModel
 ) {
     val groupedFoodList = foodList.groupBy { foodItem ->
         val date = Instant.parse(foodItem.createdAt).atZone(ZoneId.systemDefault()).toLocalDate()
@@ -414,7 +438,7 @@ fun FoodListByDate(
                 LoadingAndLoadMore(
                     isLoading = isLoading,
                     hasMoreData = hasMoreData,
-                    onLoadMore = { foodViewModel.loadNextPage() }
+                    onLoadMore = { foodViewModel.loadMore() }
                 )
             } else if (isLoading) {
                 Box(

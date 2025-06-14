@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * Status API untuk operasi profil
+ */
 sealed class ApiStatus {
     object Idle : ApiStatus()
     object Loading : ApiStatus()
@@ -18,6 +21,9 @@ sealed class ApiStatus {
     data class Error(val message: String) : ApiStatus()
 }
 
+/**
+ * ViewModel untuk menangani operasi terkait profil pengguna
+ */
 class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() {
 
     private val _userPreferences = MutableStateFlow<UserPreferences?>(null)
@@ -29,42 +35,64 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
     private val _updateStatus = MutableStateFlow<ApiStatus>(ApiStatus.Idle)
     val updateStatus: StateFlow<ApiStatus> = _updateStatus.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     init {
         fetchUserPreferences()
     }
 
-    private fun fetchUserPreferences() {
+    /**
+     * Mengambil preferensi pengguna dari repository
+     */
+    fun fetchUserPreferences() {
         viewModelScope.launch {
+            _isLoading.value = true
             _fetchStatus.value = ApiStatus.Loading
             try {
                 // Panggil fungsi dari repository
                 val result = repository.getProfile()
                 _userPreferences.value = result
                 _fetchStatus.value = ApiStatus.Success("Profile loaded")
-            } catch (e: ProfileNotFoundException) { // <-- Tangkap exception kustom ini
+            } catch (e: ProfileNotFoundException) { 
                 _userPreferences.value = null
                 _fetchStatus.value = ApiStatus.Success("No profile found, ready for onboarding.")
             } catch (e: Exception) {
                 _fetchStatus.value = ApiStatus.Error(e.message ?: "Failed to fetch profile")
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
 
+    /**
+     * Menyimpan atau memperbarui profil pengguna
+     *
+     * @param profileRequest Data profil yang akan disimpan
+     * @param onComplete Callback yang dipanggil setelah operasi selesai
+     */
     fun saveOrUpdateProfile(profileRequest: ProfileRequest, onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
             _updateStatus.value = ApiStatus.Loading
             try {
                 // Panggil fungsi dari repository
-                repository.saveProfile(profileRequest)
+                val result = repository.saveProfile(profileRequest)
+                _userPreferences.value = result // Update state secara langsung
                 _updateStatus.value = ApiStatus.Success("Profile saved successfully!")
-                // Setelah sukses, fetch data terbaru untuk memperbarui semua layar
-                fetchUserPreferences() // Anda bisa memanggil ini atau langsung update state lokal
                 onComplete(true)
             } catch (e: Exception) {
                 _updateStatus.value = ApiStatus.Error(e.message ?: "Failed to save profile")
                 onComplete(false)
             }
         }
+    }
+
+    /**
+     * Reset status API ke idle
+     */
+    fun resetStatus() {
+        _fetchStatus.value = ApiStatus.Idle
+        _updateStatus.value = ApiStatus.Idle
     }
 }

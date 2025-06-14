@@ -3,19 +3,17 @@ package com.yuch.snapcalfirebasegemini.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
-import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatMessage
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
+import com.yuch.snapcalfirebasegemini.data.repository.ChatRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class AiChatViewModel(
-    private val apiService: ApiService = ApiConfig.getApiService()
+    private val repository: ChatRepository
 ) : ViewModel() {
     private val _chatMessages = MutableStateFlow<List<AiChatMessage>>(emptyList())
     val chatMessages: StateFlow<List<AiChatMessage>> = _chatMessages.asStateFlow()
@@ -45,11 +43,12 @@ class AiChatViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val response = apiService.getAiChatHistory()
-                if (response.isSuccessful) {
-                    _chatMessages.value = response.body()?.data ?: emptyList()
+                val response = repository.getAiChatHistory()
+                if (response.isSuccess) {
+                    _chatMessages.value = response.getOrNull() ?: emptyList()
+                    _errorMessage.value = null
                 } else {
-                    _errorMessage.value = "Gagal mengambil data chat"
+                    _errorMessage.value = "Gagal mengambil riwayat chat: ${response.exceptionOrNull()?.message}"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Terjadi kesalahan: ${e.message}"
@@ -64,13 +63,18 @@ class AiChatViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val request = AiChatRequest(message, service)
-                val response = apiService.aiMessage(request)
-                if (response.isSuccessful) {
-                    fetchChatHistory()
+                val response = repository.sendAiMessage(message, service)
+                if (response.isSuccess) {
+                    val newMessage = response.getOrNull()
+                    if (newMessage != null) {
+                        fetchChatHistory()
+                    } else {
+                        _errorMessage.value = "Gagal mengirim pesan"
+                    }
                 } else {
-                    _errorMessage.value = "Gagal mengirim pesan"
+                    _errorMessage.value = "Gagal mendapatkan response dari AI"
                 }
+
             } catch (e: Exception) {
                 _errorMessage.value = "Terjadi kesalahan: ${e.message}"
             } finally {
@@ -82,14 +86,12 @@ class AiChatViewModel(
     fun fetchChatUsage() {
         viewModelScope.launch {
             try {
-                val response = apiService.getAiChatUsage()
-                if (response.isSuccessful) {
-                    _usageInfo.value = response.body()?.data
+                val response = repository.getAiChatUsage()
+                if (response.isSuccess) {
+                    _usageInfo.value = response.getOrNull()
+                    _errorMessage.value = null
                 } else {
-                    Log.e("ChatUsage", "Error: ${response.errorBody()?.string()}")
-                    // Handle error
-                    _usageInfo.value = null
-                    _errorMessage.value = "Gagal mengambil penggunaan chat"
+                    _errorMessage.value = "Gagal mengambil penggunaan chat: ${response.exceptionOrNull()?.message}"
                 }
             } catch (e: Exception) {
                 Log.e("ChatUsage", "Exception: ${e.message}")
@@ -104,11 +106,12 @@ class AiChatViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val response = apiService.deleteAiChatHistory()
-                if (response.isSuccessful) {
-                    fetchChatHistory()
+                val response = repository.deleteAiChatHistory()
+                if (response.isSuccess) {
+                    _chatMessages.value = emptyList() // Clear chat messages
+                    _errorMessage.value = null
                 } else {
-                    _errorMessage.value = "Gagal menghapus riwayat chat"
+                    _errorMessage.value = "Gagal menghapus riwayat chat: ${response.exceptionOrNull()?.message}"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Terjadi kesalahan: ${e.message}"

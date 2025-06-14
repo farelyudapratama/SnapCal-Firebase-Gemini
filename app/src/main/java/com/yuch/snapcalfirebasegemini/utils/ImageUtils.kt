@@ -66,7 +66,7 @@ object ImageUtils {
         return prepareImageForUpload(imagePath) // Bisa menggunakan fungsi yang sama untuk prepare image
     }
 
-    fun prepareImageForBase64(imagePath: String, maxWidth: Int = 1024, maxHeight: Int = 1024, quality: Int = 80): String {
+    private fun prepareImageForBase64(imagePath: String, maxWidth: Int = 1024, maxHeight: Int = 1024, quality: Int = 80): String {
         // Load bitmap dari file
         val originalBitmap = BitmapFactory.decodeFile(imagePath)
 
@@ -104,6 +104,20 @@ object ImageUtils {
 
         // Encode ke base64 tanpa line wrap
         return Base64.encodeToString(byteArray, Base64.NO_WRAP)
+    }
+
+    /**
+     * Mengkonversi gambar dari path menjadi string base64
+     * Digunakan untuk API yang membutuhkan format base64 (termasuk model kustom)
+     */
+    fun getBase64FromImagePath(imagePath: String): String? {
+        return try {
+            // Gunakan metode prepareImageForBase64 yang sudah ada untuk kompresi dan konversi
+            prepareImageForBase64(imagePath)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
 }

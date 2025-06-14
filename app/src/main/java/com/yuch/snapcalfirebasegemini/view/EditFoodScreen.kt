@@ -66,7 +66,6 @@ import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -78,7 +77,6 @@ fun EditFoodScreen(
     foodItem: FoodItem?, // Data makanan yang akan diedit harusnya
     onUpdateFood: (String, String?, UpdateFoodData) -> Unit,
     onBack: () -> Unit,
-    getFoodViewModel: GetFoodViewModel,
     foodViewModel: FoodViewModel
 ) {
     var foodName by remember { mutableStateOf(foodItem?.foodName ?: "") }
@@ -92,7 +90,6 @@ fun EditFoodScreen(
     var fiber by remember { mutableStateOf(foodItem?.nutritionData?.fiber?.toString() ?: "") }
     var sugar by remember { mutableStateOf(foodItem?.nutritionData?.sugar?.toString() ?: "") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    val imageDeletedMessage by getFoodViewModel.imageDeletedMessage.collectAsState()
 
     // Focus controllers
     val focusManager = LocalFocusManager.current
@@ -126,7 +123,7 @@ fun EditFoodScreen(
         errorMessage?.let { message ->
             scope.launch {
                 snackbarHostState.showSnackbar(message)
-                foodViewModel.clearErrorMessage()
+                foodViewModel.resetMessages()
             }
         }
     }
@@ -136,19 +133,10 @@ fun EditFoodScreen(
         successMessage?.let { message ->
             scope.launch {
                 snackbarHostState.showSnackbar("$message (Redirecting in 2 seconds)")
-                foodViewModel.clearErrorMessage()
+                foodViewModel.resetMessages()
                 delay(2000)
                 navController.previousBackStackEntry?.savedStateHandle?.set("food_updated", true)
                 navController.popBackStack()
-            }
-        }
-    }
-
-    LaunchedEffect(imageDeletedMessage) {
-        imageDeletedMessage?.let { message ->
-            scope.launch {
-                snackbarHostState.showSnackbar(message)
-                getFoodViewModel.clearImageDeletedMessage()
             }
         }
     }
@@ -251,7 +239,7 @@ fun EditFoodScreen(
                                 )
                             },
                             onDeleteImage = {
-                                getFoodViewModel.deleteFoodImageById(foodId)
+                                foodViewModel.deleteFoodImage(foodId)
                             }
                         )
 

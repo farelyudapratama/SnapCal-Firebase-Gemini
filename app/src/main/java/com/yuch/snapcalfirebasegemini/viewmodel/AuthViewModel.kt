@@ -4,17 +4,23 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.yuch.snapcalfirebasegemini.R
+import com.yuch.snapcalfirebasegemini.data.repository.FirebaseRepository
+import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(
+    private val repository: FirebaseRepository = FirebaseRepository.getInstance()
+) : ViewModel() {
 
-    private val auth : FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = repository.auth
 
     private val _authState = MutableLiveData<AuthState>()
     val authState: LiveData<AuthState> = _authState
+    
     private val _userEmail = MutableLiveData<String>()
     val userEmail: LiveData<String> = _userEmail
 
@@ -56,21 +62,19 @@ class AuthViewModel : ViewModel() {
     }
 
     fun getFirebaseToken() {
-        val user = auth.currentUser
-        user?.getIdToken(true)?.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val token = task.result?.token
-                // Tampilkan di Logcat
-                Log.d("FIREBASE_DEBUG", "Token berhasil didapatkan : Bearer $token")
-//                Log.d("FIREBASE_DEBUG", "Token length: ${token?.length} characters")
-//                Log.d("FIREBASE_DEBUG", "First 10 chars: ${token?.take(10)}...")
-
-                // Untuk debugging - HAPUS SEBELUM PRODUCTION
-                // _firebaseToken.postValue(token) // Uncomment jika mau tampilkan di UI
-
-                return@addOnCompleteListener
-            } else {
-                Log.e("FIREBASE_DEBUG", "Error getting token:", task.exception)
+        viewModelScope.launch {
+            try {
+                val tokenResult = repository.getFirebaseToken()
+                if (tokenResult.isSuccess) {
+                    val token = tokenResult.getOrNull()
+                    Log.d("FIREBASE_DEBUG", "Token berhasil didapatkan : Bearer $token")
+                    // Untuk debugging - HAPUS SEBELUM PRODUCTION
+                    // _firebaseToken.postValue(token) // Uncomment jika mau tampilkan di UI
+                } else {
+                    Log.e("FIREBASE_DEBUG", "Error getting token:", tokenResult.exceptionOrNull())
+                }
+            } catch (e: Exception) {
+                Log.e("FIREBASE_DEBUG", "Exception in getFirebaseToken:", e)
             }
         }
     }

@@ -30,7 +30,7 @@ import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.data.api.response.*
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.min
 
@@ -56,7 +56,7 @@ val TextSecondaryOnLight = Color.Gray
 fun NutriTrackScreen(
     navController: NavController,
     authViewModel: AuthViewModel,
-    viewModel: GetFoodViewModel
+    viewModel: FoodViewModel
 ) {
     val authState = authViewModel.authState.observeAsState()
     LaunchedEffect(authState.value) {

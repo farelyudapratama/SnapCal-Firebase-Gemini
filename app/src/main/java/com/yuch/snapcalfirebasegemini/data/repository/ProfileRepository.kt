@@ -1,17 +1,17 @@
 package com.yuch.snapcalfirebasegemini.data.repository
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.ProfileRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
-import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 import retrofit2.HttpException
 import java.io.IOException
 
 class ProfileNotFoundException(message: String = "User profile not found") : Exception(message)
 
+/**
+ * Repository untuk menangani data profil pengguna
+ */
 class ProfileRepository(private val apiService: ApiService) {
     suspend fun getProfile(): UserPreferences {
         try {
@@ -60,16 +60,5 @@ class ProfileRepository(private val apiService: ApiService) {
             instance ?: synchronized(this) {
                 instance ?: ProfileRepository(apiService).also { instance = it }
             }
-    }
-}
-class ProfileViewModelFactory(
-    private val apiService: ApiService
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
-            val repository = ProfileRepository.getInstance(apiService)
-            return ProfileViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

@@ -40,7 +40,7 @@ import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import java.util.Locale
 import com.yuch.snapcalfirebasegemini.ui.theme.*
 import java.time.Instant
@@ -57,7 +57,7 @@ fun DetailFoodScreen(
     authViewModel: AuthViewModel,
     foodId: String,
     onBack: () -> Boolean,
-    viewModel: GetFoodViewModel,
+    viewModel: FoodViewModel,
 ) {
     val authState = authViewModel.authState.observeAsState()
     val context = LocalContext.current
@@ -85,9 +85,12 @@ fun DetailFoodScreen(
     }
 
     LaunchedEffect(navController.currentBackStackEntry) {
+        // Always refresh when returning to this screen
+        viewModel.fetchFoodById(foodId, forceRefresh = true)
+        
+        // Also check the saved state handle for specific updates
         val updated = navController.currentBackStackEntry?.savedStateHandle?.get<Boolean>("food_updated") ?: false
         if (updated) {
-            viewModel.fetchFoodById(foodId, forceRefresh = true)
             navController.currentBackStackEntry?.savedStateHandle?.set("food_updated", false)
         }
     }

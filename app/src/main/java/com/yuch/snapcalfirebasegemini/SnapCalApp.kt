@@ -24,9 +24,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
+import com.yuch.snapcalfirebasegemini.viewmodel.AiChatViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 
@@ -37,9 +38,10 @@ import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 fun SnapCalApp(
     authViewModel: AuthViewModel,
     cameraViewModel: CameraViewModel,
-    getFoodViewModel: GetFoodViewModel,
+    foodViewModel: FoodViewModel,
     profileViewModel: ProfileViewModel,
-    onboardingViewModel: OnboardingViewModel
+    onboardingViewModel: OnboardingViewModel,
+    aiChatViewModel: AiChatViewModel
 ) {
     val navController = rememberNavController()
 
@@ -123,9 +125,10 @@ fun SnapCalApp(
                 modifier = Modifier.padding(innerPadding),
                 authViewModel = authViewModel,
                 cameraViewModel = cameraViewModel,
-                getFoodViewModel = getFoodViewModel,
+                foodViewModel = foodViewModel,
                 profileViewModel = profileViewModel,
-                onboardingViewModel = onboardingViewModel
+                onboardingViewModel = onboardingViewModel,
+                aiChatViewModel = aiChatViewModel
             )
         }
         if (showBottomSheet) {
