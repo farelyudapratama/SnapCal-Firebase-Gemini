@@ -103,6 +103,7 @@ fun DetailFoodScreen(
     LaunchedEffect(isDeleted) {
         if (isDeleted) {
             navController.popBackStack()
+            viewModel.clearIsDeleted()
         }
     }
 

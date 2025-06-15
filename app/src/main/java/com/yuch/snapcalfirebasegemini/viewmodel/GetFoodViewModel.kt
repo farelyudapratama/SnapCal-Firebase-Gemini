@@ -282,4 +282,8 @@ class GetFoodViewModel(
         _currentPage.value = 1
         fetchFood(page = 1)
     }
+
+    fun clearIsDeleted() {
+        _isDeleted.value = false
+    }
 }
