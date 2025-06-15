@@ -37,20 +37,19 @@ import kotlin.math.min
 // --- Definisi Warna Baru ---
 val DarkGreenPrimary = Color(0xFF00695C)
 val MediumGreenSecondary = Color(0xFF4DB6AC)
-val LightGreenBackground = Color(0xFFE0F2F1) // Bisa juga Color.White jika ingin lebih clean
+val LightGreenBackground = Color(0xFFE0F2F1)
 
-val AccentYellow = Color(0xFFFFD54F) // Untuk Karbohidrat
-val AccentOrange = Color(0xFFFFB74D) // Untuk Lemak / Kalori (progress utama)
-val AccentDeepOrange = Color(0xFFFF8A65) // Alternatif untuk kalori/warning
-val AccentGreen = Color(0xFF4CAF50) // Untuk Protein (tetap) / Progress Baik
-val AccentRed = Color(0xFFF44336) // Untuk warning (tetap) / Progress Buruk
-val AccentAmber = Color(0xFFFFC107) // Untuk warning sedang (tetap) / Progress Sedang
+val AccentYellow = Color(0xFFFFD54F)
+val AccentOrange = Color(0xFFFFB74D)
+val AccentDeepOrange = Color(0xFFFF8A65)
+val AccentGreen = Color(0xFF4CAF50)
+val AccentRed = Color(0xFFF44336)
+val AccentAmber = Color(0xFFFFC107)
 
 val TextOnDark = Color.White
-val TextOnLight = Color.DarkGray // Lebih soft dari Black
+val TextOnLight = Color.DarkGray
 val TextSecondaryOnLight = Color.Gray
 // --- Akhir Definisi Warna Baru ---
-
 
 @Composable
 fun NutriTrackScreen(
@@ -75,14 +74,12 @@ fun NutriTrackScreen(
     val isLoading by viewModel.isLoading.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Background gradient
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-
                             DarkGreenPrimary,
                             MediumGreenSecondary,
                             LightGreenBackground
@@ -116,10 +113,7 @@ fun NutriContent(
     val scope = rememberCoroutineScope()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Custom Header with Gradient
         CustomHeader(summary.date)
-
-        // Tab Navigation
         TabNavigation(
             selectedTab = pagerState.currentPage,
             onTabSelected = { index ->
@@ -128,8 +122,6 @@ fun NutriContent(
                 }
             }
         )
-
-        // ViewPager Content
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
@@ -150,7 +142,6 @@ fun CustomHeader(date: String) {
             .height(120.dp)
             .background(
                 Brush.horizontalGradient(
-
                     colors = listOf(DarkGreenPrimary, MediumGreenSecondary)
                 )
             )
@@ -171,7 +162,6 @@ fun CustomHeader(date: String) {
                 fontSize = 16.sp
             )
         }
-
         Icon(
             imageVector = Icons.Default.Restaurant,
             contentDescription = null,
@@ -214,16 +204,13 @@ fun TabItem(
     onClick: () -> Unit
 ) {
     val animatedColor by animateColorAsState(
-
         targetValue = if (isSelected) DarkGreenPrimary else TextSecondaryOnLight,
         animationSpec = tween(300), label = ""
     )
     val animatedTextColor by animateColorAsState(
-
         targetValue = if (isSelected) DarkGreenPrimary else TextSecondaryOnLight,
         animationSpec = tween(300), label = "tab_text_color"
     )
-
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -250,7 +237,6 @@ fun TabItem(
                     .width(20.dp)
                     .height(2.dp)
                     .background(
-
                         color = DarkGreenPrimary,
                         shape = RoundedCornerShape(1.dp)
                     )
@@ -269,15 +255,8 @@ fun DailyOverviewPage(summary: DailySummaryResponse) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
-
-        item {
-            CalorieProgressCard(summary)
-        }
-
-        item {
-            MacronutrientOverview(summary.data)
-        }
-
+        item { CalorieProgressCard(summary) }
+        item { MacronutrientOverview(summary.data) }
         item {
             Text(
                 "Today's Meals",
@@ -287,11 +266,9 @@ fun DailyOverviewPage(summary: DailySummaryResponse) {
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         }
-
         items(summary.foods) { food ->
             FoodCard(food)
         }
-
         if (summary.feedback.isNotEmpty()) {
             item {
                 Text(
@@ -302,16 +279,11 @@ fun DailyOverviewPage(summary: DailySummaryResponse) {
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
-
             items(summary.feedback) { feedback ->
                 InsightCard(feedback)
             }
         }
-
-        item {
-            DetailedNutritionCard(summary.data, summary.goals)
-        }
-
+        item { DetailedNutritionCard(summary.data, summary.goals) }
         item { Spacer(modifier = Modifier.height(100.dp)) }
     }
 }
@@ -319,9 +291,9 @@ fun DailyOverviewPage(summary: DailySummaryResponse) {
 @Composable
 fun CalorieProgressCard(summary: DailySummaryResponse) {
     val currentCalories = summary.data?.totalCalories ?: 0.0
-    val targetCalories = summary.goals.calories
+    val goals = summary.goals
+    val targetCalories = goals?.calories ?: 0.0
     val progress = if (targetCalories > 0) (currentCalories / targetCalories).toFloat() else 0f
-
 
     Card(
         modifier = Modifier
@@ -339,7 +311,6 @@ fun CalorieProgressCard(summary: DailySummaryResponse) {
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-
                             MediumGreenSecondary.copy(alpha = 0.1f),
                             Color.Transparent
                         )
@@ -355,38 +326,57 @@ fun CalorieProgressCard(summary: DailySummaryResponse) {
                     color = TextOnLight
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        progress = { min(progress, 1f) },
-                        modifier = Modifier.size(100.dp),
-
-                        color = when {
-                            progress < 0.5f -> AccentGreen
-                            progress < 0.9f -> AccentAmber
-                            else -> AccentRed
-                        },
-                        strokeWidth = 8.dp,
-                        trackColor = Color.Gray.copy(alpha = 0.2f)
-                    )
-
+                if (goals == null) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            "${currentCalories.toInt()}",
+                            "${currentCalories.toInt()} kcal",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = TextOnLight
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "/ ${targetCalories.toInt()} kcal",
+                            "Goals not set",
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondaryOnLight
+                            color = AccentAmber,
+                            textAlign = TextAlign.Center
                         )
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            progress = { min(progress, 1f) },
+                            modifier = Modifier.size(100.dp),
+                            color = when {
+                                progress < 0.5f -> AccentGreen
+                                progress < 0.9f -> AccentAmber
+                                else -> AccentRed
+                            },
+                            strokeWidth = 8.dp,
+                            trackColor = Color.Gray.copy(alpha = 0.2f)
+                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "${currentCalories.toInt()}",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = TextOnLight
+                            )
+                            Text(
+                                "/ ${targetCalories.toInt()} kcal",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondaryOnLight
+                            )
+                        }
                     }
                 }
             }
@@ -412,9 +402,7 @@ fun MacronutrientOverview(data: DailySummary?) {
                 color = TextOnLight
             )
             Spacer(modifier = Modifier.height(16.dp))
-
             if (data != null) {
-
                 MacroItem("Carbs", data.totalCarbs, AccentYellow, Icons.Default.Grain)
                 MacroItem("Protein", data.totalProtein, AccentGreen, Icons.Default.FitnessCenter)
                 MacroItem("Fat", data.totalFat, AccentOrange, Icons.Default.Opacity)
@@ -444,9 +432,7 @@ fun MacroItem(name: String, value: Double, color: Color, icon: ImageVector) {
                 modifier = Modifier.size(20.dp)
             )
         }
-
         Spacer(modifier = Modifier.width(12.dp))
-
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 name,
@@ -458,7 +444,7 @@ fun MacroItem(name: String, value: Double, color: Color, icon: ImageVector) {
                 "${value.toInt()}g",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                color = color // Warna spesifik makro
+                color = color
             )
         }
     }
@@ -493,9 +479,7 @@ fun FoodCard(food: FoodBrief) {
                     modifier = Modifier.size(24.dp)
                 )
             }
-
             Spacer(modifier = Modifier.width(16.dp))
-
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     food.mealType,
@@ -509,7 +493,6 @@ fun FoodCard(food: FoodBrief) {
                     color = TextSecondaryOnLight
                 )
             }
-
             Text(
                 "${food.calories.toInt()} kcal",
                 style = MaterialTheme.typography.titleSmall,
@@ -526,7 +509,6 @@ fun InsightCard(message: String) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-
             containerColor = MediumGreenSecondary.copy(alpha = 0.1f)
         )
     ) {
@@ -537,7 +519,6 @@ fun InsightCard(message: String) {
             Icon(
                 imageVector = Icons.Default.Lightbulb,
                 contentDescription = "Insight",
-
                 tint = DarkGreenPrimary,
                 modifier = Modifier.size(20.dp)
             )
@@ -553,7 +534,7 @@ fun InsightCard(message: String) {
 }
 
 @Composable
-fun DetailedNutritionCard(data: DailySummary?, goals: Goals) {
+fun DetailedNutritionCard(data: DailySummary?, goals: Goals?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -570,18 +551,27 @@ fun DetailedNutritionCard(data: DailySummary?, goals: Goals) {
                 color = TextOnLight
             )
             Spacer(modifier = Modifier.height(20.dp))
-
             if (data != null) {
-
-                NutrientProgressBar("Calories", data.totalCalories, goals.calories, "kcal", AccentDeepOrange)
-                NutrientProgressBar("Carbohydrates", data.totalCarbs, goals.carbs, "g", AccentYellow)
-                NutrientProgressBar("Protein", data.totalProtein, goals.protein, "g", AccentGreen)
-                NutrientProgressBar("Fat", data.totalFat, goals.fat, "g", AccentOrange)
-
+                if (goals != null) {
+                    NutrientProgressBar("Calories", data.totalCalories, goals.calories, "kcal", AccentDeepOrange)
+                    NutrientProgressBar("Carbohydrates", data.totalCarbs, goals.carbs, "g", AccentYellow)
+                    NutrientProgressBar("Protein", data.totalProtein, goals.protein, "g", AccentGreen)
+                    NutrientProgressBar("Fat", data.totalFat, goals.fat, "g", AccentOrange)
+                } else {
+                    Text(
+                        "Nutrition goals not set",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = AccentAmber,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    SimpleNutrientItem("Calories", data.totalCalories, "kcal")
+                    SimpleNutrientItem("Carbohydrates", data.totalCarbs, "g")
+                    SimpleNutrientItem("Protein", data.totalProtein, "g")
+                    SimpleNutrientItem("Fat", data.totalFat, "g")
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider(color = Color.Gray.copy(alpha = 0.3f))
                 Spacer(modifier = Modifier.height(16.dp))
-
                 Text(
                     "Additional Nutrients",
                     style = MaterialTheme.typography.titleMedium,
@@ -589,7 +579,6 @@ fun DetailedNutritionCard(data: DailySummary?, goals: Goals) {
                     color = TextOnLight
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-
                 SimpleNutrientItem("Saturated Fat", data.totalSaturatedFat, "g")
                 SimpleNutrientItem("Fiber", data.totalFiber, "g")
                 SimpleNutrientItem("Sugar", data.totalSugar, "g")
@@ -607,8 +596,6 @@ fun NutrientProgressBar(
     color: Color
 ) {
     val progress = if (goal > 0) (current / goal).toFloat() else 0f
-
-
     Column(
         modifier = Modifier.padding(vertical = 8.dp)
     ) {
@@ -628,9 +615,7 @@ fun NutrientProgressBar(
                 color = TextSecondaryOnLight
             )
         }
-
         Spacer(modifier = Modifier.height(8.dp))
-
         LinearProgressIndicator(
             progress = { min(progress, 1f) },
             modifier = Modifier
@@ -694,7 +679,6 @@ fun WeeklyAnalysisPage(weeklySummary: WeeklySummaryResponse?) {
         }
         return
     }
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -703,11 +687,7 @@ fun WeeklyAnalysisPage(weeklySummary: WeeklySummaryResponse?) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
-
-        item {
-            WeeklyOverviewCard(weeklySummary)
-        }
-
+        item { WeeklyOverviewCard(weeklySummary) }
         item {
             Text(
                 "Daily Breakdown",
@@ -716,11 +696,9 @@ fun WeeklyAnalysisPage(weeklySummary: WeeklySummaryResponse?) {
                 color = TextOnLight
             )
         }
-
         items(weeklySummary.summaries) { day ->
             DailyBreakdownCard(day, weeklySummary.dailyGoal)
         }
-
         item { Spacer(modifier = Modifier.height(100.dp)) }
     }
 }
@@ -749,13 +727,9 @@ fun WeeklyOverviewCard(summary: WeeklySummaryResponse) {
                 color = TextSecondaryOnLight
             )
             Spacer(modifier = Modifier.height(20.dp))
-
             val avgCalories = summary.summaries.map { it.calories }.average().takeIf { !it.isNaN() } ?: 0.0
             val avgCarbs = summary.summaries.map { it.carbs }.average().takeIf { !it.isNaN() } ?: 0.0
-            val avgProtein = summary.summaries.map { it.protein }.average().takeIf { !it.isNaN()} ?: 0.0
-
-
-
+            val avgProtein = summary.summaries.map { it.protein }.average().takeIf { !it.isNaN() } ?: 0.0
             WeeklyStatItem("Average Calories", avgCalories, "kcal", AccentDeepOrange)
             WeeklyStatItem("Average Carbs", avgCarbs, "g", AccentYellow)
             WeeklyStatItem("Average Protein", avgProtein, "g", AccentGreen)
@@ -793,7 +767,7 @@ fun WeeklyStatItem(label: String, value: Double, unit: String, color: Color) {
 }
 
 @Composable
-fun DailyBreakdownCard(day: DailyNutritionSummary, goal: NutrientGoal) {
+fun DailyBreakdownCard(day: DailyNutritionSummary, goal: NutrientGoal?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -810,33 +784,36 @@ fun DailyBreakdownCard(day: DailyNutritionSummary, goal: NutrientGoal) {
                 color = TextOnLight
             )
             Spacer(modifier = Modifier.height(12.dp))
-
-            val calorieProgress = if(goal.calories > 0) (day.calories / goal.calories).toFloat() else 0f
-
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-
                 CompactNutrientInfo("Cal", day.calories.toInt(), AccentDeepOrange)
                 CompactNutrientInfo("Carbs", day.carbs.toInt(), AccentYellow)
                 CompactNutrientInfo("Protein", day.protein.toInt(), AccentGreen)
                 CompactNutrientInfo("Fat", day.fat.toInt(), AccentOrange)
             }
-
             Spacer(modifier = Modifier.height(8.dp))
-
-            LinearProgressIndicator(
-                progress = { min(calorieProgress, 1f) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-
-                color = AccentDeepOrange,
-                trackColor = Color.Gray.copy(alpha = 0.2f)
-            )
+            if (goal != null) {
+                val calorieProgress = if (goal.calories > 0) (day.calories / goal.calories).toFloat() else 0f
+                LinearProgressIndicator(
+                    progress = { min(calorieProgress, 1f) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp)),
+                    color = AccentDeepOrange,
+                    trackColor = Color.Gray.copy(alpha = 0.2f)
+                )
+            } else {
+                Text(
+                    "Goals not set",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AccentAmber,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
@@ -916,7 +893,6 @@ fun EmptyDataScreen(onRetry: () -> Unit) {
             Button(
                 onClick = onRetry,
                 colors = ButtonDefaults.buttonColors(
-
                     containerColor = Color.White,
                     contentColor = DarkGreenPrimary
                 )
@@ -927,7 +903,6 @@ fun EmptyDataScreen(onRetry: () -> Unit) {
     }
 }
 
-// Helper functions
 fun getMealTypeColor(mealType: String): Color {
     return when (mealType.lowercase()) {
         "breakfast", "sarapan" -> AccentYellow
