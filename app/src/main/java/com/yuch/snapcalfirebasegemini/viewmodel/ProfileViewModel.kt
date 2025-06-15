@@ -29,6 +29,9 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
     private val _updateStatus = MutableStateFlow<ApiStatus>(ApiStatus.Idle)
     val updateStatus: StateFlow<ApiStatus> = _updateStatus.asStateFlow()
 
+    private val _isLoading = MutableStateFlow<Boolean>(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     init {
         fetchUserPreferences()
     }
@@ -36,6 +39,7 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
     private fun fetchUserPreferences() {
         viewModelScope.launch {
             _fetchStatus.value = ApiStatus.Loading
+            _isLoading.value = true
             try {
                 // Panggil fungsi dari repository
                 val result = repository.getProfile()
@@ -46,6 +50,8 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
                 _fetchStatus.value = ApiStatus.Success("No profile found, ready for onboarding.")
             } catch (e: Exception) {
                 _fetchStatus.value = ApiStatus.Error(e.message ?: "Failed to fetch profile")
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -54,6 +60,7 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
     fun saveOrUpdateProfile(profileRequest: ProfileRequest, onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
             _updateStatus.value = ApiStatus.Loading
+            _isLoading.value = true
             try {
                 // Panggil fungsi dari repository
                 repository.saveProfile(profileRequest)
@@ -64,7 +71,13 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
             } catch (e: Exception) {
                 _updateStatus.value = ApiStatus.Error(e.message ?: "Failed to save profile")
                 onComplete(false)
+            } finally {
+                _isLoading.value = false
             }
         }
+    }
+
+    fun refreshProfile() {
+        fetchUserPreferences()
     }
 }

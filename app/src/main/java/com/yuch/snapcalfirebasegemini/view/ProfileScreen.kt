@@ -31,6 +31,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 import java.util.Locale
 import kotlin.math.pow
 
@@ -40,20 +41,18 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
-    getFoodViewModel: GetFoodViewModel
+    getFoodViewModel: GetFoodViewModel,
+    profileViewModel: ProfileViewModel
 ) {
     val authState = authViewModel.authState.observeAsState()
     val email by authViewModel.userEmail.observeAsState("")
-    val userPreferences by getFoodViewModel.userPreferences.collectAsState()
-    val isLoading by getFoodViewModel.isLoading.collectAsState()
+    val userPreferences by profileViewModel.userPreferences.collectAsState()
+    val isLoading by profileViewModel.isLoading.collectAsState()
 
     LaunchedEffect(authState.value) {
         if (authState.value is AuthState.Unauthenticated) {
             navController.navigate("login") { popUpTo(0) }
         }
-    }
-    LaunchedEffect(Unit) {
-        getFoodViewModel.fetchUserPreferences()
     }
 
     Box(
@@ -81,7 +80,7 @@ fun ProfileScreen(
                     EmptyStateCard(
                         message = "Personal info kamu belum diisi. Yuk lengkapi sekarang!",
                         onActionClick = {
-                             navController.navigate("profile_onboarding")
+                             navController.navigate("profile_onboarding?edit=false")
                         },
                         actionLabel = "Isi Sekarang"
                     )
@@ -133,7 +132,7 @@ fun ProfileScreen(
                         }
                         item {
                             GoalsCard(userPreferences = userPreferences, onEditClick = {
-                                // navController.navigate("edit_goals_screen")
+                                navController.navigate("profile_onboarding?edit=true")
                             })
                         }
                         item {

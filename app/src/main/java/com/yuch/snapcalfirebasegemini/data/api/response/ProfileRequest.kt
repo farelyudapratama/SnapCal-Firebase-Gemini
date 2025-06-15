@@ -22,10 +22,10 @@ data class PersonalInfoReq(
 )
 
 data class DailyGoals(
-    val calories: Int? = null,
-    val carbs: Int? = null,
-    val protein: Int? = null,
-    val fat: Int? = null,
-    val fiber: Int? = null,
-    val sugar: Int? = null
+    val calories: Double? = null,
+    val carbs: Double? = null,
+    val protein: Double? = null,
+    val fat: Double? = null,
+    val fiber: Double? = null,
+    val sugar: Double? = null
 )

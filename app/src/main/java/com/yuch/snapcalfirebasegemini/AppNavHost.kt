@@ -66,7 +66,7 @@ fun AppNavHost(
             MainScreen(modifier, navController, authViewModel, getFoodViewModel)
         }
         composable(Screen.Profile.route) {
-            ProfileScreen(modifier, navController, authViewModel, getFoodViewModel)
+            ProfileScreen(modifier, navController, authViewModel, getFoodViewModel, profileViewModel)
         }
         composable(Screen.Tracking.route) {
             NutriTrackScreen(navController, authViewModel, getFoodViewModel)
@@ -165,12 +165,28 @@ fun AppNavHost(
             )
         }
 
-        composable("profile_onboarding") {
+//        composable("profile_onboarding") {
+//            ProfileOnboardingScreen(
+//                navController = navController,
+//                authViewModel = authViewModel,
+//                profileViewModel = profileViewModel,
+//                onboardingViewModel = onboardingViewModel,
+//            )
+//        }
+
+        composable("profile_onboarding?edit={edit}",
+            arguments = listOf(navArgument("edit") {
+                defaultValue = "false"
+            })
+        ) { backStackEntry ->
+            val isEdit = backStackEntry.arguments?.getString("edit") == "true"
+
             ProfileOnboardingScreen(
                 navController = navController,
                 authViewModel = authViewModel,
                 profileViewModel = profileViewModel,
                 onboardingViewModel = onboardingViewModel,
+                isEdit = isEdit
             )
         }
     }

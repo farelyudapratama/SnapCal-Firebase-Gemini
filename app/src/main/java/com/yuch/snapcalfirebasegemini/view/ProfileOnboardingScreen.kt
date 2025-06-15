@@ -1,5 +1,6 @@
 package com.yuch.snapcalfirebasegemini.view
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -15,8 +16,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,6 +33,7 @@ import com.yuch.snapcalfirebasegemini.viewmodel.ApiStatus
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.toProfileRequest
 import java.util.Locale
 
 object OnboardingConstants {
@@ -74,11 +74,31 @@ fun ProfileOnboardingScreen(
     navController: NavController,
     authViewModel: AuthViewModel,
     profileViewModel: ProfileViewModel,
-    onboardingViewModel: OnboardingViewModel
+    onboardingViewModel: OnboardingViewModel,
+    isEdit: Boolean
 ) {
     val currentStep by onboardingViewModel.currentStep.collectAsState()
     val formData by onboardingViewModel.formData.collectAsState()
     val updateStatus by profileViewModel.updateStatus.collectAsState()
+    val userPreferences by profileViewModel.userPreferences.collectAsState()
+    val alreadyLoaded = remember { mutableStateOf(false) }
+
+    if (isEdit) {
+        LaunchedEffect(isEdit) {
+
+            // 1. Refresh data dari server
+            profileViewModel.refreshProfile()
+
+            // 2. Tunggu sampai userPreferences tidak null
+            profileViewModel.userPreferences.collect { prefs ->
+                if (prefs != null && !alreadyLoaded.value) {
+                    val profileRequest = prefs.toProfileRequest()
+                    onboardingViewModel.loadProfile(profileRequest)
+                    alreadyLoaded.value = true
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -141,7 +161,16 @@ fun ProfileOnboardingScreen(
                             0 -> WelcomeStep { onboardingViewModel.nextStep() }
                             1 -> PersonalInfoStep(formData.personalInfo) { onboardingViewModel.updatePersonalInfo(it) }
                             2 -> GoalsStep(
-                                initialData = formData.dailyGoals,
+                                initialData = formData.dailyGoals?.let {
+                                    DailyGoals(
+                                        calories = it.calories,
+                                        protein = it.protein,
+                                        carbs = it.carbs,
+                                        fat = it.fat,
+                                        fiber = it.fiber,
+                                        sugar = it.sugar
+                                    )
+                                },
                                 onDataChange = { onboardingViewModel.updateDailyGoals(it) },
                                 personalInfo = formData.personalInfo
                             )
@@ -408,12 +437,12 @@ fun GoalsStep(
     LaunchedEffect(calories, protein, carbs, fat, fiber, sugar) {
         onDataChange(
             DailyGoals(
-                calories = calories.toIntOrNull(),
-                protein = protein.toIntOrNull(),
-                carbs = carbs.toIntOrNull(),
-                fat = fat.toIntOrNull(),
-                fiber = fiber.toIntOrNull(),
-                sugar = sugar.toIntOrNull()
+                calories = calories.toDoubleOrNull(),
+                protein = protein.toDoubleOrNull(),
+                carbs = carbs.toDoubleOrNull(),
+                fat = fat.toDoubleOrNull(),
+                fiber = fiber.toDoubleOrNull(),
+                sugar = sugar.toDoubleOrNull()
             )
         )
     }

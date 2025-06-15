@@ -53,7 +53,7 @@ fun SnapCalApp(
         Screen.DetailFood.route,
         Screen.EditFood.route,
         Screen.AiChat.route,
-        Screen.ProfileOnboarding.route
+        Screen.ProfileOnboarding.route,
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
