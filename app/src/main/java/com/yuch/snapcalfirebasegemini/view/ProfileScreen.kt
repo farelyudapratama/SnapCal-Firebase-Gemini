@@ -2,6 +2,7 @@ package com.yuch.snapcalfirebasegemini.view
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -9,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -26,7 +28,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -48,6 +49,8 @@ fun ProfileScreen(
     val email by authViewModel.userEmail.observeAsState("")
     val userPreferences by profileViewModel.userPreferences.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showOptionsBottomSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(authState.value) {
         if (authState.value is AuthState.Unauthenticated) {
@@ -67,9 +70,13 @@ fun ProfileScreen(
     ) {
         Scaffold(
             topBar = {
-                ProfileTopAppBar(email = email, onSignOut = { authViewModel.signout() })
+                ProfileTopAppBar(
+                    email = email,
+                    onSignOut = { authViewModel.signout() },
+                    onMoreOptions = { showOptionsBottomSheet = true } // Tambah menu options
+                )
             },
-            containerColor = Color.Transparent
+            containerColor = Color.Transparent,
         ) { paddingValues ->
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -80,7 +87,7 @@ fun ProfileScreen(
                     EmptyStateCard(
                         message = "Personal info kamu belum diisi. Yuk lengkapi sekarang!",
                         onActionClick = {
-                             navController.navigate("profile_onboarding?edit=false")
+                            navController.navigate("profile_onboarding?edit=false")
                         },
                         actionLabel = "Isi Sekarang"
                     )
@@ -98,8 +105,28 @@ fun ProfileScreen(
                     ) {
 
                         item {
-                            Divider(modifier = Modifier.padding(vertical = 8.dp))
-                            SectionHeader("Overview")
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                            // Header dengan quick actions
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                SectionHeader("Overview")
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    // Quick edit button untuk personal info
+                                    IconButton(
+                                        onClick = { navController.navigate("profile_onboarding?edit=true&section=personal") },
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = "Edit Personal Info",
+                                            tint = Color(0xFF7C3AED),
+                                        )
+                                    }
+
+                                }
+                            }
                         }
                         userPreferences?.personalInfo?.let { info ->
                             item {
@@ -110,7 +137,7 @@ fun ProfileScreen(
                                         label = "Weight",
                                         value = "${info.weight}",
                                         unit = "kg",
-                                        color = Color(0xFF2563EB)
+                                        color = Color(0xFF2563EB),
                                     )
                                     StatCard(
                                         modifier = Modifier.weight(1f),
@@ -118,7 +145,7 @@ fun ProfileScreen(
                                         label = "Height",
                                         value = "${info.height}",
                                         unit = "cm",
-                                        color = Color(0xFF16A34A)
+                                        color = Color(0xFF16A34A),
                                     )
                                 }
                             }
@@ -127,24 +154,180 @@ fun ProfileScreen(
                             }
                         }
                         item {
-                            Divider(modifier = Modifier.padding(vertical = 8.dp))
-                            SectionHeader("Daily Goals")
-                        }
-                        item {
-                            GoalsCard(userPreferences = userPreferences, onEditClick = {
-                                navController.navigate("profile_onboarding?edit=true")
-                            })
-                        }
-                        item {
-                            Divider(modifier = Modifier.padding(vertical = 8.dp))
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                             SectionHeader("My Preferences")
                         }
                         item {
-                            AllPreferencesCard(userPreferences = userPreferences, onEditClick = {
-                                // navController.navigate("edit_preferences_screen")
-                            })
+                            AllPreferencesCard(
+                                userPreferences = userPreferences,
+                                onEditClick = {
+                                    navController.navigate("profile_onboarding?edit=true&section=preferences")
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(76.dp))
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // Bottom Sheet untuk options menu
+    if (showOptionsBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showOptionsBottomSheet = false },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                // TODO: Belum ada opsi lain, bisa ditambahkan nanti
+//                Text(
+//                    "Profile Options",
+//                    style = MaterialTheme.typography.titleLarge,
+//                    fontWeight = FontWeight.Bold,
+//                    modifier = Modifier.padding(bottom = 16.dp)
+//                )
+
+//                ProfileOptionItem(
+//                    icon = Icons.Default.Edit,
+//                    title = "Edit All Profile",
+//                    subtitle = "Edit personal info and preferences",
+//                    onClick = {
+//                        showOptionsBottomSheet = false
+//                        navController.navigate("profile_onboarding?edit=true")
+//                    }
+//                )
+
+//                ProfileOptionItem(
+//                    icon = Icons.Default.Refresh,
+//                    title = "Reset Preferences",
+//                    subtitle = "Reset dietary preferences only",
+//                    onClick = {
+//                        showOptionsBottomSheet = false
+//                        // Implement reset preferences
+////                        profileViewModel.resetPreferences()
+//                    }
+//                )
+
+//                ProfileOptionItem(
+//                    icon = Icons.Default.Download,
+//                    title = "Export Data",
+//                    subtitle = "Download your profile data",
+//                    onClick = {
+//                        showOptionsBottomSheet = false
+//                        // Implement export functionality
+////                        profileViewModel.exportData()
+//                    }
+//                )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                ProfileOptionItem(
+                    icon = Icons.Default.Delete,
+                    title = "Delete Profile",
+                    subtitle = "Permanently delete all profile data",
+                    onClick = {
+                        showOptionsBottomSheet = false
+                        showDeleteDialog = true
+                    },
+                    isDestructive = true
+                )
+
+                Spacer(modifier = Modifier.height(36.dp))
+            }
+        }
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Profile") },
+            text = {
+                Text("Apakah kamu yakin ingin menghapus semua data profile? Tindakan ini tidak bisa dibatalkan.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+//                        profileViewModel.deleteProfile()
+//                        authViewModel.signout()
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileTopAppBar(
+    email: String,
+    onSignOut: () -> Unit,
+    onMoreOptions: () -> Unit = {}
+) {
+    TopAppBar(
+        title = {
+            Column {
+                Text("My Profile", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                Text(email, color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        },
+        actions = {
+            IconButton(onClick = onMoreOptions) {
+                Icon(Icons.Default.MoreVert, contentDescription = "More Options", tint = Color.White)
+            }
+            IconButton(onClick = onSignOut) {
+                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Sign Out", tint = Color.White)
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, titleContentColor = Color.White)
+    )
+}
+
+@Composable
+fun StatCard(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    label: String,
+    value: String,
+    unit: String,
+    color: Color,
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Box {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(label, fontSize = 12.sp, color = Color.Gray)
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = color)
+                        Text(unit, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(color.copy(alpha = 0.15f), shape = CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(imageVector = icon, contentDescription = null, tint = color)
                 }
             }
         }
@@ -194,25 +377,6 @@ fun EmptyStateCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ProfileTopAppBar(email: String, onSignOut: () -> Unit) {
-    TopAppBar(
-        title = {
-            Column {
-                Text("My Profile", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
-                Text(email, color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        },
-        actions = {
-            IconButton(onClick = onSignOut) {
-                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Sign Out", tint = Color.White)
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, titleContentColor = Color.White)
-    )
-}
-
 @Composable
 fun SectionHeader(title: String) {
     Text(
@@ -221,90 +385,6 @@ fun SectionHeader(title: String) {
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 4.dp)
     )
-}
-
-@Composable
-fun UserProfileCard(email: String, weight: Int?, height: Int?) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-    ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Default.AccountCircle,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape),
-                tint = Color(0xFF9333EA)
-            )
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text("Hi, $email", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text(
-                    text = "Weight: ${weight ?: "-"} kg | Height: ${height ?: "-"} cm",
-                    fontSize = 12.sp, color = Color.Gray
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun DailySummaryBanner(calories: Int, goal: Int) {
-    val progress = if (goal > 0) calories * 100 / goal else 0
-    val text = when {
-        progress < 50 -> "You're just getting started. Keep going!"
-        progress < 100 -> "Almost there! You're doing great."
-        else -> "Congrats! You've hit your daily goal 🎉"
-    }
-
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFEDE9FE)),
-        elevation = CardDefaults.cardElevation(2.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text,
-            modifier = Modifier.padding(16.dp),
-            fontWeight = FontWeight.Medium,
-            color = Color(0xFF7C3AED),
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-fun StatCard(modifier: Modifier = Modifier, icon: ImageVector, label: String, value: String, unit: String, color: Color) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-    ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(label, fontSize = 12.sp, color = Color.Gray)
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = color)
-                    Text(unit, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(color.copy(alpha = 0.15f), shape = CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(imageVector = icon, contentDescription = null, tint = color)
-            }
-        }
-    }
 }
 
 @Composable
@@ -335,33 +415,6 @@ fun BMICard(height: Int, weight: Int) {
 }
 
 @Composable
-fun GoalsCard(userPreferences: UserPreferences?, onEditClick: () -> Unit) {
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Nutrition Progress", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                IconButton(onClick = onEditClick) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit Goals", tint = Color(0xFF7C3AED))
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-            userPreferences?.dailyGoals?.let { goals ->
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    GoalProgressBar("Calories", 1650, goals.calories.toInt(), "kcal", Color(0xFF3B82F6))
-                    GoalProgressBar("Protein", 45, goals.protein.toInt(), "g", Color(0xFFEF4444))
-                    GoalProgressBar("Carbs", 220, goals.carbs.toInt(), "g", Color(0xFFF59E0B))
-                    GoalProgressBar("Fat", 50, goals.fat.toInt(), "g", Color(0xFF10B981))
-                }
-            } ?: Text("No goals set yet.", color = Color.Gray)
-        }
-    }
-}
-
-@Composable
 fun AllPreferencesCard(userPreferences: UserPreferences?, onEditClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -375,7 +428,7 @@ fun AllPreferencesCard(userPreferences: UserPreferences?, onEditClick: () -> Uni
                     Icon(Icons.Default.Edit, contentDescription = "Edit Preferences", tint = Color(0xFF7C3AED))
                 }
             }
-            Divider(Modifier.padding(vertical = 12.dp))
+            HorizontalDivider(Modifier.padding(vertical = 12.dp))
             userPreferences?.let {
                 PreferenceItem(Icons.Default.LocalHospital, "Health Conditions", it.healthConditions + it.customHealthConditions)
                 PreferenceItem(Icons.Default.Warning, "Allergies", it.allergies + it.customAllergies)
@@ -414,26 +467,6 @@ fun PreferenceItem(icon: ImageVector, title: String, items: List<String>) {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun GoalProgressBar(label: String, current: Int, target: Int, unit: String, color: Color) {
-    val percentage = if (target > 0) (current.toFloat() / target.toFloat()).coerceAtMost(1f) else 0f
-    Column {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            Text("${(percentage * 100).toInt()}%", fontSize = 12.sp, color = Color.Gray)
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        LinearProgressIndicator(
-            progress = { percentage },
-            modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-            color = color,
-            trackColor = color.copy(alpha = 0.2f)
-        )
-        Spacer(Modifier.height(4.dp))
-        Text("$current / $target $unit", fontSize = 12.sp, color = Color.DarkGray)
     }
 }
 
@@ -477,6 +510,73 @@ fun FlowRow(
                 }
                 y += rowHeights[i] + vSpacing
             }
+        }
+    }
+}
+
+@Composable
+fun ProfileOptionItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    isDestructive: Boolean = false
+) {
+    val textColor = if (isDestructive) Color.Red else Color.Black
+    val iconColor = if (isDestructive) Color.Red else Color(0xFF7C3AED)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        iconColor.copy(alpha = 0.1f),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.sp,
+                    color = textColor
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+            }
+
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = Color.Gray,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
