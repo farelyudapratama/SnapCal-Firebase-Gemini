@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
+import com.yuch.snapcalfirebasegemini.utils.normalizeDecimal
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import kotlinx.coroutines.launch
 import java.io.File
@@ -77,13 +78,13 @@ fun AnalyzeScreen(
         analysisResult.data?.let {
             val baseData = EditableFoodData(
                 foodName = it.foodName,
-                calories = it.calories.toString(),
-                carbs = it.carbs.toString(),
-                protein = it.protein.toString(),
-                totalFat = it.totalFat.toString(),
-                saturatedFat = it.saturatedFat.toString(),
-                fiber = it.fiber.toString(),
-                sugar = it.sugar.toString(),
+                calories = it.calories.toString().normalizeDecimal(),
+                carbs = it.carbs.toString().normalizeDecimal(),
+                protein = it.protein.toString().normalizeDecimal(),
+                totalFat = it.totalFat.toString().normalizeDecimal(),
+                saturatedFat = it.saturatedFat.toString().normalizeDecimal(),
+                fiber = it.fiber.toString().normalizeDecimal(),
+                sugar = it.sugar.toString().normalizeDecimal(),
                 weightInGrams = "100"
             )
             baseNutrition = baseData
@@ -521,7 +522,7 @@ private fun EditableAnalysisCard(
             )
 
             EditableNutritionRow(stringResource(R.string.weight_g), foodData.weightInGrams) {
-                onValueChange(foodData.copy(weightInGrams = it))
+                onValueChange(foodData.copy(weightInGrams = it.normalizeDecimal()))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -568,7 +569,7 @@ private fun EditableAnalysisCard(
                     isManual = manualOverrides[key] == true,
                     onValueChange = { newValue ->
                         manualOverrides[key] = true
-                        onValueChange(updateField(foodData, key, newValue))
+                        onValueChange(updateField(foodData, key, newValue.normalizeDecimal()))
                     },
                     onToggleChange = { isChecked ->
                         manualOverrides[key] = isChecked

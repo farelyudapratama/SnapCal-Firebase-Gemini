@@ -38,10 +38,11 @@ interface ApiService {
     ): Response<ApiResponse<AnalyzeResult>>
 
     // Analisis food pake model sendiri
+    @Multipart
     @POST("food/analyze-by-mymodel")
     suspend fun analyzeFoodByMyModel(
-        @Body request: ImageUploadRequest
-    ): Response<ApiResponse<AnalyzeByMyModelResponse>>
+        @Part file: MultipartBody.Part
+    ): Response<ApiResponse<AnalyzeResult>>
 
     @Multipart
     @POST("food/upload")
