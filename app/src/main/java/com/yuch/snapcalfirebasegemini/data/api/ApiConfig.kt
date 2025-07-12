@@ -25,8 +25,15 @@ class ApiConfig {
 
             // Menggunakan await() untuk menunggu id token dengan Kotlin coroutines
             return try {
-                user.getIdToken(true).await()?.token
-                    ?: throw Exception("Token is null")
+                // Add timeout for token retrieval
+                withContext(Dispatchers.IO) {
+                    kotlinx.coroutines.withTimeout(10000) { // 10 second timeout
+                        user.getIdToken(true).await()?.token
+                            ?: throw Exception("Token is null")
+                    }
+                }
+            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                throw Exception("Token retrieval timeout after 10 seconds")
             } catch (e: Exception) {
                 throw Exception("Token retrieval failed: ${e.message}")
             }
@@ -34,6 +41,11 @@ class ApiConfig {
 
         fun getApiService(): ApiService {
             val okHttpClient = OkHttpClient.Builder()
+                // Add timeout configurations
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .callTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
                 .addInterceptor { chain ->
                     val request = chain.request()
 
@@ -45,7 +57,7 @@ class ApiConfig {
                         }
                     } catch (e: Exception) {
                         // Handle error dengan response custom
-                        Response.Builder()
+                        return@addInterceptor Response.Builder()
                             .request(request)
                             .protocol(okhttp3.Protocol.HTTP_1_1)
                             .code(401)
