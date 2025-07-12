@@ -16,7 +16,7 @@
 
     <string name="weight_title">Berat</string>
 
-    <!--  meal types  -->
+    <!--  meal time  -->
     <string name="breakfast">Sarapan</string>
     <string name="lunch">Makan siang</string>
     <string name="dinner">Makan malam</string>
@@ -53,7 +53,7 @@
     <!--  Main Screen  -->
     <string name="press_back_again_to_exit">Tekan lagi untuk keluar</string>
     <string name="no_food_on_date">Tidak ada makanan pada tanggal ini</string>
-    <string name="empty_food_entry">Belum ada entri makanan</string>
+    <string name="empty_food_entry">Belum ada kalori yang dicatat nich</string>
     <string name="all_entries">Semua entri</string>
     <string name="date_not_available">Tanggal tidak tersedia</string>
     <string name="load_more">Muat lebih banyak</string>
@@ -69,24 +69,33 @@
     <!--  Food Entry Screen  -->
     <string name="food_entry_added_successfully">Makanan berhasil ditambahkan!</string>
     <string name="food_analysis_title">Analisis Food</string>
-    <string name="please_select_a_meal_type_before_saving">Harap pilih jenis makanan sebelum menyimpan</string>
+    <string name="please_select_a_meal_type_before_saving">Harap pilih waktu makan sebelum menyimpan</string>
     <string name="analyzing_your_food">Sedang menganalisis…</string>
     <string name="this_may_take_a_moment">Tunggu Sebentar</string>
-    <string name="choose_analysis_method">Pilih metode analisis</string>
+    <string name="choose_analysis_method">Pilih Metode Analisis</string>
     <string name="analyze_with_ai">Analisis dengan AI</string>
     <string name="food_information">Informasi</string>
     <string name="adjust_values_if_needed">Atur ulang jika diperlukan</string>
-    <string name="select_meal_type">Pilih jenis makanan</string>
-    <string name="meal_type">Jenis makanan</string>
+    <string name="select_meal_type">Pilih waktu makan</string>
+    <string name="meal_type">Waktu makan</string>
     <string name="food_name">Nama makanan</string>
     <string name="weight_g">Berat (g)</string>
     <string name="nutrition_values">Nilai nutrisi</string>
-    <string name="add_food_entry">Tambah entri</string>
+    <string name="add_food_entry">Catat Kalorimu sendiri</string>
     <string name="please_fill_in_food_name_and_select_meal_type">Mohon isi nama manakan dan pilih jenis makanan</string>
     <string name="selected_food_image">Pilih gambar</string>
     <string name="tap_to_change_photo">Ganti gambar</string>
     <string name="delete_image">Hapus gambar</string>
     <string name="are_you_sure_you_want_to_delete_this_image_this_action_cannot_be_undone">Yakin mau hapus gambar? Ini ga bisa di undo loh.</string>
+
+    <!--  bottom navigation  -->
+    <string name="bottom_navigation_home">Beranda</string>
+    <string name="bottom_navigation_tracking">History</string>
+    <string name="bottom_navigation_profile">Akun</string>
+
+    <!--  FAB  -->
+    <string name="fab_add_food_entry_ai">Deteksi Makanan dari Kamera</string>
+    <string name="fab_add_food_entry_manual">Ketik Sendiri Kalori Makananmu</string>
 
 </resources>
 

@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -133,6 +134,16 @@ fun AnalyzeScreen(
         }
     }
 
+    var loadingPhase by remember { mutableStateOf<String?>(null) } // "analyzing", "uploading", or null
+
+    LaunchedEffect(isLoading) {
+        if (isLoading) {
+            loadingPhase = if (analysisResult.data == null) "analyzing" else "uploading"
+        } else {
+            loadingPhase = null
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -211,7 +222,7 @@ fun AnalyzeScreen(
             item {
                 when {
                     isLoading -> {
-                        LoadingContent()
+                        LoadingContent(phase = loadingPhase)
                     }
                     editableFood == null -> {
                         ServiceSelectionCard(
@@ -237,10 +248,10 @@ fun AnalyzeScreen(
                         
                         // TODO: Food Composition Section - This section will display detailed 
                         // ingredients and composition information for the analyzed food
-                        CompositionSectionPlaceholder(
-                            showComposition = showComposition,
-                            onToggleComposition = { showComposition = it }
-                        )
+//                        CompositionSectionPlaceholder(
+//                            showComposition = showComposition,
+//                            onToggleComposition = { showComposition = it }
+//                        )
                     }
                 }
             }
@@ -254,7 +265,7 @@ fun AnalyzeScreen(
 }
 
 @Composable
-private fun LoadingContent() {
+private fun LoadingContent(phase: String?) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -271,7 +282,13 @@ private fun LoadingContent() {
                 strokeWidth = 5.dp
             )
             Text(
-                stringResource(R.string.analyzing_your_food),
+                stringResource(
+                    when (phase) {
+                        "analyzing" -> R.string.analyzing_your_food
+                        "uploading" -> R.string.this_may_take_a_moment
+                        else -> R.string.analyzing_your_food
+                    }
+                ),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -306,37 +323,79 @@ private fun ServiceSelectionCard(
         Column(
             modifier = Modifier
                 .padding(24.dp)
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                stringResource(R.string.choose_analysis_method),
+                "Pilih Metode Analisis:",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold
                 ),
-                modifier = Modifier.padding(bottom = 8.dp)
+                color = MaterialTheme.colorScheme.onSurface
             )
 
+            // My Model Analysis - Terbaik (First)
+            AnalysisMethodCard(
+                title = "Analisis dengan Model Yolo",
+                description = "Deteksi otomatis menggunakan sistem lokal, lalu dihitung nutrisinya dengan AI.",
+                buttonText = "Analisis dengan Model Saya",
+//                isRecommended = true,
+                onClick = onMyModelClick,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+
+            // TODO Quick Analysis with TFLite
+//            AnalysisMethodCard(
+//                title = "⚡ Analisis Cepat",
+//                description = "Analisis lokal menggunakan TensorFlow Lite untuk hasil yang cepat.",
+//                buttonText = "Quick Analysis (TFLite)",
+//                onClick = onTFLiteClick,
+//                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+//                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+//            )
+
+            // AI Service Selection
+            Text(
+                "Atau pilih layanan AI eksternal:",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                modifier = Modifier.padding(top = 8.dp)
+            )
+
+            // AI Service Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 ServiceButton(
                     text = "Gemini",
+                    description = "Google AI",
                     isSelected = selectedService == "gemini",
                     onClick = { onServiceSelected("gemini") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    iconRes = R.drawable.google_gemini_icon
                 )
 
                 ServiceButton(
-                    text = "Llama",
+                    text = "🦙 LLaMA",
+                    description = "Meta AI",
                     isSelected = selectedService == "groq",
                     onClick = { onServiceSelected("groq") },
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                "Gambar dikirim ke AI eksternal untuk analisis visual dan estimasi nutrisi.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                modifier = Modifier.padding(horizontal = 4.dp)
+            )
 
+            // AI Analysis Button
             Button(
                 onClick = { selectedService?.let(onAnalyzeClick) },
                 modifier = Modifier
@@ -357,48 +416,99 @@ private fun ServiceSelectionCard(
                     )
                 } else {
                     Text(
-                        stringResource(R.string.analyze_with_ai),
+                        "Analisis dengan ${if (selectedService == "gemini") "Gemini" else "LLaMA"}",
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
 
-            Button(
-                onClick = onTFLiteClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                ),
-                elevation = ButtonDefaults.buttonElevation(2.dp)
+@Composable
+private fun AnalysisMethodCard(
+    title: String,
+    description: String,
+    buttonText: String,
+    onClick: () -> Unit,
+    containerColor: Color,
+    contentColor: Color,
+    isRecommended: Boolean = false
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Quick Analysis (TFLite)",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+                    title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = contentColor
                 )
+
+                if (isRecommended) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Text(
+                            "Terpopuler",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = contentColor.copy(alpha = 0.8f)
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
+
             Button(
-                onClick = onMyModelClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
+                onClick = onClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ),
-                elevation = ButtonDefaults.buttonElevation(2.dp)
+                    containerColor = if (isRecommended)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        contentColor.copy(alpha = 0.1f),
+                    contentColor = if (isRecommended)
+                        MaterialTheme.colorScheme.onPrimary
+                    else
+                        contentColor
+                )
             ) {
                 Text(
-                    "Analyze with My Model",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+                    buttonText,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium
+                    )
                 )
             }
         }
@@ -792,9 +902,11 @@ private fun ImagePreview(imagePath: String) {
 @Composable
 private fun ServiceButton(
     text: String,
+    description: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    iconRes: Int? = null
 ) {
     Button(
         onClick = onClick,
@@ -815,12 +927,39 @@ private fun ServiceButton(
             defaultElevation = if (isSelected) 8.dp else 2.dp
         )
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-            )
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (iconRes != null) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                    )
+                )
+
+                if (description.isNotBlank()) {
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
     }
 }
 

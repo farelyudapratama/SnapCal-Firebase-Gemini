@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -155,7 +156,7 @@ fun SnapCalApp(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Pindai Makanan (AI)",
+                            text = stringResource(R.string.fab_add_food_entry_ai),
                             fontSize = 16.sp,
                         )
                     }
@@ -174,7 +175,7 @@ fun SnapCalApp(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Input Manual",
+                            text = stringResource(R.string.fab_add_food_entry_manual),
                             fontSize = 16.sp,
                             textAlign = TextAlign.Center
                         )
@@ -213,7 +214,7 @@ fun BottomNavbar(
                 },
                 label = {
                     Text(
-                        text = "Beranda",
+                        text = stringResource(R.string.bottom_navigation_home),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center
                     )
@@ -244,7 +245,7 @@ fun BottomNavbar(
                 },
                 label = {
                     Text(
-                        text = "Lacak",
+                        text = stringResource(R.string.bottom_navigation_tracking),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center
                     )
@@ -276,7 +277,7 @@ fun BottomNavbar(
                 },
                 label = {
                     Text(
-                        text = "Akun",
+                        text = stringResource(R.string.bottom_navigation_profile),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center
                     )
