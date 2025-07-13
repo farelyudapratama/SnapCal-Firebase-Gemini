@@ -13,6 +13,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.DateRange
@@ -24,12 +26,16 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -134,194 +140,226 @@ fun MainScreen(
         )
     }
 
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-//                .padding(paddingValues)
-        ) {
-            TopBar(
-                selectedDate = selectedDate,
-                isFilterActive = isFilterActive,
-                onDateClick = { showCalendarDialog = true },
-                onPreviousDay = {
-                    if (selectedDate != null) {
-                        val newDate = selectedDate!!.minusDays(1)
-                        selectedDate = newDate
-
-                        // Format date
-                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-                        val formattedDate = newDate.format(dateFormatter)
-
-                        // Fetch food for previous day
-                        foodViewModel.fetchFoodDate(formattedDate)
-                    } else {
-                        val newDate = LocalDateTime.now().minusDays(1)
-                        selectedDate = newDate
-                        isFilterActive = true
-
-                        // Format date
-                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-                        val formattedDate = newDate.format(dateFormatter)
-
-                        // Fetch food for previous day
-                        foodViewModel.fetchFoodDate(formattedDate)
-                    }
-                },
-                onNextDay = {
-                    if (selectedDate != null) {
-                        val newDate = selectedDate!!.plusDays(1)
-                        selectedDate = newDate
-
-                        // Format date
-                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-                        val formattedDate = newDate.format(dateFormatter)
-
-                        // Fetch food for next day
-                        foodViewModel.fetchFoodDate(formattedDate)
-                    } else {
-                        val newDate = LocalDateTime.now().plusDays(1)
-                        selectedDate = newDate
-                        isFilterActive = true
-
-                        // Format date
-                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-                        val formattedDate = newDate.format(dateFormatter)
-
-                        // Fetch food for next day
-                        foodViewModel.fetchFoodDate(formattedDate)
-                    }
-                },
-                onClearFilter = {
-                    selectedDate = null
-                    isFilterActive = false
-                    // Refresh to get all data
-                    foodViewModel.refreshFood()
-                },
-                email = email
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(Color(0xFFB67321), Color(0xFFEA4233)),
+                    endY = 400f
+                )
             )
-
-            // Main Content
-            PullToRefreshBox(
-                modifier = Modifier.fillMaxWidth(),
-                state = refreshState,
-                isRefreshing = isRefreshing,
-                onRefresh = {
-                    coroutineScope.launch {
-                        isRefreshing = true
-                        if (isFilterActive && selectedDate != null) {
-                            // Format date
-                            val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-                            val formattedDate = selectedDate!!.format(dateFormatter)
-
-                            // Refresh with date filter
-                            foodViewModel.fetchFoodDate(formattedDate)
-                        } else {
-                            // Refresh all data
-                            foodViewModel.refreshFood()
-                        }
-                        isRefreshing = false
-                    }
+    ) {
+        Scaffold(
+            topBar = {
+                MainTopAppBar(email = email)
+            },
+            containerColor = Color.Transparent,
+        ) { paddingValues ->
+            // Date selector card
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color.White)
                 }
-            ) {
-                if (foodList.isEmpty() && !isLoading) {
-                    // Empty state
-                    Box(
+            } else {
+                // Main Content
+                PullToRefreshBox(
+                    modifier = Modifier.fillMaxWidth(),
+                    state = refreshState,
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        coroutineScope.launch {
+                            isRefreshing = true
+                            if (isFilterActive && selectedDate != null) {
+                                val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                                val formattedDate = selectedDate!!.format(dateFormatter)
+                                foodViewModel.fetchFoodDate(formattedDate)
+                            } else {
+                                foodViewModel.refreshFood()
+                            }
+                            isRefreshing = false
+                        }
+                    }
+                ) {
+                    LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(paddingValues)
+                            .background(
+                                color = Color(0xFFF9FAFB),
+                                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                            ),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.NoFood,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = if (isFilterActive) stringResource(R.string.no_food_on_date) else stringResource(R.string.empty_food_entry),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        item {
+                            // Date selector card
+                            DateSelectorCard(
+                                selectedDate = selectedDate,
+                                isFilterActive = isFilterActive,
+                                onDateClick = { showCalendarDialog = true },
+                                onPreviousDay = {
+                                    if (selectedDate != null) {
+                                        val newDate = selectedDate!!.minusDays(1)
+                                        selectedDate = newDate
+
+                                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                                        val formattedDate = newDate.format(dateFormatter)
+
+                                        foodViewModel.fetchFoodDate(formattedDate)
+                                    } else {
+                                        val newDate = LocalDateTime.now().minusDays(1)
+                                        selectedDate = newDate
+                                        isFilterActive = true
+
+                                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                                        val formattedDate = newDate.format(dateFormatter)
+
+                                        foodViewModel.fetchFoodDate(formattedDate)
+                                    }
+                                },
+                                onNextDay = {
+                                    if (selectedDate != null) {
+                                        val newDate = selectedDate!!.plusDays(1)
+                                        selectedDate = newDate
+
+                                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                                        val formattedDate = newDate.format(dateFormatter)
+
+                                        foodViewModel.fetchFoodDate(formattedDate)
+                                    } else {
+                                        val newDate = LocalDateTime.now().plusDays(1)
+                                        selectedDate = newDate
+                                        isFilterActive = true
+
+                                        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                                        val formattedDate = newDate.format(dateFormatter)
+
+                                        foodViewModel.fetchFoodDate(formattedDate)
+                                    }
+                                },
+                                onClearFilter = {
+                                    selectedDate = null
+                                    isFilterActive = false
+                                    foodViewModel.refreshFood()
+                                }
                             )
                         }
+
+                        if (foodList.isEmpty()) {
+                            // Empty state dengan styling seperti ProfileScreen
+                            item {
+                                EmptyFoodState(isFilterActive = isFilterActive)
+                            }
+                        } else {
+                            val groupedFoodList = foodList.groupBy { foodItem ->
+                                Instant.parse(foodItem.createdAt).atZone(ZoneId.systemDefault()).toLocalDate()
+                            }
+
+                            groupedFoodList.forEach { (date, itemsOnDate) ->
+                                // Header Tanggal
+                                item {
+                                    val localDateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                                    Text(
+                                        text = date.format(localDateFormatter),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                                    )
+                                }
+                                // List Makanan per Tanggal
+                                items(itemsOnDate, key = { it.id }) { foodItem ->
+                                    FoodItemCard(foodItem, navController)
+                                }
+                            }
+                        }
                     }
-                } else {
-                    FoodListByDate(foodList, navController, isFilterActive, isLoading, hasMoreData, foodViewModel)
                 }
             }
         }
+    }
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainTopAppBar(email: String) {
+    TopAppBar(
+        title = {
+            Column {
+                Text(
+                    "SnapCal",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp
+                )
+                Text(
+                    email,
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            titleContentColor = Color.White
+        )
+    )
 }
 
 @Composable
-fun TopBar(
+fun DateSelectorCard(
     selectedDate: LocalDateTime?,
     isFilterActive: Boolean,
     onDateClick: () -> Unit,
     onPreviousDay: () -> Unit,
     onNextDay: () -> Unit,
-    onClearFilter: () -> Unit,
-    email: String
+    onClearFilter: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().height(120.dp)) {
-        // App title and email
-        TopAppBar(
-            title = {
-                Column {
-                    Text(
-                        text = "SnapCal",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Text(
-                        text = email,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        )
-
-        // Calendar date selector bar
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.fillMaxWidth()
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
+            IconButton(
+                onClick = onPreviousDay,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onPreviousDay,
-                    enabled = true // Always enabled for better UX
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.NavigateBefore,
-                        contentDescription = "Previous Day"
+                    .size(48.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        CircleShape
                     )
-                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.NavigateBefore,
+                    contentDescription = "Previous Day",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
 
+            Column(
+                modifier = Modifier
+                    .clickable(onClick = onDateClick)
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Row(
-                    modifier = Modifier
-                        .clickable(onClick = onDateClick)
-                        .padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.DateRange,
                         contentDescription = "Calendar",
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
 
@@ -339,95 +377,116 @@ fun TopBar(
                         Text(
                             text = selectedDate.format(dateFormatter),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-                        IconButton(
-                            onClick = onClearFilter,
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear Filter",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
                     } else {
                         Text(
                             text = stringResource(R.string.all_entries),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
 
-                IconButton(
-                    onClick = onNextDay,
-                    enabled = true
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.NavigateNext,
-                        contentDescription = "Next Day"
-                    )
+                if (isFilterActive) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    TextButton(
+                        onClick = onClearFilter,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Clear Filter",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            "Clear Filter",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
+            }
+
+            IconButton(
+                onClick = onNextDay,
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        CircleShape
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.NavigateNext,
+                    contentDescription = "Next Day",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }
 }
 
 @Composable
-fun FoodListByDate(
-    foodList: List<FoodItem>,
-    navController: NavController,
-    isFilterActive: Boolean,
-    isLoading: Boolean,
-    hasMoreData: Boolean,
-    foodViewModel: GetFoodViewModel
-) {
-    val groupedFoodList = foodList.groupBy { foodItem ->
-        val date = Instant.parse(foodItem.createdAt).atZone(ZoneId.systemDefault()).toLocalDate()
-        date
-    }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+fun EmptyFoodState(isFilterActive: Boolean) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
     ) {
-        groupedFoodList.forEach { (date, foodItems) ->
-            item {
-                val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-                Text(
-                    text = date.format(dateFormatter),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-            items(foodItems) { foodItem ->
-                FoodItemCard(foodItem, navController)
-            }
-        }
-        // Loading and Load More
-        item {
-            if (!isFilterActive) {
-                LoadingAndLoadMore(
-                    isLoading = isLoading,
-                    hasMoreData = hasMoreData,
-                    onLoadMore = { foodViewModel.loadNextPage() }
-                )
-            } else if (isLoading) {
+        Card(
+            modifier = Modifier.fillMaxWidth(0.9f),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                        .size(80.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                            CircleShape
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    Icon(
+                        imageVector = Icons.Default.NoFood,
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = if (isFilterActive)
+                        stringResource(R.string.no_food_on_date)
+                    else
+                        stringResource(R.string.empty_food_entry),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Start tracking your nutrition journey!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
-        item { Spacer(modifier = Modifier.height(80.dp)) }
     }
 }
 

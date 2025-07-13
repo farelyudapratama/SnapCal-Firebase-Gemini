@@ -90,6 +90,7 @@
     <!--  bottom navigation  -->
     <string name="bottom_navigation_home">Home</string>
     <string name="bottom_navigation_tracking">History</string>
+    <string name="bottom_navigation_ai_assistant">Ai Assistant</string>
     <string name="bottom_navigation_profile">Profile</string>
 
     <!--  FAB  -->
