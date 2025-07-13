@@ -126,4 +126,37 @@
     <string name="from_cache">From cache</string>
     <string name="recently">Recently</string>
     <string name="failed_to_load_recommendations">Failed to load recommendations</string>
+
+    <!-- Profile Screen -->
+    <string name="my_profile">My Profile</string>
+    <string name="overview">Overview</string>
+    <string name="weight">Weight</string>
+    <string name="height">Height</string>
+    <string name="my_preferences">My Preferences</string>
+    <string name="delete_profile">Delete Profile</string>
+    <string name="delete_profile_confirmation">Are you sure you want to delete all profile data? This action cannot be undone.</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="personal_info_empty">Your personal info is not yet filled. Let\'s complete it now!</string>
+    <string name="fill_now">Fill Now</string>
+    <string name="edit_personal_info">Edit Personal Info</string>
+    <string name="more_options">More Options</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="kg">kg</string>
+    <string name="cm">cm</string>
+    <string name="body_mass_index">Body Mass Index (BMI)</string>
+    <string name="underweight">Underweight</string>
+    <string name="normal">Normal</string>
+    <string name="overweight">Overweight</string>
+    <string name="obese">Obese</string>
+    <string name="preferences_restrictions">Preferences &amp; Restrictions</string>
+    <string name="edit_preferences">Edit Preferences</string>
+    <string name="health_conditions">Health Conditions</string>
+    <string name="allergies">Allergies</string>
+    <string name="dietary_types">Dietary Types</string>
+    <string name="liked_foods">Liked Foods</string>
+    <string name="disliked_foods">Disliked Foods</string>
+    <string name="no_preferences_set">No preferences set yet.</string>
+    <string name="delete_profile_subtitle">Permanently delete all profile data</string>
+
 </resources>

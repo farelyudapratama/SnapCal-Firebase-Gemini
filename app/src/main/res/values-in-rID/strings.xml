@@ -128,4 +128,36 @@
     <string name="recently">Baru saja</string>
     <string name="failed_to_load_recommendations">Gagal memuat rekomendasi</string>
 
+    <!-- Profile Screen -->
+    <string name="my_profile">Profil Saya</string>
+    <string name="overview">Ringkasan</string>
+    <string name="weight">Berat</string>
+    <string name="height">Tinggi</string>
+    <string name="my_preferences">Preferensi Saya</string>
+    <string name="delete_profile">Hapus Profil</string>
+    <string name="delete_profile_confirmation">Apakah kamu yakin ingin menghapus semua data profil? Tindakan ini tidak bisa dibatalkan.</string>
+    <string name="delete">Hapus</string>
+    <string name="cancel">Batal</string>
+    <string name="personal_info_empty">Personal info kamu belum diisi. Yuk lengkapi sekarang!</string>
+    <string name="fill_now">Isi Sekarang</string>
+    <string name="edit_personal_info">Edit Info Personal</string>
+    <string name="more_options">Opsi Lainnya</string>
+    <string name="sign_out">Keluar</string>
+    <string name="kg">kg</string>
+    <string name="cm">cm</string>
+    <string name="body_mass_index">Indeks Massa Tubuh (IMT)</string>
+    <string name="underweight">Kurus</string>
+    <string name="normal">Normal</string>
+    <string name="overweight">Gemuk</string>
+    <string name="obese">Obesitas</string>
+    <string name="preferences_restrictions">Preferensi &amp; Pantangan</string>
+    <string name="edit_preferences">Edit Preferensi</string>
+    <string name="health_conditions">Kondisi Kesehatan</string>
+    <string name="allergies">Alergi</string>
+    <string name="dietary_types">Jenis Diet</string>
+    <string name="liked_foods">Makanan Disukai</string>
+    <string name="disliked_foods">Makanan Tidak Disukai</string>
+    <string name="no_preferences_set">Belum ada preferensi yang diatur.</string>
+    <string name="delete_profile_subtitle">Hapus semua data profil secara permanen</string>
+
 </resources>

@@ -22,12 +22,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -85,11 +88,11 @@ fun ProfileScreen(
             } else {
                 if (userPreferences?.personalInfo == null) {
                     EmptyStateCard(
-                        message = "Personal info kamu belum diisi. Yuk lengkapi sekarang!",
+                        message = stringResource(R.string.personal_info_empty),
                         onActionClick = {
                             navController.navigate("profile_onboarding?edit=false")
                         },
-                        actionLabel = "Isi Sekarang"
+                        actionLabel = stringResource(R.string.fill_now)
                     )
                 } else {
                     LazyColumn(
@@ -112,7 +115,7 @@ fun ProfileScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                SectionHeader("Overview")
+                                SectionHeader(stringResource(R.string.overview))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     // Quick edit button untuk personal info
                                     IconButton(
@@ -120,7 +123,7 @@ fun ProfileScreen(
                                     ) {
                                         Icon(
                                             Icons.Default.Edit,
-                                            contentDescription = "Edit Personal Info",
+                                            contentDescription = stringResource(R.string.edit_personal_info),
                                             tint = Color(0xFF7C3AED),
                                         )
                                     }
@@ -134,17 +137,17 @@ fun ProfileScreen(
                                     StatCard(
                                         modifier = Modifier.weight(1f),
                                         icon = Icons.Default.FitnessCenter,
-                                        label = "Weight",
+                                        label = stringResource(R.string.weight),
                                         value = "${info.weight}",
-                                        unit = "kg",
+                                        unit = stringResource(R.string.kg),
                                         color = Color(0xFF2563EB),
                                     )
                                     StatCard(
                                         modifier = Modifier.weight(1f),
                                         icon = Icons.Default.Height,
-                                        label = "Height",
+                                        label = stringResource(R.string.height),
                                         value = "${info.height}",
-                                        unit = "cm",
+                                        unit = stringResource(R.string.cm),
                                         color = Color(0xFF16A34A),
                                     )
                                 }
@@ -155,7 +158,7 @@ fun ProfileScreen(
                         }
                         item {
                             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                            SectionHeader("My Preferences")
+                            SectionHeader(stringResource(R.string.my_preferences))
                         }
                         item {
                             AllPreferencesCard(
@@ -228,8 +231,8 @@ fun ProfileScreen(
 
                 ProfileOptionItem(
                     icon = Icons.Default.Delete,
-                    title = "Delete Profile",
-                    subtitle = "Permanently delete all profile data",
+                    title = stringResource(R.string.delete_profile),
+                    subtitle = stringResource(R.string.delete_profile_subtitle),
                     onClick = {
                         showOptionsBottomSheet = false
                         showDeleteDialog = true
@@ -246,9 +249,9 @@ fun ProfileScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Profile") },
+            title = { Text(stringResource(R.string.delete_profile)) },
             text = {
-                Text("Apakah kamu yakin ingin menghapus semua data profile? Tindakan ini tidak bisa dibatalkan.")
+                Text(stringResource(R.string.delete_profile_confirmation))
             },
             confirmButton = {
                 TextButton(
@@ -259,12 +262,12 @@ fun ProfileScreen(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -281,16 +284,16 @@ fun ProfileTopAppBar(
     TopAppBar(
         title = {
             Column {
-                Text("My Profile", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                Text(stringResource(R.string.my_profile), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
                 Text(email, color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         },
         actions = {
             IconButton(onClick = onMoreOptions) {
-                Icon(Icons.Default.MoreVert, contentDescription = "More Options", tint = Color.White)
+                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options), tint = Color.White)
             }
             IconButton(onClick = onSignOut) {
-                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Sign Out", tint = Color.White)
+                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = stringResource(R.string.sign_out), tint = Color.White)
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, titleContentColor = Color.White)
@@ -390,11 +393,12 @@ fun SectionHeader(title: String) {
 @Composable
 fun BMICard(height: Int, weight: Int) {
     val bmi = if (height > 0) weight / (height / 100.0).pow(2) else 0.0
+    val context = LocalContext.current
     val (category, color) = when {
-        bmi < 18.5 -> "Underweight" to Color(0xFF3B82F6)
-        bmi < 25 -> "Normal" to Color(0xFF10B981)
-        bmi < 30 -> "Overweight" to Color(0xFFF59E0B)
-        else -> "Obese" to Color(0xFFEF4444)
+        bmi < 18.5 -> context.getString(R.string.underweight) to Color(0xFF3B82F6)
+        bmi < 25 -> context.getString(R.string.normal) to Color(0xFF10B981)
+        bmi < 30 -> context.getString(R.string.overweight) to Color(0xFFF59E0B)
+        else -> context.getString(R.string.obese) to Color(0xFFEF4444)
     }
 
     Card(
@@ -403,7 +407,7 @@ fun BMICard(height: Int, weight: Int) {
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text("Body Mass Index (BMI)", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.body_mass_index), fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(String.format(Locale.US, "%.1f", bmi), fontSize = 36.sp, fontWeight = FontWeight.Bold, color = color)
@@ -423,19 +427,19 @@ fun AllPreferencesCard(userPreferences: UserPreferences?, onEditClick: () -> Uni
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Preferences & Restrictions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.preferences_restrictions), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 IconButton(onClick = onEditClick) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit Preferences", tint = Color(0xFF7C3AED))
+                    Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_preferences), tint = Color(0xFF7C3AED))
                 }
             }
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
             userPreferences?.let {
-                PreferenceItem(Icons.Default.LocalHospital, "Health Conditions", it.healthConditions + it.customHealthConditions)
-                PreferenceItem(Icons.Default.Warning, "Allergies", it.allergies + it.customAllergies)
-                PreferenceItem(Icons.Default.RestaurantMenu, "Dietary Types", it.dietaryRestrictions)
-                PreferenceItem(Icons.Default.Favorite, "Liked Foods", it.likedFoods)
-                PreferenceItem(Icons.Default.ThumbDown, "Disliked Foods", it.dislikedFoods)
-            } ?: Text("No preferences set yet.", color = Color.Gray)
+                PreferenceItem(Icons.Default.LocalHospital, stringResource(R.string.health_conditions), it.healthConditions + it.customHealthConditions)
+                PreferenceItem(Icons.Default.Warning, stringResource(R.string.allergies), it.allergies + it.customAllergies)
+                PreferenceItem(Icons.Default.RestaurantMenu, stringResource(R.string.dietary_types), it.dietaryRestrictions)
+                PreferenceItem(Icons.Default.Favorite, stringResource(R.string.liked_foods), it.likedFoods)
+                PreferenceItem(Icons.Default.ThumbDown, stringResource(R.string.disliked_foods), it.dislikedFoods)
+            } ?: Text(stringResource(R.string.no_preferences_set), color = Color.Gray)
         }
     }
 }
