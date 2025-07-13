@@ -187,9 +187,12 @@ data class UserPreferences(
 	val customAllergies: List<String>,
 	val customHealthConditions: List<String>,
 	val dietaryRestrictions: List<String>,
+	val customDietaryRestrictions: List<String>,
 	val dislikedFoods: List<String>,
+	val customDislikedFoods: List<String>,
 	val healthConditions: List<String>,
-	val likedFoods: List<String>
+	val likedFoods: List<String>,
+	val customLikedFoods: List<String>
 )
 
 // Rekomendasi makanan berdasarkan preferensi pengguna

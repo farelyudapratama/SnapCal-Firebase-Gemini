@@ -143,14 +143,34 @@ class OnboardingViewModel : ViewModel() {
     }
 
     fun toggleAllergy(item: String) = _formData.update { it.copy(allergies = toggleListItem(it.allergies, item)) }
-    fun addCustomAllergy(item: String) = _formData.update { it.copy(customAllergies = it.customAllergies + item.trim()) }
+    fun addCustomAllergy(item: String) = _formData.update {
+        val trimmedItem = item.trim()
+        it.copy(
+            customAllergies = it.customAllergies + trimmedItem,
+            allergies = it.allergies + trimmedItem // Langsung pilih item yang baru ditambahkan
+        )
+    }
 
     fun toggleHealthCondition(item: String) = _formData.update { it.copy(healthConditions = toggleListItem(it.healthConditions, item)) }
-    fun addCustomHealthCondition(item: String) = _formData.update { it.copy(customHealthConditions = it.customHealthConditions + item.trim()) }
+    fun addCustomHealthCondition(item: String) = _formData.update {
+        val trimmedItem = item.trim()
+        it.copy(
+            customHealthConditions = it.customHealthConditions + trimmedItem,
+            healthConditions = it.healthConditions + trimmedItem // Langsung pilih item yang baru ditambahkan
+        )
+    }
 
     fun toggleDietaryRestriction(item: String) = _formData.update { it.copy(dietaryRestrictions = toggleListItem(it.dietaryRestrictions, item)) }
+    fun addCustomDietaryRestriction(item: String) = _formData.update {
+        val trimmedItem = item.trim()
+        it.copy(
+            customDietaryRestrictions = it.customDietaryRestrictions + trimmedItem,
+            dietaryRestrictions = it.dietaryRestrictions + trimmedItem // Langsung pilih item yang baru ditambahkan
+        )
+    }
 
     fun toggleLikedFood(item: String) = _formData.update {
+        // Ensure an item is not in both liked and disliked lists
         val newDisliked = it.dislikedFoods.filter { food -> food != item }
         it.copy(likedFoods = toggleListItem(it.likedFoods, item), dislikedFoods = newDisliked)
     }
@@ -158,6 +178,28 @@ class OnboardingViewModel : ViewModel() {
     fun toggleDislikedFood(item: String) = _formData.update {
         val newLiked = it.likedFoods.filter { food -> food != item }
         it.copy(dislikedFoods = toggleListItem(it.dislikedFoods, item), likedFoods = newLiked)
+    }
+
+    fun addCustomLikedFood(item: String) = _formData.update {
+        val trimmedItem = item.trim()
+        // Pastikan item tidak ada di disliked foods dan langsung pilih
+        val newDisliked = it.dislikedFoods.filter { food -> food != trimmedItem }
+        it.copy(
+            customLikedFoods = it.customLikedFoods + trimmedItem,
+            likedFoods = it.likedFoods + trimmedItem, // Langsung pilih item yang baru ditambahkan
+            dislikedFoods = newDisliked // Hapus dari disliked jika ada
+        )
+    }
+
+    fun addCustomDislikedFood(item: String) = _formData.update {
+        val trimmedItem = item.trim()
+        // Pastikan item tidak ada di liked foods dan langsung pilih
+        val newLiked = it.likedFoods.filter { food -> food != trimmedItem }
+        it.copy(
+            customDislikedFoods = it.customDislikedFoods + trimmedItem,
+            dislikedFoods = it.dislikedFoods + trimmedItem, // Langsung pilih item yang baru ditambahkan
+            likedFoods = newLiked // Hapus dari liked jika ada
+        )
     }
 }
 
@@ -178,12 +220,20 @@ fun UserPreferences.toProfileRequest(): ProfileRequest {
             fiber = this.dailyGoals?.fiber,
             sugar = this.dailyGoals?.sugar
         ),
-        allergies = this.allergies,
-        customAllergies = this.customAllergies,
-        dietaryRestrictions = this.dietaryRestrictions,
-        dislikedFoods = this.dislikedFoods,
-        likedFoods = this.likedFoods,
-        healthConditions = this.healthConditions,
-        customHealthConditions = this.customHealthConditions
+        // Gabungkan predefined dan custom items ke dalam selected items
+        allergies = this.allergies + (this.customAllergies ?: emptyList()),
+        customAllergies = this.customAllergies ?: emptyList(),
+
+        healthConditions = this.healthConditions + (this.customHealthConditions ?: emptyList()),
+        customHealthConditions = this.customHealthConditions ?: emptyList(),
+
+        dietaryRestrictions = this.dietaryRestrictions + (this.customDietaryRestrictions ?: emptyList()),
+        customDietaryRestrictions = this.customDietaryRestrictions ?: emptyList(),
+
+        likedFoods = this.likedFoods + (this.customLikedFoods ?: emptyList()),
+        customLikedFoods = this.customLikedFoods ?: emptyList(),
+
+        dislikedFoods = this.dislikedFoods + (this.customDislikedFoods ?: emptyList()),
+        customDislikedFoods = this.customDislikedFoods ?: emptyList()
     )
 }

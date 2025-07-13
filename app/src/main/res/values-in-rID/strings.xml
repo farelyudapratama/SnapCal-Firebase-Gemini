@@ -119,10 +119,6 @@
     <string name="no_description_available">Tidak ada deskripsi</string>
     <string name="no_reasoning_provided">Tidak ada penjelasan</string>
     <string name="kcal">kkal</string>
-    <string name="carbs">Karbo</string>
-    <string name="protein">Protein</string>
-    <string name="fat">Lemak</string>
-    <string name="fiber">Serat</string>
     <string name="fallback_mode">Mode cadangan</string>
     <string name="from_cache">Dari cache</string>
     <string name="recently">Baru saja</string>
@@ -159,5 +155,110 @@
     <string name="disliked_foods">Makanan Tidak Disukai</string>
     <string name="no_preferences_set">Belum ada preferensi yang diatur.</string>
     <string name="delete_profile_subtitle">Hapus semua data profil secara permanen</string>
+
+    <!-- Profile Onboarding Screen -->
+    <string name="setup_your_profile">Atur Profil Anda</string>
+    <string name="previous_step">Langkah Sebelumnya</string>
+    <string name="close">Tutup</string>
+    <string name="welcome">Selamat datang!</string>
+    <string name="welcome_message">Mari atur profil Anda untuk mempersonalisasi perjalanan nutrisi Anda. Ini hanya butuh beberapa menit.</string>
+    <string name="get_started">Mulai</string>
+    <string name="personal_details">Data Personal</string>
+    <string name="age">Umur</string>
+    <string name="height_cm">Tinggi (cm)</string>
+    <string name="weight_kg">Berat (kg)</string>
+    <string name="gender">Jenis Kelamin</string>
+    <string name="male">Laki-laki</string>
+    <string name="female">Perempuan</string>
+    <string name="activity_level">Level Aktivitas</string>
+    <string name="food_allergies">Alergi Makanan</string>
+    <string name="add_other">Tambah lainnya…</string>
+    <string name="add">Tambah</string>
+    <string name="dietary_preferences">Preferensi Diet</string>
+    <string name="dietary_preferences_description">Pilih gaya hidup diet yang Anda ikuti. Ini membantu kami menyaring resep dan saran.</string>
+    <string name="foods_you_like">Makanan yang Disukai</string>
+    <string name="foods_you_like_description">Beri tahu kami apa yang Anda suka makan.</string>
+    <string name="foods_you_dislike">Makanan yang Tidak Disukai</string>
+    <string name="foods_you_dislike_description">Ada yang ingin dihindari?</string>
+    <string name="selected">Dipilih</string>
+    <string name="your_daily_goals">Target Harian Anda</string>
+    <string name="daily_goals_description">Tetapkan target nutrisi harian Anda. Anda bisa menggunakan rekomendasi kami atau mengatur sendiri.</string>
+    <string name="our_recommendation">Rekomendasi Kami</string>
+    <string name="kcal_per_day">kkal / hari</string>
+    <string name="use_this">Gunakan Ini</string>
+    <string name="calories_kcal">Kalori (kkal)</string>
+    <string name="protein_g">Protein (g)</string>
+    <string name="carbs_g">Karbo (g)</string>
+    <string name="fat_g">Lemak (g)</string>
+    <string name="fiber_g">Serat (g)</string>
+    <string name="sugar_g">Gula (g)</string>
+    <string name="step_counter">Langkah %1$d dari %2$d</string>
+    <string name="next">Lanjut</string>
+    <string name="finish_setup">Selesai Setup</string>
+
+    <!-- Activity Levels -->
+    <string name="activity_sedentary">Tidak Aktif</string>
+    <string name="activity_sedentary_desc">Sedikit atau tidak ada olahraga</string>
+    <string name="activity_light">Ringan</string>
+    <string name="activity_light_desc">Olahraga ringan 1–3 hari/minggu</string>
+    <string name="activity_moderate">Sedang</string>
+    <string name="activity_moderate_desc">Olahraga sedang 3–5 hari/minggu</string>
+    <string name="activity_active">Aktif</string>
+    <string name="activity_active_desc">Olahraga berat 6–7 hari/minggu</string>
+    <string name="activity_very_active">Sangat Aktif</string>
+    <string name="activity_very_active_desc">Olahraga sangat berat, pekerjaan fisik</string>
+
+    <!-- Health Conditions -->
+    <string name="condition_diabetes">Diabetes</string>
+    <string name="condition_hypertension">Hipertensi</string>
+    <string name="condition_heart_disease">Penyakit Jantung</string>
+    <string name="condition_high_cholesterol">Kolesterol Tinggi</string>
+    <string name="condition_kidney_disease">Penyakit Ginjal</string>
+    <string name="condition_liver_disease">Penyakit Hati</string>
+    <string name="condition_thyroid_disorder">Gangguan Tiroid</string>
+    <string name="condition_arthritis">Arthritis</string>
+
+    <!-- Allergies -->
+    <string name="allergy_milk">Susu</string>
+    <string name="allergy_eggs">Telur</string>
+    <string name="allergy_fish">Ikan</string>
+    <string name="allergy_shellfish">Kerang</string>
+    <string name="allergy_tree_nuts">Kacang Pohon</string>
+    <string name="allergy_peanuts">Kacang Tanah</string>
+    <string name="allergy_wheat">Gandum</string>
+    <string name="allergy_soybeans">Kedelai</string>
+    <string name="allergy_sesame">Wijen</string>
+
+    <!-- Dietary Types -->
+    <string name="diet_vegetarian">Vegetarian</string>
+    <string name="diet_vegan">Vegan</string>
+    <string name="diet_halal">Halal</string>
+    <string name="diet_kosher">Kosher</string>
+    <string name="diet_gluten_free">Bebas Gluten</string>
+    <string name="diet_dairy_free">Bebas Susu</string>
+    <string name="diet_low_carb">Rendah Karbo</string>
+    <string name="diet_keto">Keto</string>
+    <string name="diet_paleo">Paleo</string>
+
+    <!-- Common Foods -->
+    <string name="food_chicken">Ayam</string>
+    <string name="food_beef">Daging Sapi</string>
+    <string name="food_fish">Ikan</string>
+    <string name="food_rice">Nasi</string>
+    <string name="food_pasta">Pasta</string>
+    <string name="food_bread">Roti</string>
+    <string name="food_eggs">Telur</string>
+    <string name="food_milk">Susu</string>
+    <string name="food_cheese">Keju</string>
+    <string name="food_yogurt">Yogurt</string>
+    <string name="food_apple">Apel</string>
+    <string name="food_banana">Pisang</string>
+    <string name="food_orange">Jeruk</string>
+    <string name="food_broccoli">Brokoli</string>
+    <string name="food_spinach">Bayam</string>
+    <string name="food_carrot">Wortel</string>
+    <string name="food_potato">Kentang</string>
+    <string name="food_tomato">Tomat</string>
+    <string name="food_onion">Bawang</string>
 
 </resources>

@@ -6,8 +6,11 @@ data class ProfileRequest(
     val allergies: List<String> = emptyList(),
     val customAllergies: List<String> = emptyList(),
     val dietaryRestrictions: List<String> = emptyList(),
+    val customDietaryRestrictions: List<String> = emptyList(),
     val dislikedFoods: List<String> = emptyList(),
+    val customDislikedFoods: List<String> = emptyList(),
     val likedFoods: List<String> = emptyList(),
+    val customLikedFoods: List<String> = emptyList(),
     val healthConditions: List<String> = emptyList(),
     val customHealthConditions: List<String> = emptyList()
 )

@@ -22,12 +22,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.*
 import com.yuch.snapcalfirebasegemini.viewmodel.ApiStatus
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -58,14 +61,76 @@ object OnboardingConstants {
         "broccoli", "spinach", "carrot", "potato", "tomato", "onion"
     )
 
-    data class ActivityLevelOption(val key: String, val title: String, val description: String)
+    data class ActivityLevelOption(val key: String, val titleRes: Int, val descriptionRes: Int)
     val activityLevels = listOf(
-        ActivityLevelOption("sedentary", "Sedentary", "Little to no exercise"),
-        ActivityLevelOption("light", "Light", "Light exercise 1-3 days/week"),
-        ActivityLevelOption("moderate", "Moderate", "Moderate exercise 3-5 days/week"),
-        ActivityLevelOption("active", "Active", "Hard exercise 6-7 days/week"),
-        ActivityLevelOption("very-active", "Very Active", "Very hard exercise, physical job")
+        ActivityLevelOption("sedentary", R.string.activity_sedentary, R.string.activity_sedentary_desc),
+        ActivityLevelOption("light", R.string.activity_light, R.string.activity_light_desc),
+        ActivityLevelOption("moderate", R.string.activity_moderate, R.string.activity_moderate_desc),
+        ActivityLevelOption("active", R.string.activity_active, R.string.activity_active_desc),
+        ActivityLevelOption("very-active", R.string.activity_very_active, R.string.activity_very_active_desc)
     )
+
+    // Helper functions to get localized text for options
+    fun getLocalizedHealthCondition(condition: String): Int = when (condition) {
+        "diabetes" -> R.string.condition_diabetes
+        "hypertension" -> R.string.condition_hypertension
+        "heart disease" -> R.string.condition_heart_disease
+        "high cholesterol" -> R.string.condition_high_cholesterol
+        "kidney disease" -> R.string.condition_kidney_disease
+        "liver disease" -> R.string.condition_liver_disease
+        "thyroid disorder" -> R.string.condition_thyroid_disorder
+        "arthritis" -> R.string.condition_arthritis
+        else -> R.string.condition_diabetes // fallback
+    }
+
+    fun getLocalizedAllergy(allergy: String): Int = when (allergy) {
+        "milk" -> R.string.allergy_milk
+        "eggs" -> R.string.allergy_eggs
+        "fish" -> R.string.allergy_fish
+        "shellfish" -> R.string.allergy_shellfish
+        "tree nuts" -> R.string.allergy_tree_nuts
+        "peanuts" -> R.string.allergy_peanuts
+        "wheat" -> R.string.allergy_wheat
+        "soybeans" -> R.string.allergy_soybeans
+        "sesame" -> R.string.allergy_sesame
+        else -> R.string.allergy_milk // fallback
+    }
+
+    fun getLocalizedDiet(diet: String): Int = when (diet) {
+        "vegetarian" -> R.string.diet_vegetarian
+        "vegan" -> R.string.diet_vegan
+        "halal" -> R.string.diet_halal
+        "kosher" -> R.string.diet_kosher
+        "gluten-free" -> R.string.diet_gluten_free
+        "dairy-free" -> R.string.diet_dairy_free
+        "low-carb" -> R.string.diet_low_carb
+        "keto" -> R.string.diet_keto
+        "paleo" -> R.string.diet_paleo
+        else -> R.string.diet_vegetarian // fallback
+    }
+
+    fun getLocalizedFood(food: String): Int = when (food) {
+        "chicken" -> R.string.food_chicken
+        "beef" -> R.string.food_beef
+        "fish" -> R.string.food_fish
+        "rice" -> R.string.food_rice
+        "pasta" -> R.string.food_pasta
+        "bread" -> R.string.food_bread
+        "eggs" -> R.string.food_eggs
+        "milk" -> R.string.food_milk
+        "cheese" -> R.string.food_cheese
+        "yogurt" -> R.string.food_yogurt
+        "apple" -> R.string.food_apple
+        "banana" -> R.string.food_banana
+        "orange" -> R.string.food_orange
+        "broccoli" -> R.string.food_broccoli
+        "spinach" -> R.string.food_spinach
+        "carrot" -> R.string.food_carrot
+        "potato" -> R.string.food_potato
+        "tomato" -> R.string.food_tomato
+        "onion" -> R.string.food_onion
+        else -> R.string.food_chicken // fallback
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,15 +168,15 @@ fun ProfileOnboardingScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Setup Your Profile") },
+                title = { Text(stringResource(R.string.setup_your_profile)) },
                 navigationIcon = {
                     if (currentStep > 0) {
                         IconButton(onClick = { onboardingViewModel.previousStep() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Previous Step")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.previous_step))
                         }
                     } else {
                         IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.Default.Close, "Close")
+                            Icon(Icons.Default.Close, stringResource(R.string.close))
                         }
                     }
                 }
@@ -177,6 +242,8 @@ fun ProfileOnboardingScreen(
                             3 -> HealthStep(
                                 selectedConditions = formData.healthConditions,
                                 selectedAllergies = formData.allergies,
+                                customConditions = formData.customHealthConditions,
+                                customAllergies = formData.customAllergies,
                                 onConditionToggle = { onboardingViewModel.toggleHealthCondition(it) },
                                 onAllergyToggle = { onboardingViewModel.toggleAllergy(it) },
                                 onAddCustomCondition = { onboardingViewModel.addCustomHealthCondition(it) },
@@ -184,13 +251,19 @@ fun ProfileOnboardingScreen(
                             )
                             4 -> DietStep(
                                 selectedDiets = formData.dietaryRestrictions,
-                                onDietToggle = { onboardingViewModel.toggleDietaryRestriction(it) }
+                                customDiets = formData.customDietaryRestrictions,
+                                onDietToggle = { onboardingViewModel.toggleDietaryRestriction(it) },
+                                onAddCustomDiet = { onboardingViewModel.addCustomDietaryRestriction(it) }
                             )
                             5 -> FoodPreferencesStep(
                                 likedFoods = formData.likedFoods,
                                 dislikedFoods = formData.dislikedFoods,
+                                customLikedFoods = formData.customLikedFoods,
+                                customDislikedFoods = formData.customDislikedFoods,
                                 onLikeToggle = { onboardingViewModel.toggleLikedFood(it) },
-                                onDislikeToggle = { onboardingViewModel.toggleDislikedFood(it) }
+                                onDislikeToggle = { onboardingViewModel.toggleDislikedFood(it) },
+                                onAddCustomLiked = { onboardingViewModel.addCustomLikedFood(it) },
+                                onAddCustomDisliked = { onboardingViewModel.addCustomDislikedFood(it) }
                             )
                         }
                     }
@@ -212,17 +285,16 @@ fun WelcomeStep(onGetStarted: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Icon(Icons.Default.WavingHand, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
-        Text("Welcome!", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.welcome), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(16.dp))
         Text(
-            "Let's set up your profile to personalize your nutrition journey. It will only take a minute.",
+            stringResource(R.string.welcome_message),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge
         )
         Spacer(Modifier.height(32.dp))
         Button(onClick = onGetStarted, modifier = Modifier.fillMaxWidth()) {
-            Text("Get Started")
+            Text(stringResource(R.string.get_started))
         }
     }
 }
@@ -248,22 +320,22 @@ fun PersonalInfoStep(initialData: PersonalInfoReq?, onDataChange: (PersonalInfoR
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        SectionTitle("Personal Details")
-        OutlinedTextField(value = age, onValueChange = { age = it }, label = { Text("Age") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next), modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = height, onValueChange = { height = it }, label = { Text("Height (cm)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next), modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = weight, onValueChange = { weight = it }, label = { Text("Weight (kg)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done), modifier = Modifier.fillMaxWidth())
+        SectionTitle(stringResource(R.string.personal_details))
+        OutlinedTextField(value = age, onValueChange = { age = it }, label = { Text(stringResource(R.string.age)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next), modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = height, onValueChange = { height = it }, label = { Text(stringResource(R.string.height_cm)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next), modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = weight, onValueChange = { weight = it }, label = { Text(stringResource(R.string.weight_kg)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done), modifier = Modifier.fillMaxWidth())
 
-        Text("Gender", style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(R.string.gender), style = MaterialTheme.typography.bodyLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TagChip("Male", gender == "male") { gender = "male" }
-            TagChip("Female", gender == "female") { gender = "female" }
+            TagChip(stringResource(R.string.male), gender == "male") { gender = "male" }
+            TagChip(stringResource(R.string.female), gender == "female") { gender = "female" }
         }
 
-        Text("Activity Level", style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(R.string.activity_level), style = MaterialTheme.typography.bodyLarge)
         OnboardingConstants.activityLevels.forEach { level ->
             SelectableCard(
-                title = level.title,
-                subtitle = level.description,
+                title = stringResource(level.titleRes),
+                subtitle = stringResource(level.descriptionRes),
                 isSelected = activityLevel == level.key,
                 onClick = { activityLevel = level.key }
             )
@@ -275,6 +347,8 @@ fun PersonalInfoStep(initialData: PersonalInfoReq?, onDataChange: (PersonalInfoR
 fun HealthStep(
     selectedConditions: List<String>,
     selectedAllergies: List<String>,
+    customConditions: List<String>,
+    customAllergies: List<String>,
     onConditionToggle: (String) -> Unit,
     onAllergyToggle: (String) -> Unit,
     onAddCustomCondition: (String) -> Unit,
@@ -282,33 +356,44 @@ fun HealthStep(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         TagSelectionSection(
-            title = "Health Conditions",
+            title = stringResource(R.string.health_conditions),
             options = OnboardingConstants.healthConditionOptions,
             selectedItems = selectedConditions,
+            customItems = customConditions,
             onToggle = onConditionToggle,
-            onAddCustom = onAddCustomCondition
+            onAddCustom = onAddCustomCondition,
+            getLocalizedText = { OnboardingConstants.getLocalizedHealthCondition(it) }
         )
         TagSelectionSection(
-            title = "Food Allergies",
+            title = stringResource(R.string.food_allergies),
             options = OnboardingConstants.allergyOptions,
             selectedItems = selectedAllergies,
+            customItems = customAllergies,
             onToggle = onAllergyToggle,
-            onAddCustom = onAddCustomAllergy
+            onAddCustom = onAddCustomAllergy,
+            getLocalizedText = { OnboardingConstants.getLocalizedAllergy(it) }
         )
     }
 }
 
 @Composable
-fun DietStep(selectedDiets: List<String>, onDietToggle: (String) -> Unit) {
+fun DietStep(
+    selectedDiets: List<String>,
+    customDiets: List<String>,
+    onDietToggle: (String) -> Unit,
+    onAddCustomDiet: (String) -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        SectionTitle("Dietary Preferences")
-        Text("Select any dietary lifestyles you follow. This helps us filter recipes and suggestions.", style = MaterialTheme.typography.bodyMedium)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            OnboardingConstants.dietaryOptions.forEach { diet ->
-                TagChip(diet.replaceFirstChar { it.titlecase(
-                    Locale.ROOT) }, selectedDiets.contains(diet), onClick = { onDietToggle(diet) })
-            }
-        }
+        TagSelectionSection(
+            title = stringResource(R.string.dietary_preferences),
+            description = stringResource(R.string.dietary_preferences_description),
+            options = OnboardingConstants.dietaryOptions,
+            selectedItems = selectedDiets,
+            customItems = customDiets,
+            onToggle = onDietToggle,
+            onAddCustom = onAddCustomDiet,
+            getLocalizedText = { OnboardingConstants.getLocalizedDiet(it) }
+        )
     }
 }
 
@@ -316,28 +401,34 @@ fun DietStep(selectedDiets: List<String>, onDietToggle: (String) -> Unit) {
 fun FoodPreferencesStep(
     likedFoods: List<String>,
     dislikedFoods: List<String>,
+    customLikedFoods: List<String>,
+    customDislikedFoods: List<String>,
     onLikeToggle: (String) -> Unit,
-    onDislikeToggle: (String) -> Unit
+    onDislikeToggle: (String) -> Unit,
+    onAddCustomLiked: (String) -> Unit,
+    onAddCustomDisliked: (String) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SectionTitle("Foods You Like")
-            Text("Tell us what you enjoy eating.", style = MaterialTheme.typography.bodyMedium)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OnboardingConstants.commonFoods.forEach { food ->
-                    TagChip(food.replaceFirstChar { it.titlecase(Locale.ROOT) }, likedFoods.contains(food), onClick = { onLikeToggle(food) })
-                }
-            }
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SectionTitle("Foods You Dislike")
-            Text("Anything you'd rather avoid?", style = MaterialTheme.typography.bodyMedium)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OnboardingConstants.commonFoods.forEach { food ->
-                    TagChip(food.replaceFirstChar { it.titlecase(Locale.ROOT) }, dislikedFoods.contains(food), onClick = { onDislikeToggle(food) })
-                }
-            }
-        }
+        TagSelectionSection(
+            title = stringResource(R.string.foods_you_like),
+            description = stringResource(R.string.foods_you_like_description),
+            options = OnboardingConstants.commonFoods,
+            selectedItems = likedFoods,
+            customItems = customLikedFoods,
+            onToggle = onLikeToggle,
+            onAddCustom = onAddCustomLiked,
+            getLocalizedText = { OnboardingConstants.getLocalizedFood(it) }
+        )
+        TagSelectionSection(
+            title = stringResource(R.string.foods_you_dislike),
+            description = stringResource(R.string.foods_you_dislike_description),
+            options = OnboardingConstants.commonFoods,
+            selectedItems = dislikedFoods,
+            customItems = customDislikedFoods,
+            onToggle = onDislikeToggle,
+            onAddCustom = onAddCustomDisliked,
+            getLocalizedText = { OnboardingConstants.getLocalizedFood(it) }
+        )
     }
 }
 
@@ -354,30 +445,41 @@ fun TagSelectionSection(
     title: String,
     options: List<String>,
     selectedItems: List<String>,
+    customItems: List<String> = emptyList(),
     onToggle: (String) -> Unit,
-    onAddCustom: (String) -> Unit
+    onAddCustom: (String) -> Unit,
+    getLocalizedText: (String) -> Int,
+    description: String? = null
 ) {
     var customInput by remember { mutableStateOf("") }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SectionTitle(title)
+        description?.let {
+            Text(it, style = MaterialTheme.typography.bodyMedium)
+        }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Tampilkan predefined options
             options.forEach { item ->
-                TagChip(item.replaceFirstChar { it.titlecase(Locale.ROOT) }, selectedItems.contains(item)) { onToggle(item) }
+                TagChip(stringResource(getLocalizedText(item)), selectedItems.contains(item)) { onToggle(item) }
+            }
+            // Tampilkan custom items
+            customItems.forEach { item ->
+                TagChip(item.replaceFirstChar { it.titlecase(Locale.getDefault()) }, selectedItems.contains(item)) { onToggle(item) }
             }
         }
         OutlinedTextField(
             value = customInput,
             onValueChange = { customInput = it },
-            label = { Text("Add other...") },
+            label = { Text(stringResource(R.string.add_other)) },
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
                 IconButton(onClick = {
                     if (customInput.isNotBlank()) {
-                        onAddCustom(customInput)
+                        onAddCustom(customInput.trim())
                         customInput = ""
                     }
                 }) {
-                    Icon(Icons.Default.Add, "Add")
+                    Icon(Icons.Default.Add, stringResource(R.string.add))
                 }
             }
         )
@@ -453,9 +555,9 @@ fun GoalsStep(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        SectionTitle("Your Daily Goals")
+        SectionTitle(stringResource(R.string.your_daily_goals))
         Text(
-            "Set your daily nutrition targets. You can use our recommendation or set your own.",
+            stringResource(R.string.daily_goals_description),
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -471,11 +573,11 @@ fun GoalsStep(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("Our Recommendation", fontWeight = FontWeight.Bold)
-                        Text("$recommendedCalories kcal / day", style = MaterialTheme.typography.titleLarge)
+                        Text(stringResource(R.string.our_recommendation), fontWeight = FontWeight.Bold)
+                        Text("$recommendedCalories ${stringResource(R.string.kcal_per_day)}", style = MaterialTheme.typography.titleLarge)
                     }
                     Button(onClick = { calories = recommendedCalories.toString() }) {
-                        Text("Use This")
+                        Text(stringResource(R.string.use_this))
                     }
                 }
             }
@@ -485,17 +587,17 @@ fun GoalsStep(
         OutlinedTextField(
             value = calories,
             onValueChange = { calories = it },
-            label = { Text("Calories (kcal)") },
+            label = { Text(stringResource(R.string.calories_kcal)) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(value = protein, onValueChange = { protein = it }, label = { Text("Protein (g)") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-            OutlinedTextField(value = carbs, onValueChange = { carbs = it }, label = { Text("Carbs (g)") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+            OutlinedTextField(value = protein, onValueChange = { protein = it }, label = { Text(stringResource(R.string.protein_g)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+            OutlinedTextField(value = carbs, onValueChange = { carbs = it }, label = { Text(stringResource(R.string.carbs_g)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(value = fat, onValueChange = { fat = it }, label = { Text("Fat (g)") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-            OutlinedTextField(value = fiber, onValueChange = { fiber = it }, label = { Text("Fiber (g)") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+            OutlinedTextField(value = fat, onValueChange = { fat = it }, label = { Text(stringResource(R.string.fat_g)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+            OutlinedTextField(value = fiber, onValueChange = { fiber = it }, label = { Text(stringResource(R.string.fiber_g)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
         }
     }
 }
@@ -536,7 +638,7 @@ fun OnboardingBottomBar(currentStep: Int, totalSteps: Int, onNext: () -> Unit, o
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (currentStep > 0) { // Tampilkan step counter setelah welcome screen
-                Text("Step ${currentStep} of ${totalSteps - 1}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text(stringResource(R.string.step_counter, currentStep, totalSteps - 1), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 Spacer(Modifier.weight(1f))
             }
 
@@ -548,7 +650,7 @@ fun OnboardingBottomBar(currentStep: Int, totalSteps: Int, onNext: () -> Unit, o
                 if(isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
                 } else {
-                    Text(if (currentStep < totalSteps - 1) "Next" else "Finish Setup")
+                    Text(if (currentStep < totalSteps - 1) stringResource(R.string.next) else stringResource(R.string.finish_setup))
                 }
             }
         }

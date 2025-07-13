@@ -434,11 +434,31 @@ fun AllPreferencesCard(userPreferences: UserPreferences?, onEditClick: () -> Uni
             }
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
             userPreferences?.let {
-                PreferenceItem(Icons.Default.LocalHospital, stringResource(R.string.health_conditions), it.healthConditions + it.customHealthConditions)
-                PreferenceItem(Icons.Default.Warning, stringResource(R.string.allergies), it.allergies + it.customAllergies)
-                PreferenceItem(Icons.Default.RestaurantMenu, stringResource(R.string.dietary_types), it.dietaryRestrictions)
-                PreferenceItem(Icons.Default.Favorite, stringResource(R.string.liked_foods), it.likedFoods)
-                PreferenceItem(Icons.Default.ThumbDown, stringResource(R.string.disliked_foods), it.dislikedFoods)
+                PreferenceItem(
+                    Icons.Default.LocalHospital,
+                    stringResource(R.string.health_conditions),
+                    (it.healthConditions ?: emptyList()) + (it.customHealthConditions ?: emptyList())
+                )
+                PreferenceItem(
+                    Icons.Default.Warning,
+                    stringResource(R.string.allergies),
+                    (it.allergies ?: emptyList()) + (it.customAllergies ?: emptyList())
+                )
+                PreferenceItem(
+                    Icons.Default.RestaurantMenu,
+                    stringResource(R.string.dietary_types),
+                    (it.dietaryRestrictions ?: emptyList()) + (it.customDietaryRestrictions ?: emptyList())
+                )
+                PreferenceItem(
+                    Icons.Default.Favorite,
+                    stringResource(R.string.liked_foods),
+                    (it.likedFoods ?: emptyList()) + (it.customLikedFoods ?: emptyList())
+                )
+                PreferenceItem(
+                    Icons.Default.ThumbDown,
+                    stringResource(R.string.disliked_foods),
+                    (it.dislikedFoods ?: emptyList()) + (it.customDislikedFoods ?: emptyList())
+                )
             } ?: Text(stringResource(R.string.no_preferences_set), color = Color.Gray)
         }
     }
