@@ -260,4 +260,33 @@
     <string name="food_tomato">Tomato</string>
     <string name="food_onion">Onion</string>
 
+    <!-- NutriTrack Screen -->
+    <string name="nutritrack_title">NutriTrack</string>
+    <string name="tab_today">Today</string>
+    <string name="tab_weekly">Weekly</string>
+    <string name="todays_meals">Today\'s Meals</string>
+    <string name="daily_calories">Daily Calories</string>
+    <string name="goals_not_set">Goals not set</string>
+    <string name="macronutrients">Macronutrients</string>
+    <string name="detailed_nutrition">Detailed Nutrition</string>
+    <string name="carbohydrates">Carbohydrates</string>
+    <string name="nutrition_goals_not_set">Nutrition goals not set</string>
+    <string name="additional_nutrients">Additional Nutrients</string>
+    <string name="saturated_fat">Saturated Fat</string>
+    <string name="weekly_data_not_available">Weekly data not available</string>
+    <string name="daily_breakdown">Daily Breakdown</string>
+    <string name="weekly_overview">Weekly Overview</string>
+    <string name="average_calories">Average Calories</string>
+    <string name="average_carbs">Average Carbs</string>
+    <string name="average_protein">Average Protein</string>
+    <string name="cal_short">Cal</string>
+    <string name="carbs_short">Carbs</string>
+    <string name="protein_short">Protein</string>
+    <string name="fat_short">Fat</string>
+    <string name="loading_nutrition_data">Loading nutrition data...</string>
+    <string name="no_nutrition_data_available">No nutrition data available</string>
+    <string name="add_food_entries_to_see_tracking">Add some food entries to see your nutrition tracking</string>
+    <string name="retry">Retry</string>
+    <string name="insight">Insight</string>
+
 </resources>

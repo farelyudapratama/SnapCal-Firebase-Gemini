@@ -261,4 +261,33 @@
     <string name="food_tomato">Tomat</string>
     <string name="food_onion">Bawang</string>
 
+    <!-- NutriTrack Screen -->
+    <string name="nutritrack_title">NutriTrack</string>
+    <string name="tab_today">Hari Ini</string>
+    <string name="tab_weekly">Mingguan</string>
+    <string name="todays_meals">Makanan Hari Ini</string>
+    <string name="daily_calories">Kalori Harian</string>
+    <string name="goals_not_set">Target belum diatur</string>
+    <string name="macronutrients">Makronutrien</string>
+    <string name="detailed_nutrition">Nutrisi Detail</string>
+    <string name="carbohydrates">Karbohidrat</string>
+    <string name="nutrition_goals_not_set">Target nutrisi belum diatur</string>
+    <string name="additional_nutrients">Nutrisi Tambahan</string>
+    <string name="saturated_fat">Lemak Jenuh</string>
+    <string name="weekly_data_not_available">Data mingguan tidak tersedia</string>
+    <string name="daily_breakdown">Rincian Harian</string>
+    <string name="weekly_overview">Ringkasan Mingguan</string>
+    <string name="average_calories">Rata-rata Kalori</string>
+    <string name="average_carbs">Rata-rata Karbo</string>
+    <string name="average_protein">Rata-rata Protein</string>
+    <string name="cal_short">Kal</string>
+    <string name="carbs_short">Karbo</string>
+    <string name="protein_short">Protein</string>
+    <string name="fat_short">Lemak</string>
+    <string name="loading_nutrition_data">Memuat data nutrisi...</string>
+    <string name="no_nutrition_data_available">Tidak ada data nutrisi tersedia</string>
+    <string name="add_food_entries_to_see_tracking">Tambahkan entri makanan untuk melihat pelacakan nutrisi</string>
+    <string name="retry">Coba Lagi</string>
+    <string name="insight">Wawasan</string>
+
 </resources>

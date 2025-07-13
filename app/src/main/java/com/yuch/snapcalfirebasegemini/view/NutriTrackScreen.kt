@@ -22,11 +22,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.*
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -109,7 +112,7 @@ fun NutriContent(
     summary: DailySummaryResponse,
     weeklySummary: WeeklySummaryResponse?
 ) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerState = rememberPagerState(pageCount = { 2 })
     val scope = rememberCoroutineScope()
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -151,7 +154,7 @@ fun CustomHeader(date: String) {
             modifier = Modifier.align(Alignment.CenterStart)
         ) {
             Text(
-                text = "NutriTrack",
+                text = stringResource(R.string.nutritrack_title),
                 color = TextOnDark,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold
@@ -175,7 +178,7 @@ fun CustomHeader(date: String) {
 
 @Composable
 fun TabNavigation(selectedTab: Int, onTabSelected: (Int) -> Unit) {
-    val tabs = listOf("Today", "Weekly")
+    val tabs = listOf(stringResource(R.string.tab_today), stringResource(R.string.tab_weekly))
     val icons = listOf(Icons.Default.Dashboard, Icons.Default.Timeline)
 
     LazyRow(
@@ -259,7 +262,7 @@ fun DailyOverviewPage(summary: DailySummaryResponse) {
         item { MacronutrientOverview(summary.data) }
         item {
             Text(
-                "Today's Meals",
+                stringResource(R.string.todays_meals),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = TextOnLight,
@@ -270,15 +273,6 @@ fun DailyOverviewPage(summary: DailySummaryResponse) {
             FoodCard(food)
         }
         if (summary.feedback.isNotEmpty()) {
-            item {
-                Text(
-                    "AI Insights",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = TextOnLight,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
             items(summary.feedback) { feedback ->
                 InsightCard(feedback)
             }
@@ -320,7 +314,7 @@ fun CalorieProgressCard(summary: DailySummaryResponse) {
         ) {
             Column {
                 Text(
-                    "Daily Calories",
+                    stringResource(R.string.daily_calories),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = TextOnLight
@@ -333,14 +327,14 @@ fun CalorieProgressCard(summary: DailySummaryResponse) {
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            "${currentCalories.toInt()} kcal",
+                            "${currentCalories.toInt()} ${stringResource(R.string.kcal)}",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = TextOnLight
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Goals not set",
+                            stringResource(R.string.goals_not_set),
                             style = MaterialTheme.typography.bodySmall,
                             color = AccentAmber,
                             textAlign = TextAlign.Center
@@ -372,7 +366,7 @@ fun CalorieProgressCard(summary: DailySummaryResponse) {
                                 color = TextOnLight
                             )
                             Text(
-                                "/ ${targetCalories.toInt()} kcal",
+                                "/ ${targetCalories.toInt()} ${stringResource(R.string.kcal)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondaryOnLight
                             )
@@ -396,16 +390,16 @@ fun MacronutrientOverview(data: DailySummary?) {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                "Macronutrients",
+                stringResource(R.string.macronutrients),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = TextOnLight
             )
             Spacer(modifier = Modifier.height(16.dp))
             if (data != null) {
-                MacroItem("Carbs", data.totalCarbs, AccentYellow, Icons.Default.Grain)
-                MacroItem("Protein", data.totalProtein, AccentGreen, Icons.Default.FitnessCenter)
-                MacroItem("Fat", data.totalFat, AccentOrange, Icons.Default.Opacity)
+                MacroItem(stringResource(R.string.nutrient_carbs), data.totalCarbs, AccentYellow, Icons.Default.Grain)
+                MacroItem(stringResource(R.string.nutrient_protein), data.totalProtein, AccentGreen, Icons.Default.FitnessCenter)
+                MacroItem(stringResource(R.string.nutrient_fat), data.totalFat, AccentOrange, Icons.Default.Opacity)
             }
         }
     }
@@ -545,7 +539,7 @@ fun DetailedNutritionCard(data: DailySummary?, goals: Goals?) {
             modifier = Modifier.padding(20.dp)
         ) {
             Text(
-                "Detailed Nutrition",
+                stringResource(R.string.detailed_nutrition),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = TextOnLight
@@ -553,35 +547,35 @@ fun DetailedNutritionCard(data: DailySummary?, goals: Goals?) {
             Spacer(modifier = Modifier.height(20.dp))
             if (data != null) {
                 if (goals != null) {
-                    NutrientProgressBar("Calories", data.totalCalories, goals.calories, "kcal", AccentDeepOrange)
-                    NutrientProgressBar("Carbohydrates", data.totalCarbs, goals.carbs, "g", AccentYellow)
-                    NutrientProgressBar("Protein", data.totalProtein, goals.protein, "g", AccentGreen)
-                    NutrientProgressBar("Fat", data.totalFat, goals.fat, "g", AccentOrange)
+                    NutrientProgressBar(stringResource(R.string.nutrient_calories), data.totalCalories, goals.calories, stringResource(R.string.kcal), AccentDeepOrange)
+                    NutrientProgressBar(stringResource(R.string.carbohydrates), data.totalCarbs, goals.carbs, "g", AccentYellow)
+                    NutrientProgressBar(stringResource(R.string.nutrient_protein), data.totalProtein, goals.protein, "g", AccentGreen)
+                    NutrientProgressBar(stringResource(R.string.nutrient_fat), data.totalFat, goals.fat, "g", AccentOrange)
                 } else {
                     Text(
-                        "Nutrition goals not set",
+                        stringResource(R.string.nutrition_goals_not_set),
                         style = MaterialTheme.typography.bodyMedium,
                         color = AccentAmber,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
-                    SimpleNutrientItem("Calories", data.totalCalories, "kcal")
-                    SimpleNutrientItem("Carbohydrates", data.totalCarbs, "g")
-                    SimpleNutrientItem("Protein", data.totalProtein, "g")
-                    SimpleNutrientItem("Fat", data.totalFat, "g")
+                    SimpleNutrientItem(stringResource(R.string.nutrient_calories), data.totalCalories, stringResource(R.string.kcal))
+                    SimpleNutrientItem(stringResource(R.string.carbohydrates), data.totalCarbs, "g")
+                    SimpleNutrientItem(stringResource(R.string.nutrient_protein), data.totalProtein, "g")
+                    SimpleNutrientItem(stringResource(R.string.nutrient_fat), data.totalFat, "g")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider(color = Color.Gray.copy(alpha = 0.3f))
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "Additional Nutrients",
+                    stringResource(R.string.additional_nutrients),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = TextOnLight
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                SimpleNutrientItem("Saturated Fat", data.totalSaturatedFat, "g")
-                SimpleNutrientItem("Fiber", data.totalFiber, "g")
-                SimpleNutrientItem("Sugar", data.totalSugar, "g")
+                SimpleNutrientItem(stringResource(R.string.saturated_fat), data.totalSaturatedFat, "g")
+                SimpleNutrientItem(stringResource(R.string.nutrient_fiber), data.totalFiber, "g")
+                SimpleNutrientItem(stringResource(R.string.nutrient_sugar), data.totalSugar, "g")
             }
         }
     }
@@ -671,7 +665,7 @@ fun WeeklyAnalysisPage(weeklySummary: WeeklySummaryResponse?) {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "Weekly data not available",
+                    stringResource(R.string.weekly_data_not_available),
                     style = MaterialTheme.typography.bodyLarge,
                     color = TextSecondaryOnLight
                 )
@@ -690,7 +684,7 @@ fun WeeklyAnalysisPage(weeklySummary: WeeklySummaryResponse?) {
         item { WeeklyOverviewCard(weeklySummary) }
         item {
             Text(
-                "Daily Breakdown",
+                stringResource(R.string.daily_breakdown),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = TextOnLight
@@ -715,7 +709,7 @@ fun WeeklyOverviewCard(summary: WeeklySummaryResponse) {
             modifier = Modifier.padding(20.dp)
         ) {
             Text(
-                "Weekly Overview",
+                stringResource(R.string.weekly_overview),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = TextOnLight
@@ -730,9 +724,9 @@ fun WeeklyOverviewCard(summary: WeeklySummaryResponse) {
             val avgCalories = summary.summaries.map { it.calories }.average().takeIf { !it.isNaN() } ?: 0.0
             val avgCarbs = summary.summaries.map { it.carbs }.average().takeIf { !it.isNaN() } ?: 0.0
             val avgProtein = summary.summaries.map { it.protein }.average().takeIf { !it.isNaN() } ?: 0.0
-            WeeklyStatItem("Average Calories", avgCalories, "kcal", AccentDeepOrange)
-            WeeklyStatItem("Average Carbs", avgCarbs, "g", AccentYellow)
-            WeeklyStatItem("Average Protein", avgProtein, "g", AccentGreen)
+            WeeklyStatItem(stringResource(R.string.average_calories), avgCalories, stringResource(R.string.kcal), AccentDeepOrange)
+            WeeklyStatItem(stringResource(R.string.average_carbs), avgCarbs, "g", AccentYellow)
+            WeeklyStatItem(stringResource(R.string.average_protein), avgProtein, "g", AccentGreen)
         }
     }
 }
@@ -788,10 +782,10 @@ fun DailyBreakdownCard(day: DailyNutritionSummary, goal: NutrientGoal?) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                CompactNutrientInfo("Cal", day.calories.toInt(), AccentDeepOrange)
-                CompactNutrientInfo("Carbs", day.carbs.toInt(), AccentYellow)
-                CompactNutrientInfo("Protein", day.protein.toInt(), AccentGreen)
-                CompactNutrientInfo("Fat", day.fat.toInt(), AccentOrange)
+                CompactNutrientInfo(stringResource(R.string.cal_short), day.calories.toInt(), AccentDeepOrange)
+                CompactNutrientInfo(stringResource(R.string.carbs_short), day.carbs.toInt(), AccentYellow)
+                CompactNutrientInfo(stringResource(R.string.protein_short), day.protein.toInt(), AccentGreen)
+                CompactNutrientInfo(stringResource(R.string.fat_short), day.fat.toInt(), AccentOrange)
             }
             Spacer(modifier = Modifier.height(8.dp))
             if (goal != null) {
@@ -807,7 +801,7 @@ fun DailyBreakdownCard(day: DailyNutritionSummary, goal: NutrientGoal?) {
                 )
             } else {
                 Text(
-                    "Goals not set",
+                    stringResource(R.string.goals_not_set),
                     style = MaterialTheme.typography.bodySmall,
                     color = AccentAmber,
                     textAlign = TextAlign.Center,
@@ -852,7 +846,7 @@ fun LoadingScreen() {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "Loading nutrition data...",
+                stringResource(R.string.loading_nutrition_data),
                 color = TextOnDark,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -877,14 +871,14 @@ fun EmptyDataScreen(onRetry: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "No nutrition data available",
+                stringResource(R.string.no_nutrition_data_available),
                 color = TextOnDark,
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "Add some food entries to see your nutrition tracking",
+                stringResource(R.string.add_food_entries_to_see_tracking),
                 color = TextOnDark.copy(alpha = 0.8f),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center
@@ -897,7 +891,7 @@ fun EmptyDataScreen(onRetry: () -> Unit) {
                     contentColor = DarkGreenPrimary
                 )
             ) {
-                Text("Retry")
+                Text(stringResource(R.string.retry))
             }
         }
     }
