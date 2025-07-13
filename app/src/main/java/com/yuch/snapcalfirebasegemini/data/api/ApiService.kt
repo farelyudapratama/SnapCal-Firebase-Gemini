@@ -13,6 +13,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.ImageUploadRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.ProfileRequest
+import com.yuch.snapcalfirebasegemini.data.api.response.RecommendationData
 import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
@@ -98,6 +99,12 @@ interface ApiService {
 
     @DELETE("chat/history-ai")
     suspend fun deleteAiChatHistory(): Response<ApiResponse<AiChatDelete>>
+
+    @GET("recommendations")
+    suspend fun getRecommendation(
+        @Query("mealType") mealType: String,
+        @Query("refresh") refresh: Boolean = false
+    ): Response<ApiResponse<RecommendationData>>
 
     @GET("food/summary")
     suspend fun getSummaryToday(): Response<ApiResponse<DailySummaryResponse>>

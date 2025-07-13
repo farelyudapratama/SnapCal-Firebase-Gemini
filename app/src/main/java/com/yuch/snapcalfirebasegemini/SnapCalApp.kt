@@ -57,6 +57,7 @@ fun SnapCalApp(
         Screen.EditFood.route,
         Screen.AiChat.route,
         Screen.ProfileOnboarding.route,
+        Screen.Recommendation.route,
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()

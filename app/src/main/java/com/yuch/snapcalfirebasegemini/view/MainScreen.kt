@@ -49,6 +49,7 @@ import com.github.mikephil.charting.data.PieEntry
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
+import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.ui.theme.*
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -152,7 +153,9 @@ fun MainScreen(
     ) {
         Scaffold(
             topBar = {
-                MainTopAppBar(email = email)
+                MainTopAppBar(email = email, onRecommendationClick = {
+                    navController.navigate(Screen.Recommendation.route)
+                })
             },
             containerColor = Color.Transparent,
         ) { paddingValues ->
@@ -281,7 +284,10 @@ fun MainScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTopAppBar(email: String) {
+fun MainTopAppBar(
+    email: String,
+    onRecommendationClick: () -> Unit = {}
+) {
     TopAppBar(
         title = {
             Column {
@@ -298,6 +304,29 @@ fun MainTopAppBar(email: String) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+            }
+        },
+        actions = {
+            // AI Recommendation Button
+            IconButton(
+                onClick = onRecommendationClick
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(
+                            Color.White.copy(alpha = 0.2f),
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = "AI Food Recommendations",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

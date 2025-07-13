@@ -23,6 +23,7 @@ import com.yuch.snapcalfirebasegemini.view.MainScreen
 import com.yuch.snapcalfirebasegemini.view.ManualEntryScreen
 import com.yuch.snapcalfirebasegemini.view.ProfileOnboardingScreen
 import com.yuch.snapcalfirebasegemini.view.ProfileScreen
+import com.yuch.snapcalfirebasegemini.view.RecommendationScreen
 import com.yuch.snapcalfirebasegemini.view.RegisterScreen
 import com.yuch.snapcalfirebasegemini.view.camera.ScanScreen
 import com.yuch.snapcalfirebasegemini.viewmodel.AiChatViewModel
@@ -33,6 +34,7 @@ import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.RecommendationViewModel
 
 @Composable
 fun AppNavHost(
@@ -187,6 +189,13 @@ fun AppNavHost(
                 profileViewModel = profileViewModel,
                 onboardingViewModel = onboardingViewModel,
                 isEdit = isEdit
+            )
+        }
+        composable(Screen.Recommendation.route) {
+            RecommendationScreen(
+                viewModel = RecommendationViewModel(),
+                navController = navController,
+                onBack = { navController.popBackStack() }
             )
         }
     }
