@@ -96,4 +96,34 @@
     <!--  FAB  -->
     <string name="fab_add_food_entry_ai">Food Detection from Camera</string>
     <string name="fab_add_food_entry_manual">Type Your Own Food Calories</string>
+
+    <!-- Recommendation Screen -->
+    <string name="ai_food_assistant">AI Food Assistant</string>
+    <string name="back">Back</string>
+    <string name="refresh">Refresh</string>
+    <string name="what_can_i_help_you_with">What can I help you with?</string>
+    <string name="choose_nutrition_guidance">Choose how you\'d like to get nutrition guidance</string>
+    <string name="get_meal_recommendations">Get Meal Recommendations</string>
+    <string name="smart_suggestions_meals">Smart suggestions for breakfast, lunch, or dinner</string>
+    <string name="chat_with_ai_nutritionist">Chat with AI Nutritionist</string>
+    <string name="ask_questions_nutrition">Ask questions about nutrition and health</string>
+    <string name="back_to_options">Back to Options</string>
+    <string name="generating_recommendations">Generating personalized recommendations…</string>
+    <string name="no_recommendations_available">No recommendations available</string>
+    <string name="try_refreshing_different_meal">Try refreshing or selecting a different meal type</string>
+    <string name="something_went_wrong">Something went wrong</string>
+    <string name="try_again">Try Again</string>
+    <string name="why_this_recommendation">Why this recommendation?</string>
+    <string name="unknown_food">Unknown Food</string>
+    <string name="no_description_available">No description available</string>
+    <string name="no_reasoning_provided">No reasoning provided</string>
+    <string name="kcal">kcal</string>
+    <string name="carbs">Carbs</string>
+    <string name="protein">Protein</string>
+    <string name="fat">Fat</string>
+    <string name="fiber">Fiber</string>
+    <string name="fallback_mode">Fallback mode</string>
+    <string name="from_cache">From cache</string>
+    <string name="recently">Recently</string>
+    <string name="failed_to_load_recommendations">Failed to load recommendations</string>
 </resources>

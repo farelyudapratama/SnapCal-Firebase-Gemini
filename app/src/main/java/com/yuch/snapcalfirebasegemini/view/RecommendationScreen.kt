@@ -19,12 +19,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodRecommendation
 import com.yuch.snapcalfirebasegemini.data.api.response.RecommendationData
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
@@ -53,13 +55,13 @@ fun RecommendationScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "AI Food Assistant",
+                        stringResource(R.string.ai_food_assistant),
                         fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Kembali")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -85,12 +87,21 @@ fun RecommendationScreen(
                 InitialChoiceScreen(
                     onRecommendationChoice = {
                         showInitialChoice = false
+                        // Auto-load recommendations when user chooses recommendation option
+                        viewModel.loadRecommendations(selectedMealType, refresh = false)
                     },
                     onChatChoice = {
                         navController?.navigate(Screen.AiChat.route)
                     }
                 )
             } else {
+                // Auto-load recommendations when entering recommendation screen
+                LaunchedEffect(Unit) {
+                    if (result == null) {
+                        viewModel.loadRecommendations(selectedMealType, refresh = false)
+                    }
+                }
+
                 RecommendationContent(
                     selectedMealType = selectedMealType,
                     onMealTypeChanged = { newType ->
@@ -143,7 +154,7 @@ fun InitialChoiceScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "What can I help you with?",
+                    text = stringResource(R.string.what_can_i_help_you_with),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
@@ -152,7 +163,7 @@ fun InitialChoiceScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Choose how you'd like to get nutrition guidance",
+                    text = stringResource(R.string.choose_nutrition_guidance),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -194,12 +205,12 @@ fun InitialChoiceScreen(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Get Meal Recommendations",
+                                text = stringResource(R.string.get_meal_recommendations),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Smart suggestions for breakfast, lunch, or dinner",
+                                text = stringResource(R.string.smart_suggestions_meals),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -249,12 +260,12 @@ fun InitialChoiceScreen(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Chat with AI Nutritionist",
+                                text = stringResource(R.string.chat_with_ai_nutritionist),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Ask questions about nutrition and health",
+                                text = stringResource(R.string.ask_questions_nutrition),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -306,7 +317,7 @@ fun RecommendationContent(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Back to Options")
+                    Text(stringResource(R.string.back_to_options))
                 }
 
                 IconButton(onClick = onRefresh) {
@@ -337,7 +348,7 @@ fun RecommendationContent(
                             CircularProgressIndicator(color = Color(0xFFB67321))
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "Generating personalized recommendations...",
+                                stringResource(R.string.generating_recommendations),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -348,7 +359,7 @@ fun RecommendationContent(
 
             result?.status == "success" && result.data != null -> {
                 val recommendations = result.data.recommendations
-                if (recommendations.isNotEmpty()) {
+                if (!recommendations.isNullOrEmpty()) {
                     item {
                         RecommendationMetadataCard(result.data.metadata)
                     }
@@ -396,7 +407,7 @@ fun MealTypeSelector(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Select Meal Type",
+                text = stringResource(R.string.select_meal_type),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -504,14 +515,14 @@ fun RecommendationMetadataCard(metadata: com.yuch.snapcalfirebasegemini.data.api
                         ) {
                             if (metadata.fallbackUsed) {
                                 Text(
-                                    text = "Fallback mode",
+                                    text = stringResource(R.string.fallback_mode),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFFF59E0B)
                                 )
                             }
                             if (metadata.fromCache) {
                                 Text(
-                                    text = "From cache",
+                                    text = stringResource(R.string.from_cache),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF059669)
                                 )
@@ -620,7 +631,7 @@ fun FoodRecommendationCard(recommendation: FoodRecommendation) {
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Why this recommendation?",
+                                text = stringResource(R.string.why_this_recommendation),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFF59E0B)
@@ -689,12 +700,12 @@ fun EmptyRecommendationState() {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "No recommendations available",
+                text = stringResource(R.string.no_recommendations_available),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Try refreshing or selecting a different meal type",
+                text = stringResource(R.string.try_refreshing_different_meal),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -727,7 +738,7 @@ fun ErrorRecommendationState(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Something went wrong",
+                text = stringResource(R.string.something_went_wrong),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFDC2626)

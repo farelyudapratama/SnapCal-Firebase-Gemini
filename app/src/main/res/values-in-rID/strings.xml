@@ -98,5 +98,34 @@
     <string name="fab_add_food_entry_ai">Deteksi Makanan dari Kamera</string>
     <string name="fab_add_food_entry_manual">Ketik Sendiri Kalori Makananmu</string>
 
-</resources>
+    <!-- Recommendation Screen -->
+    <string name="ai_food_assistant">Asisten Makanan AI</string>
+    <string name="back">Kembali</string>
+    <string name="refresh">Muat Ulang</string>
+    <string name="what_can_i_help_you_with">Apa yang bisa saya bantu?</string>
+    <string name="choose_nutrition_guidance">Pilih cara mendapatkan panduan nutrisi</string>
+    <string name="get_meal_recommendations">Dapatkan Rekomendasi Makanan</string>
+    <string name="smart_suggestions_meals">Saran cerdas untuk sarapan, makan siang, atau malam</string>
+    <string name="chat_with_ai_nutritionist">Chat dengan Ahli Gizi AI</string>
+    <string name="ask_questions_nutrition">Tanya tentang nutrisi dan kesehatan</string>
+    <string name="back_to_options">Kembali ke Pilihan</string>
+    <string name="generating_recommendations">Membuat rekomendasi personal…</string>
+    <string name="no_recommendations_available">Tidak ada rekomendasi tersedia</string>
+    <string name="try_refreshing_different_meal">Coba muat ulang atau pilih jenis makanan lain</string>
+    <string name="something_went_wrong">Ada yang salah</string>
+    <string name="try_again">Coba Lagi</string>
+    <string name="why_this_recommendation">Kenapa direkomendasikan?</string>
+    <string name="unknown_food">Makanan Tidak Dikenal</string>
+    <string name="no_description_available">Tidak ada deskripsi</string>
+    <string name="no_reasoning_provided">Tidak ada penjelasan</string>
+    <string name="kcal">kkal</string>
+    <string name="carbs">Karbo</string>
+    <string name="protein">Protein</string>
+    <string name="fat">Lemak</string>
+    <string name="fiber">Serat</string>
+    <string name="fallback_mode">Mode cadangan</string>
+    <string name="from_cache">Dari cache</string>
+    <string name="recently">Baru saja</string>
+    <string name="failed_to_load_recommendations">Gagal memuat rekomendasi</string>
 
+</resources>
