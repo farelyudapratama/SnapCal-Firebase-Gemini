@@ -4,14 +4,14 @@ import com.yuch.snapcalfirebasegemini.data.api.response.AiChatDelete
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatMessage
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatResponse
-import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeByMyModelResponse
+import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeMyModelResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
-import com.yuch.snapcalfirebasegemini.data.api.response.ImageUploadRequest
+import com.yuch.snapcalfirebasegemini.data.api.response.NutritionEstimateRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.ProfileRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.RecommendationData
 import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
@@ -43,6 +43,12 @@ interface ApiService {
     @POST("food/analyze-by-mymodel")
     suspend fun analyzeFoodByMyModel(
         @Part file: MultipartBody.Part
+    ): Response<AnalyzeMyModelResponse>
+
+    // Estimate nutrition by food name after YOLO detection
+    @POST("food/estimate-nutrition-by-name")
+    suspend fun estimateNutritionByName(
+        @Body request: NutritionEstimateRequest
     ): Response<ApiResponse<AnalyzeResult>>
 
     @Multipart

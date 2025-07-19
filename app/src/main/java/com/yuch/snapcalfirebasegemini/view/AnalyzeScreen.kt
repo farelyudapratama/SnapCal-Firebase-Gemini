@@ -2,15 +2,20 @@ package com.yuch.snapcalfirebasegemini.view
 
 import android.widget.Toast
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,10 +29,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.yuch.snapcalfirebasegemini.R
+import com.yuch.snapcalfirebasegemini.data.api.response.FoodDetectionByMyModelResult
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.utils.normalizeDecimal
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
@@ -48,6 +57,7 @@ fun AnalyzeScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val uploadSuccess by viewModel.uploadSuccess.collectAsStateWithLifecycle()
+    val yoloDetections by viewModel.yoloDetectionResult.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     // State for storing analyzed food data
@@ -158,7 +168,7 @@ fun AnalyzeScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack, 
+                            Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -245,8 +255,8 @@ fun AnalyzeScreen(
                             manualOverrides = manualOverrides,
                             onValueChange = { editableFood = it }
                         )
-                        
-                        // TODO: Food Composition Section - This section will display detailed 
+
+                        // TODO: Food Composition Section - This section will display detailed
                         // ingredients and composition information for the analyzed food
 //                        CompositionSectionPlaceholder(
 //                            showComposition = showComposition,
@@ -256,9 +266,93 @@ fun AnalyzeScreen(
                 }
             }
 
-            // Add space at the bottom to avoid FAB overlap
+            // Add YOLO detection chips and actions
+            if (!yoloDetections.isNullOrEmpty()) {
+                item {
+                    Text(
+                        text = "Detected Foods:",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(yoloDetections.orEmpty()) { detection ->
+                            var isSelected by remember { mutableStateOf(false) }
+
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { isSelected = !isSelected },
+                                label = { Text(detection.foodName) },
+                                enabled = true,
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = isSelected,
+                                    borderColor = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline,
+                                    selectedBorderColor = Color.Transparent,
+                                    borderWidth = 1.dp
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Add form for additional description
             item {
-                Spacer(modifier = Modifier.height(80.dp))
+                var additionalDescription by remember { mutableStateOf("") }
+                OutlinedTextField(
+                    value = additionalDescription,
+                    onValueChange = { additionalDescription = it },
+                    label = { Text("Additional Description (Optional)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // Add action buttons
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(
+                        onClick = {
+                            // Handle continue analysis with selected chips and description
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Continue Analysis")
+                    }
+
+                    Button(
+                        onClick = {
+                            // Handle analysis with external AI
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Analyze with External AI")
+                    }
+                }
+            }
+        }
+
+        // YOLO Detection Dialog - Show as overlay outside LazyColumn
+        yoloDetections?.let { detections ->
+            if (detections.isNotEmpty()) {
+                YoloDetectionDialog(
+                    detections = detections,
+                    onContinueAnalysis = { selectedFood, description ->
+                        viewModel.estimateNutritionByName(selectedFood, description)
+                        viewModel.clearYoloDetections() // Clear after processing
+                    },
+                    onDirectAiAnalysis = {
+                        viewModel.clearYoloDetections()
+                        selectedService = "gemini"
+                        viewModel.analyzeImage(imagePath, "gemini")
+                    },
+                    onDismiss = {
+                        viewModel.clearYoloDetections()
+                    },
+                    isLoading = isLoading
+                )
             }
         }
     }
@@ -541,7 +635,7 @@ private fun EditableAnalysisCard(
                 ),
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            
+
             Text(
                 stringResource(R.string.adjust_values_if_needed),
                 style = MaterialTheme.typography.bodyMedium,
@@ -642,7 +736,7 @@ private fun EditableAnalysisCard(
                 thickness = 1.dp,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
-            
+
             Text(
                 stringResource(R.string.nutrition_values),
                 style = MaterialTheme.typography.titleMedium.copy(
@@ -691,81 +785,6 @@ private fun EditableAnalysisCard(
 }
 
 @Composable
-private fun CompositionSectionPlaceholder(
-    showComposition: Boolean,
-    onToggleComposition: (Boolean) -> Unit
-) {
-    // This will be expanded in the future to show food composition details
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Info, 
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Text(
-                        "Food Composition",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-                
-                Switch(
-                    checked = showComposition,
-                    onCheckedChange = onToggleComposition
-                )
-            }
-            
-            AnimatedVisibility(visible = showComposition) {
-                Column(
-                    modifier = Modifier.padding(top = 16.dp)
-                ) {
-                    Text(
-                        "Nanti mungkin nambah komposisi " +
-                        "information for the analyzed food item.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        "TODO: Implementation coming soon",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun ToggleableNutritionRow(
     label: String,
     value: String,
@@ -791,7 +810,7 @@ private fun ToggleableNutritionRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    "Edit", 
+                    "Edit",
                     style = MaterialTheme.typography.labelSmall,
                     color = if (isManual) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -824,9 +843,9 @@ private fun ToggleableNutritionRow(
             enabled = isManual,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = if (isManual) 
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) 
-                else 
+                unfocusedBorderColor = if (isManual)
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                else
                     MaterialTheme.colorScheme.outline
             )
         )
@@ -882,7 +901,7 @@ private fun ImagePreview(imagePath: String) {
                     .clip(RoundedCornerShape(20.dp)),
                 contentScale = ContentScale.Crop
             )
-            
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -961,6 +980,237 @@ private fun ServiceButton(
             }
         }
     }
+}
+
+@Composable
+fun YoloDetectionDialog(
+    detections: List<FoodDetectionByMyModelResult>,
+    onContinueAnalysis: (String, String?) -> Unit,
+    onDirectAiAnalysis: () -> Unit,
+    onDismiss: () -> Unit,
+    isLoading: Boolean
+) {
+    var selectedDetection by remember { mutableStateOf<FoodDetectionByMyModelResult?>(null) }
+    var description by remember { mutableStateOf("") }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false
+        )
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(20.dp),
+            elevation = CardDefaults.cardElevation(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header dengan icon check
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "🎯 Makanan Terdeteksi!",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Text(
+                    "Model YOLO berhasil mendeteksi ${detections.size} jenis makanan. Pilih makanan yang ingin dianalisis nutrisinya:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                )
+
+                // Detection chips dalam LazyRow
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(detections) { detection ->
+                        DetectionChip(
+                            detection = detection,
+                            isSelected = selectedDetection == detection,
+                            onSelectionChanged = {
+                                selectedDetection = if (selectedDetection == detection) null else detection
+                            }
+                        )
+                    }
+                }
+
+                // Input deskripsi tambahan
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = {
+                        Text("Deskripsi Tambahan (Opsional)")
+                    },
+                    placeholder = {
+                        Text("Contoh: porsi besar, dengan nasi, digoreng, dll.")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    maxLines = 3,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
+                )
+
+                Text(
+                    "💡 Tip: Tambahkan deskripsi untuk hasil yang lebih akurat (ukuran porsi, cara memasak, dll.)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+
+                // Tombol aksi
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Tombol lanjutkan analisis
+                    Button(
+                        onClick = {
+                            selectedDetection?.let { detection ->
+                                onContinueAnalysis(detection.foodName, description.takeIf { it.isNotBlank() })
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        enabled = selectedDetection != null && !isLoading,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(4.dp)
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Menganalisis...")
+                        } else {
+                            Text(
+                                "Lanjutkan Analisis dengan Pilihan",
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+                            )
+                        }
+                    }
+
+                    // Tombol analisis langsung dengan AI
+                    OutlinedButton(
+                        onClick = onDirectAiAnalysis,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        enabled = !isLoading,
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text(
+                            "Analisis Langsung dengan AI Eksternal",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                // Info text
+                Text(
+                    "📋 Pilihan pertama menggunakan hasil deteksi model, pilihan kedua menganalisis ulang dengan AI eksternal.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DetectionChip(
+    detection: FoodDetectionByMyModelResult,
+    isSelected: Boolean,
+    onSelectionChanged: () -> Unit
+) {
+    FilterChip(
+        onClick = onSelectionChanged,
+        label = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    detection.foodName,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium
+                    )
+                )
+                Text(
+                    "${(detection.confidence * 100).toInt()}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isSelected)
+                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    else
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+        },
+        selected = isSelected,
+        leadingIcon = if (isSelected) {
+            {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = "Selected",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        } else null,
+        shape = RoundedCornerShape(12.dp),
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = MaterialTheme.colorScheme.primary,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+            selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        border = FilterChipDefaults.filterChipBorder(
+            enabled = true, // Assuming the chip is always enabled
+            selected = isSelected, // Pass the isSelected state
+            borderColor = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline,
+            selectedBorderColor = Color.Transparent,
+            borderWidth = 1.dp
+        ),
+        modifier = Modifier.padding(vertical = 4.dp)
+    )
 }
 
 fun updateField(food: EditableFoodData, field: String, value: String): EditableFoodData {

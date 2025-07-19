@@ -3,7 +3,6 @@ package com.yuch.snapcalfirebasegemini.viewmodel
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.RectF
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,9 +13,9 @@ import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeByMyModelResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
+import com.yuch.snapcalfirebasegemini.data.api.response.FoodDetectionByMyModelResult
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
-import com.yuch.snapcalfirebasegemini.data.api.response.ImageUploadRequest
-import com.yuch.snapcalfirebasegemini.data.api.response.ProfileRequest
+import com.yuch.snapcalfirebasegemini.data.api.response.NutritionEstimateRequest
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +27,6 @@ import retrofit2.HttpException
 import retrofit2.Response
 import com.yuch.snapcalfirebasegemini.utils.ImageUtils
 import org.tensorflow.lite.DataType
-import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -44,14 +42,8 @@ class FoodViewModel(
     private val _analysisResult = MutableStateFlow<ApiResponse<AnalyzeResult>>(ApiResponse("error", "error", null))
     val analysisResult = _analysisResult.asStateFlow()
 
-    private val _customModelResult = MutableStateFlow<ApiResponse<AnalyzeByMyModelResponse>>(ApiResponse("idle", "Idle"))
-    val customModelResult = _customModelResult.asStateFlow()
-
-    private val _uploadResult = MutableStateFlow<ApiResponse<Food>>(ApiResponse("error", "error", null))
-    val uploadResult = _uploadResult.asStateFlow()
-
-    private val _editResult = MutableStateFlow<ApiResponse<FoodItem>>(ApiResponse("error", "error", null))
-    val editResult = _editResult.asStateFlow()
+    private val _yoloAnalysisResult = MutableStateFlow<ApiResponse<AnalyzeByMyModelResponse>>(ApiResponse("error", "error", null))
+    val yoloAnalysisResult = _yoloAnalysisResult.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -64,6 +56,9 @@ class FoodViewModel(
 
     private val _uploadSuccess = MutableStateFlow(false)
     val uploadSuccess = _uploadSuccess.asStateFlow()
+
+    private val _yoloDetectionResult = MutableStateFlow<List<FoodDetectionByMyModelResult>?>(null)
+    val yoloDetectionResult = _yoloDetectionResult.asStateFlow()
 
     fun clearErrorMessage() {
         _errorMessage.value = null
@@ -99,74 +94,82 @@ class FoodViewModel(
 
     // Analyze food using custom model saat ini YOLO
     fun analyzeFoodByMyModel(imagePath: String) {
-        _customModelResult.value = ApiResponse("loading", "Loading")
         _errorMessage.value = null
+        _yoloDetectionResult.value = null // Clear previous detections
 
         viewModelScope.launch {
             try {
                 Log.d("CustomModel", "Start analyzing image at path: $imagePath")
 
-                val validationError = ImageUtils.validateImageFile(imagePath)
-                if (validationError != null) throw Exception(validationError)
+                ImageUtils.validateImageFile(imagePath)?.let {
+                    throw Exception(it)
+                }
 
                 _isLoading.value = true
-
                 val (imagePart, mimeType) = ImageUtils.prepareImageForAnalyze(imagePath)
-                Log.d("CustomModel", "Image prepared. MimeType: $mimeType, FileName: ${imagePart.body.contentType()}")
+                Log.d("CustomModel", "Image prepared. MimeType: $mimeType")
 
                 val response = apiService.analyzeFoodByMyModel(imagePart)
-                Log.d("CustomModel", "Response received. isSuccessful: ${response.isSuccessful}, code: ${response.code()}")
+                Log.d("CustomModel", "Response code: ${response.code()}, isSuccessful: ${response.isSuccessful}")
 
-                if (response.isSuccessful) {
-                    response.body()?.let { apiResponse ->
-                        Log.d("CustomModel", "API Status: ${apiResponse.status}, Message: ${apiResponse.message}")
-
-                        when (apiResponse.status) {
-                            "success" -> {
-                                Log.d("CustomModel", "Detected food: ${apiResponse.data}")
-                                handleResponse(response)
-                                Log.d("CustomModel", "Analysis result: ${_customModelResult.value}")
-                                _errorMessage.value = null
-                            }
-                            "error" -> {
-                                val statusCode = response.code()
-                                val errorMsg = "[Code: $statusCode] ${apiResponse.message}"
-                                Log.e("CustomModel", "API error: $errorMsg")
-                                _errorMessage.value = errorMsg
-                                _customModelResult.value = ApiResponse("error", apiResponse.message)
-                            }
-                            else -> {
-                                Log.w("CustomModel", "Unexpected API status: ${apiResponse.status}")
-                                _customModelResult.value = ApiResponse("error", "Unexpected status: ${apiResponse.status}")
-                            }
-                        }
-                    } ?: run {
-                        val msg = "[Code: ${response.code()}] Empty response from server"
-                        Log.e("CustomModel", msg)
-                        _errorMessage.value = msg
-                        _customModelResult.value = ApiResponse("error", msg)
-                    }
-                } else {
-                    val errorMsg = try {
-                        val errorJson = response.errorBody()?.string()
-                        Log.e("CustomModel", "Raw error body: $errorJson")
-                        val jsonObj = JSONObject(errorJson ?: "{}")
-                        jsonObj.optString("message", "Unknown server error")
+                if (!response.isSuccessful) {
+                    val errorBody = response.errorBody()?.string()
+                    Log.e("CustomModel", "Raw error body: $errorBody")
+                    val message = try {
+                        JSONObject(errorBody ?: "{}").optString("message", "Unknown server error")
                     } catch (e: Exception) {
-                        Log.e("CustomModel", "Failed to parse error body", e)
                         "Request failed with code ${response.code()}"
                     }
+                    _errorMessage.value = "[Code: ${response.code()}] $message"
+                    return@launch
+                }
 
-                    val fullError = "[Code: ${response.code()}] $errorMsg"
-                    Log.e("CustomModel", "HTTP error: $fullError")
-                    _errorMessage.value = fullError
-                    _customModelResult.value = ApiResponse("error", errorMsg)
+                val body = response.body()
+                if (body == null) {
+                    _errorMessage.value = "[Code: ${response.code()}] Empty response from server"
+                    return@launch
+                }
+
+                Log.d("CustomModel", "API Status: ${body.status}, Message: ${body.message}")
+
+                if (body.status != "success") {
+                    _errorMessage.value = "[Code: ${response.code()}] ${body.message}"
+                    return@launch
+                }
+
+                val rawJson = Gson().toJson(body.data)
+                Log.d("CustomModel", "Raw JSON response: $rawJson")
+
+                when (body.message) {
+                    "Makanan berhasil dideteksi oleh model YoLo" -> {
+                        val detectionResponse = Gson().fromJson(rawJson, AnalyzeByMyModelResponse::class.java)
+
+                        if (detectionResponse.detections.isNullOrEmpty()) {
+                            Log.w("CustomModel", "No detections found")
+                            _yoloDetectionResult.value = emptyList()
+                        } else {
+                            _yoloDetectionResult.value = detectionResponse.detections
+                            Log.d("CustomModel", "YOLO detected ${detectionResponse.detections.size} items")
+                        }
+
+                        _yoloAnalysisResult.value = ApiResponse("success", body.message, detectionResponse)
+                    }
+
+                    "Image analyzed successfully" -> {
+                        val aiResult = Gson().fromJson(rawJson, AnalyzeResult::class.java)
+                        _analysisResult.value = ApiResponse("success", body.message, aiResult)
+                    }
+
+                    else -> {
+                        Log.w("CustomModel", "Unexpected message: ${body.message}")
+                        _errorMessage.value = "Unexpected response message"
+                    }
                 }
 
             } catch (e: Exception) {
                 Log.e("CustomModel", "Exception during analysis", e)
                 handleError(e)
-                _customModelResult.value = ApiResponse("error", e.message ?: "Unknown error")
+                _errorMessage.value = e.message ?: "Unknown error"
             } finally {
                 _isLoading.value = false
                 Log.d("CustomModel", "Analysis finished")
@@ -367,11 +370,6 @@ class FoodViewModel(
                     response.body()?.let { apiResponse ->
                         when (apiResponse.status) {
                             "success" -> {
-                                _editResult.value = ApiResponse(
-                                    status = "success",
-                                    message = "Food updated successfully",
-                                    data = apiResponse.data
-                                )
                                 _successMessage.value = "Food updated successfully."
                             }
                             else -> {
@@ -390,6 +388,33 @@ class FoodViewModel(
                 _isLoading.value = false
             }
         }
+    }
+
+
+    // Add method to estimate nutrition by food name
+    fun estimateNutritionByName(foodName: String, description: String? = null) {
+        _analysisResult.value = ApiResponse("loading", "Estimating nutrition...", null)
+        _errorMessage.value = null
+
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+
+                val request = NutritionEstimateRequest(foodName, description)
+                val response = apiService.estimateNutritionByName(request)
+                handleResponse(response)
+
+            } catch (e: Exception) {
+                handleError(e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    // Clear YOLO detection results
+    fun clearYoloDetections() {
+        _yoloDetectionResult.value = null
     }
 
     private fun handleErrorResponse(response: Response<ApiResponse<FoodItem>>) {
@@ -437,10 +462,6 @@ class FoodViewModel(
                 ?.let { apiResponse ->
                     when (apiResponse.status) {
                         "success" -> {
-                            _uploadResult.value =
-                                apiResponse
-                            _errorMessage.value =
-                                null
                             _uploadSuccess.value = true
                         }
 

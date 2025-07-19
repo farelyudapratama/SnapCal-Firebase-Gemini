@@ -1,6 +1,8 @@
 package com.yuch.snapcalfirebasegemini.data.api.response
 
+import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+
 
 data class ApiResponse<T>(
 	val status: String,
@@ -63,26 +65,31 @@ data class AnalyzeResult(
 	val sugar: Double
 )
 
+data class AnalyzeMyModelResponse(
+	val status: String,
+	val message: String,
+	val data: JsonObject
+)
+
 // Response untuk analisis makanan dengan model sendiri
 data class AnalyzeByMyModelResponse(
-	val results: List<FoodDetectionByMyModelResult>
+	@SerializedName("detections")
+	val detections: List<FoodDetectionByMyModelResult>?
 )
 
 data class FoodDetectionByMyModelResult(
-	@SerializedName("class_id")
-	val classId: Int,
+	@SerializedName("foodName")
+	val foodName: String,
 
-	@SerializedName("class_name")
-	val className: String,
-
-	val confidence: Float,
-
-	val bbox: List<Float>
+	@SerializedName("confidence")
+	val confidence: Float
 )
-// Request untuk upload gambar makanan pada model sendiri
-data class ImageUploadRequest(
-	val image: String,
+// Request untuk estimasi nutrisi berdasarkan nama makanan setelah deteksi YOLO
+data class NutritionEstimateRequest(
+	val foodName: String,
+	val description: String? = null
 )
+
 // Akhir inisialisasi data class untuk model sendiri
 
 data class AiChatResponse(
