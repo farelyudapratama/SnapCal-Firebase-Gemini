@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
+import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
@@ -45,7 +47,6 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
-    getFoodViewModel: GetFoodViewModel,
     profileViewModel: ProfileViewModel
 ) {
     val authState = authViewModel.authState.observeAsState()
@@ -226,6 +227,13 @@ fun ProfileScreen(
 ////                        profileViewModel.exportData()
 //                    }
 //                )
+
+                ProfileOptionItem(
+                    icon = Icons.AutoMirrored.Filled.HelpOutline,
+                    title = "Help & FAQ",
+                    subtitle = "Dapatkan bantuan dan FAQ",
+                    onClick = { navController.navigate(Screen.Help.route) }
+                )
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 

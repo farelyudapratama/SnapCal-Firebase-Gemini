@@ -18,6 +18,7 @@ import com.yuch.snapcalfirebasegemini.view.NutriTrackScreen
 import com.yuch.snapcalfirebasegemini.view.DetailFoodScreen
 import com.yuch.snapcalfirebasegemini.view.EditFoodScreen
 import com.yuch.snapcalfirebasegemini.view.ForgotPasswordScreen
+import com.yuch.snapcalfirebasegemini.view.HelpScreen
 import com.yuch.snapcalfirebasegemini.view.LoginScreen
 import com.yuch.snapcalfirebasegemini.view.MainScreen
 import com.yuch.snapcalfirebasegemini.view.ManualEntryScreen
@@ -68,7 +69,7 @@ fun AppNavHost(
             MainScreen(modifier, navController, authViewModel, getFoodViewModel)
         }
         composable(Screen.Profile.route) {
-            ProfileScreen(modifier, navController, authViewModel, getFoodViewModel, profileViewModel)
+            ProfileScreen(modifier, navController, authViewModel, profileViewModel)
         }
         composable(Screen.Tracking.route) {
             NutriTrackScreen(navController, authViewModel, getFoodViewModel)
@@ -197,6 +198,9 @@ fun AppNavHost(
                 navController = navController,
                 onBack = { navController.popBackStack() }
             )
+        }
+        composable(Screen.Help.route) {
+            HelpScreen(navController)
         }
     }
 }

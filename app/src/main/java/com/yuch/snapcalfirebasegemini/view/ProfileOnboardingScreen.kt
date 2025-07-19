@@ -440,6 +440,7 @@ fun SectionTitle(title: String) {
     Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TagSelectionSection(
     title: String,
