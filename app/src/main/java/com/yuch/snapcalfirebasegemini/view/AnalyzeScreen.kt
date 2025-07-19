@@ -274,13 +274,22 @@ fun AnalyzeScreen(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
+
+                    val selectedDetections = remember { mutableStateListOf<FoodDetectionByMyModelResult>() }
+
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(yoloDetections.orEmpty()) { detection ->
-                            var isSelected by remember { mutableStateOf(false) }
+                            val isSelected = selectedDetections.contains(detection)
 
                             FilterChip(
                                 selected = isSelected,
-                                onClick = { isSelected = !isSelected },
+                                onClick = {
+                                    if (isSelected) {
+                                        selectedDetections.remove(detection)
+                                    } else {
+                                        selectedDetections.add(detection)
+                                    }
+                                },
                                 label = { Text(detection.foodName) },
                                 enabled = true,
                                 border = FilterChipDefaults.filterChipBorder(
@@ -292,43 +301,6 @@ fun AnalyzeScreen(
                                 )
                             )
                         }
-                    }
-                }
-            }
-
-            // Add form for additional description
-            item {
-                var additionalDescription by remember { mutableStateOf("") }
-                OutlinedTextField(
-                    value = additionalDescription,
-                    onValueChange = { additionalDescription = it },
-                    label = { Text("Additional Description (Optional)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // Add action buttons
-            item {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = {
-                            // Handle continue analysis with selected chips and description
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Continue Analysis")
-                    }
-
-                    Button(
-                        onClick = {
-                            // Handle analysis with external AI
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Analyze with External AI")
                     }
                 }
             }
@@ -379,7 +351,7 @@ private fun LoadingContent(phase: String?) {
                 stringResource(
                     when (phase) {
                         "analyzing" -> R.string.analyzing_your_food
-                        "uploading" -> R.string.this_may_take_a_moment
+                        "uploading" -> R.string.saving_your_food
                         else -> R.string.analyzing_your_food
                     }
                 ),
@@ -990,7 +962,7 @@ fun YoloDetectionDialog(
     onDismiss: () -> Unit,
     isLoading: Boolean
 ) {
-    var selectedDetection by remember { mutableStateOf<FoodDetectionByMyModelResult?>(null) }
+    val selectedDetections = remember { mutableStateListOf<FoodDetectionByMyModelResult>() }
     var description by remember { mutableStateOf("") }
 
     Dialog(
@@ -1039,7 +1011,7 @@ fun YoloDetectionDialog(
                 }
 
                 Text(
-                    "Model YOLO berhasil mendeteksi ${detections.size} jenis makanan. Pilih makanan yang ingin dianalisis nutrisinya:",
+                    "Model YOLO berhasil mendeteksi ${detections.size} jenis makanan. Pilih satu atau beberapa makanan yang ingin dianalisis nutrisinya:",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                 )
@@ -1050,11 +1022,17 @@ fun YoloDetectionDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(detections) { detection ->
+                        val isSelected = selectedDetections.contains(detection)
+
                         DetectionChip(
                             detection = detection,
-                            isSelected = selectedDetection == detection,
+                            isSelected = isSelected,
                             onSelectionChanged = {
-                                selectedDetection = if (selectedDetection == detection) null else detection
+                                if (isSelected) {
+                                    selectedDetections.remove(detection)
+                                } else {
+                                    selectedDetections.add(detection)
+                                }
                             }
                         )
                     }
@@ -1079,13 +1057,6 @@ fun YoloDetectionDialog(
                     )
                 )
 
-                Text(
-                    "💡 Tip: Tambahkan deskripsi untuk hasil yang lebih akurat (ukuran porsi, cara memasak, dll.)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                )
-
                 // Tombol aksi
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -1094,14 +1065,15 @@ fun YoloDetectionDialog(
                     // Tombol lanjutkan analisis
                     Button(
                         onClick = {
-                            selectedDetection?.let { detection ->
-                                onContinueAnalysis(detection.foodName, description.takeIf { it.isNotBlank() })
+                            if (selectedDetections.isNotEmpty()) {
+                                val selectedFoodNames = selectedDetections.joinToString(", ") { it.foodName }
+                                onContinueAnalysis(selectedFoodNames, description.takeIf { it.isNotBlank() })
                             }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
-                        enabled = selectedDetection != null && !isLoading,
+                        enabled = selectedDetections.isNotEmpty() && !isLoading,
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
@@ -1118,7 +1090,7 @@ fun YoloDetectionDialog(
                             Text("Menganalisis...")
                         } else {
                             Text(
-                                "Lanjutkan Analisis dengan Pilihan",
+                                "Lanjut estimasi dengan gemini dengan pilihan (${selectedDetections.size})",
                                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
                             )
                         }
@@ -1144,14 +1116,6 @@ fun YoloDetectionDialog(
                         )
                     }
                 }
-
-                // Info text
-                Text(
-                    "📋 Pilihan pertama menggunakan hasil deteksi model, pilihan kedua menganalisis ulang dengan AI eksternal.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                )
             }
         }
     }
