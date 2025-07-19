@@ -71,6 +71,7 @@
     <string name="food_analysis_title">Analisis Food</string>
     <string name="please_select_a_meal_type_before_saving">Harap pilih waktu makan sebelum menyimpan</string>
     <string name="analyzing_your_food">Sedang menganalisis…</string>
+    <string name="saving_your_food">Sedang menyimpan…</string>
     <string name="this_may_take_a_moment">Tunggu Sebentar</string>
     <string name="choose_analysis_method">Pilih Metode Analisis</string>
     <string name="analyze_with_ai">Analisis dengan AI</string>

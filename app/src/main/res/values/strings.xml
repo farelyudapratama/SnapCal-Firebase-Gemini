@@ -70,6 +70,7 @@
     <string name="food_analysis_title">Food Analysis</string>
     <string name="please_select_a_meal_type_before_saving">Please select a meal time before saving</string>
     <string name="analyzing_your_food">Analyzing your food…</string>
+    <string name="saving_your_food">Saving your food…</string>
     <string name="this_may_take_a_moment">This may take a moment</string>
     <string name="choose_analysis_method">Choose Analysis Method</string>
     <string name="analyze_with_ai">Analyze with AI</string>
