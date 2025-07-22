@@ -58,6 +58,7 @@ fun AnalyzeScreen(
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val uploadSuccess by viewModel.uploadSuccess.collectAsStateWithLifecycle()
     val yoloDetections by viewModel.yoloDetectionResult.collectAsStateWithLifecycle()
+    val successMessage by viewModel.successMessage.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     // State for storing analyzed food data
@@ -136,6 +137,17 @@ fun AnalyzeScreen(
     // Handle error messages with Snackbar
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
+            snackbarHostState.showSnackbar(
+                message = it,
+                duration = SnackbarDuration.Long
+            )
+            viewModel.clearErrorMessage()
+        }
+    }
+
+    // Handle success messages with Snackbar
+    LaunchedEffect(successMessage) {
+        successMessage?.let {
             snackbarHostState.showSnackbar(
                 message = it,
                 duration = SnackbarDuration.Long

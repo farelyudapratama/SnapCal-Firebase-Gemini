@@ -142,22 +142,40 @@ class FoodViewModel(
 
                 when (body.message) {
                     "Makanan berhasil dideteksi oleh model YoLo" -> {
-                        val detectionResponse = Gson().fromJson(rawJson, AnalyzeByMyModelResponse::class.java)
+                        try {
+                            val detectionResponse = Gson().fromJson(rawJson, AnalyzeByMyModelResponse::class.java)
+                            Log.d("CustomModel", "Parsed YOLO detection response: $detectionResponse")
 
-                        if (detectionResponse.detections.isNullOrEmpty()) {
-                            Log.w("CustomModel", "No detections found")
+                            if (detectionResponse?.detections.isNullOrEmpty()) {
+                                Log.w("CustomModel", "No detections found")
+                                _yoloDetectionResult.value = emptyList()
+                                Log.d("CustomModel", "YOLO detected 0 items")
+                            } else {
+                                _yoloDetectionResult.value = detectionResponse.detections!!
+                                Log.d("CustomModel", "YOLO detected ${detectionResponse.detections!!.size} items")
+                            }
+
+                            _yoloAnalysisResult.value = ApiResponse("success", body.message, detectionResponse)
+                        } catch (e: Exception) {
+                            Log.e("CustomModel", "Failed to parse YOLO detection result", e)
                             _yoloDetectionResult.value = emptyList()
-                        } else {
-                            _yoloDetectionResult.value = detectionResponse.detections
-                            Log.d("CustomModel", "YOLO detected ${detectionResponse.detections.size} items")
+                            _errorMessage.value = "Failed to parse YOLO detection result"
                         }
-
-                        _yoloAnalysisResult.value = ApiResponse("success", body.message, detectionResponse)
                     }
 
-                    "Image analyzed successfully" -> {
-                        val aiResult = Gson().fromJson(rawJson, AnalyzeResult::class.java)
-                        _analysisResult.value = ApiResponse("success", body.message, aiResult)
+                    "Image analyzed successfully", "Model tidak mendeteksi, hasil diperoleh dari AI eksternal" -> {
+                        try {
+                            val aiResult = Gson().fromJson(rawJson, AnalyzeResult::class.java)
+                            _analysisResult.value = ApiResponse("success", body.message, aiResult)
+
+                            // Show notification when YOLO failed and fallback to AI
+                            if (body.message == "Model tidak mendeteksi, hasil diperoleh dari AI eksternal") {
+                                _successMessage.value = "Model YOLO gagal mendeteksi makanan. Analisis dilakukan menggunakan Gemini AI."
+                            }
+                        } catch (e: Exception) {
+                            Log.e("CustomModel", "Failed to parse AI result", e)
+                            _errorMessage.value = "Failed to parse AI analysis result"
+                        }
                     }
 
                     else -> {
