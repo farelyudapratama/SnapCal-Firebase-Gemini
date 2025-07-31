@@ -56,4 +56,10 @@ class RecommendationViewModel(
     fun clearError() {
         _errorMessage.value = null
     }
+
+    fun clearData() {
+        _recommendationResult.value = null
+        _isLoading.value = false
+        _errorMessage.value = null
+    }
 }

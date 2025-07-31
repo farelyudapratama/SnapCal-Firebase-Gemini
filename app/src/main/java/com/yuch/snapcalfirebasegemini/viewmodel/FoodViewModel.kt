@@ -26,12 +26,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import retrofit2.Response
 import com.yuch.snapcalfirebasegemini.utils.ImageUtils
-import org.tensorflow.lite.DataType
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import com.yuch.snapcalfirebasegemini.ml.ModelTeachable
 import com.yuch.snapcalfirebasegemini.utils.normalizeDecimal
 import org.json.JSONObject
 
@@ -292,74 +289,6 @@ class FoodViewModel(
 
         return byteBuffer
     }
-
-    //    TODO CEK MY MODEL TFLITE
-    fun analyzeWithTFLite(imagePath: String, context: Context) {
-        viewModelScope.launch {
-            _isLoading.value = true
-
-            try {
-                // Load gambar sebagai Bitmap
-                val bitmap = BitmapFactory.decodeFile(imagePath)
-                val resizedBitmap = Bitmap.createScaledBitmap(bitmap, 224, 224, true)
-
-                // Konversi ke ByteBuffer untuk model
-                val byteBuffer = convertBitmapToByteBuffer(resizedBitmap)
-
-                // Load model TFLite
-                val model = ModelTeachable.newInstance(context)
-
-                // Buat input untuk model
-                val inputFeature0 = TensorBuffer.createFixedSize(intArrayOf(1, 224, 224, 3), DataType.FLOAT32)
-                inputFeature0.loadBuffer(byteBuffer)
-
-                // Jalankan model
-                val outputs = model.process(inputFeature0)
-                val outputFeature0 = outputs.outputFeature0AsTensorBuffer
-
-                // Ambil hasil klasifikasi
-                val scores = outputFeature0.floatArray
-                val maxIndex = scores.indices.maxByOrNull { scores[it] } ?: -1
-
-                // List label yang digunakan saat training di Teachable Machine
-                val labels = listOf("ayam_geprek", "bakso", "ketoprak", "lontong_sayur", "martabak_manis", "martabak_telur", "mie_goreng", "nasi_goreng", "nasi_padang", "nasi_uduk", "pecel_lele", "pempek", "rawon", "rendang", "siomay", "sate", "soto", "tahu_gejrot")  // Ganti dengan label yang sesuai
-
-                if (maxIndex != -1 && maxIndex < labels.size) {
-                    val detectedFood = labels[maxIndex]
-                    val confidence = scores[maxIndex]
-
-                    Log.d("TFLite", "Detected: $detectedFood ($confidence)")
-
-                    _analysisResult.value = ApiResponse(
-                        "success",
-                        "Detected Food: $detectedFood",
-                        AnalyzeResult(
-                            foodName = detectedFood,
-                            calories = 100.0,  // Bisa dikembangkan Ntar  moga semangat
-                            carbs = 20.0,
-                            protein = 5.0,
-                            totalFat = 3.0,
-                            saturatedFat = 1.0,
-                            fiber = 2.0,
-                            sugar = 10.0
-                        )
-                    )
-                } else {
-                    _errorMessage.value = "No object detected."
-                }
-
-                // Tutup model
-                model.close()
-
-            } catch (e: Exception) {
-                _errorMessage.value = "Error analyzing with TFLite: ${e.message}"
-                Log.e("FoodViewModel", "Error analyzing with TFLite", e)
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
     // Update Food data
     fun updateFood(
         foodId: String, imagePath: String?, foodData: UpdateFoodData?
@@ -551,5 +480,15 @@ class FoodViewModel(
     fun resetState() {
         _uploadSuccess.value = false
         _errorMessage.value = null
+    }
+
+    fun clearData() {
+        _analysisResult.value = ApiResponse("error", "error", null)
+        _yoloAnalysisResult.value = ApiResponse("error", "error", null)
+        _isLoading.value = false
+        _errorMessage.value = null
+        _successMessage.value = null
+        _uploadSuccess.value = false
+        _yoloDetectionResult.value = null
     }
 }

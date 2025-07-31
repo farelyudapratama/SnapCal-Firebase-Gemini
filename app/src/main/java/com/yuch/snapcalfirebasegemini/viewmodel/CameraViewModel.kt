@@ -37,4 +37,10 @@ class CameraViewModel : ViewModel() {
     fun toggleCamera() {
         _isFrontCamera.value = !_isFrontCamera.value
     }
+
+    fun clearData() {
+        _bitmaps.value = emptyList()
+        _capturedImagePaths.value = emptyList()
+        _isFrontCamera.value = false
+    }
 }

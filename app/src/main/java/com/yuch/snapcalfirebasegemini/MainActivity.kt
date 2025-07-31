@@ -44,11 +44,25 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Setup callback untuk menghapus semua data saat logout
+        setupClearDataCallback()
+
         setContent {
             MaterialTheme {
                 SnapCalApp(authViewModel = authViewModel, cameraViewModel = cameraViewModel, getFoodViewModel = getFoodViewModel,
-                           profileViewModel = profileViewModel, onboardingViewModel = onboardingViewModel)
+                    profileViewModel = profileViewModel, onboardingViewModel = onboardingViewModel)
             }
+        }
+    }
+
+    private fun setupClearDataCallback() {
+        authViewModel.setClearDataCallback {
+            // Hapus data dari semua ViewModels
+            cameraViewModel.clearData()
+            getFoodViewModel.clearData()
+            profileViewModel.clearData()
+            onboardingViewModel.clearData()
         }
     }
 }

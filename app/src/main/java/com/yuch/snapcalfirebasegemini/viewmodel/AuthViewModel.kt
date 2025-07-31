@@ -24,8 +24,15 @@ class AuthViewModel : ViewModel() {
     private val _userUid = MutableLiveData<String?>()
     val userUid: LiveData<String?> = _userUid
 
+    // Callback untuk menghapus data di ViewModels lain
+    private var clearDataCallback: (() -> Unit)? = null
+
     init {
         checkAuthStatus()
+    }
+
+    fun setClearDataCallback(callback: () -> Unit) {
+        clearDataCallback = callback
     }
 
     private fun checkAuthStatus(){
@@ -129,8 +136,21 @@ class AuthViewModel : ViewModel() {
 
 
     fun signout(){
+        // Hapus semua data sebelum logout
+        clearAllUserData()
+
         auth.signOut()
         _authState.value = AuthState.Unauthenticated
+
+        // Reset data di AuthViewModel
+        _userEmail.value = null
+        _firebaseToken.value = null
+        _userUid.value = null
+    }
+
+    private fun clearAllUserData() {
+        // Panggil callback untuk menghapus data di ViewModels lain
+        clearDataCallback?.invoke()
     }
 
     fun resetState() {

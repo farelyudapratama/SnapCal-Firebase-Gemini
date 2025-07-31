@@ -253,7 +253,6 @@ fun AnalyzeScreen(
                             onAnalyzeClick = { service ->
                                 viewModel.analyzeImage(imagePath, service)
                             },
-                            onTFLiteClick = { viewModel.analyzeWithTFLite(imagePath, context) },
                             isLoading = isLoading,
                             onMyModelClick = {
                                 viewModel.analyzeFoodByMyModel(imagePath)
@@ -428,7 +427,6 @@ private fun ServiceSelectionCard(
     selectedService: String?,
     onServiceSelected: (String) -> Unit,
     onAnalyzeClick: (String) -> Unit,
-    onTFLiteClick: () -> Unit,
     isLoading: Boolean,
     onMyModelClick: () -> Unit
 ) {
@@ -466,16 +464,6 @@ private fun ServiceSelectionCard(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             )
-
-            // TODO Quick Analysis with TFLite
-//            AnalysisMethodCard(
-//                title = "⚡ Analisis Cepat",
-//                description = "Analisis lokal menggunakan TensorFlow Lite untuk hasil yang cepat.",
-//                buttonText = "Quick Analysis (TFLite)",
-//                onClick = onTFLiteClick,
-//                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-//                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-//            )
 
             // AI Service Selection
             Text(

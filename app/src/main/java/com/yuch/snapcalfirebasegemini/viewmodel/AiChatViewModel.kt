@@ -117,5 +117,12 @@ class AiChatViewModel(
             }
         }
     }
-}
 
+    fun clearData() {
+        _chatMessages.value = emptyList()
+        _selectedService.value = "gemini"
+        _usageInfo.value = null
+        _isLoading.value = false
+        _errorMessage.value = null
+    }
+}

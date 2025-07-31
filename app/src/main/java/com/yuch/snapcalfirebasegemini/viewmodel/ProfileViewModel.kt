@@ -80,4 +80,11 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
     fun refreshProfile() {
         fetchUserPreferences()
     }
+
+    fun clearData() {
+        _userPreferences.value = null
+        _fetchStatus.value = ApiStatus.Idle
+        _updateStatus.value = ApiStatus.Idle
+        _isLoading.value = false
+    }
 }

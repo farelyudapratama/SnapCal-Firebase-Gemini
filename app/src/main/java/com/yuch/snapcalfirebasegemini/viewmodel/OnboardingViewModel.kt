@@ -201,6 +201,11 @@ class OnboardingViewModel : ViewModel() {
             likedFoods = newLiked // Hapus dari liked jika ada
         )
     }
+
+    fun clearData() {
+        _currentStep.value = 0
+        _formData.value = ProfileRequest()
+    }
 }
 
 fun UserPreferences.toProfileRequest(): ProfileRequest {

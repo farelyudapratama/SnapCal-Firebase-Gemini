@@ -286,4 +286,16 @@ class GetFoodViewModel(
     fun clearIsDeleted() {
         _isDeleted.value = false
     }
+
+    fun clearData() {
+        _foodList.value = emptyList()
+        _food.value = null
+        _currentPage.value = 1
+        _totalPages.value = 1
+        _hasMoreData.value = true
+        _isLoading.value = false
+        _isDeleted.value = false
+        _errorMessage.value = null
+        _imageDeletedMessage.value = null
+    }
 }

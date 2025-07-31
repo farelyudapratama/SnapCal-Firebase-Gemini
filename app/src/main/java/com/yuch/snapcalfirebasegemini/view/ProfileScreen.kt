@@ -285,7 +285,7 @@ fun ProfileScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileTopAppBar(
-    email: String,
+    email: String?,
     onSignOut: () -> Unit,
     onMoreOptions: () -> Unit = {}
 ) {
@@ -293,7 +293,13 @@ fun ProfileTopAppBar(
         title = {
             Column {
                 Text(stringResource(R.string.my_profile), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
-                Text(email, color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = email ?: "Loading...",
+                    color = Color.White.copy(alpha = 0.8f),
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         },
         actions = {
