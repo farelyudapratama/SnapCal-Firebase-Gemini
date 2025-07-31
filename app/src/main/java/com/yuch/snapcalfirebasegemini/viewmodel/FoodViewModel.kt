@@ -146,13 +146,14 @@ class FoodViewModel(
                             val detectionResponse = Gson().fromJson(rawJson, AnalyzeByMyModelResponse::class.java)
                             Log.d("CustomModel", "Parsed YOLO detection response: $detectionResponse")
 
-                            if (detectionResponse?.detections.isNullOrEmpty()) {
+                            val detections = detectionResponse?.detections
+                            if (detections.isNullOrEmpty()) {
                                 Log.w("CustomModel", "No detections found")
                                 _yoloDetectionResult.value = emptyList()
                                 Log.d("CustomModel", "YOLO detected 0 items")
                             } else {
-                                _yoloDetectionResult.value = detectionResponse.detections!!
-                                Log.d("CustomModel", "YOLO detected ${detectionResponse.detections!!.size} items")
+                                _yoloDetectionResult.value = detections
+                                Log.d("CustomModel", "YOLO detected ${detections.size} items")
                             }
 
                             _yoloAnalysisResult.value = ApiResponse("success", body.message, detectionResponse)
@@ -163,24 +164,45 @@ class FoodViewModel(
                         }
                     }
 
-                    "Image analyzed successfully", "Model tidak mendeteksi, hasil diperoleh dari AI eksternal" -> {
+                    "Image analyzed successfully" -> {
                         try {
                             val aiResult = Gson().fromJson(rawJson, AnalyzeResult::class.java)
                             _analysisResult.value = ApiResponse("success", body.message, aiResult)
-
-                            // Show notification when YOLO failed and fallback to AI
-                            if (body.message == "Model tidak mendeteksi, hasil diperoleh dari AI eksternal") {
-                                _successMessage.value = "Model YOLO gagal mendeteksi makanan. Analisis dilakukan menggunakan Gemini AI."
-                            }
                         } catch (e: Exception) {
                             Log.e("CustomModel", "Failed to parse AI result", e)
                             _errorMessage.value = "Failed to parse AI analysis result"
                         }
                     }
 
+                    "Model tidak mendeteksi, hasil diperoleh dari AI eksternal" -> {
+                        try {
+                            val aiResult = Gson().fromJson(rawJson, AnalyzeResult::class.java)
+                            _analysisResult.value = ApiResponse("success", body.message, aiResult)
+
+                            // Show notification when YOLO failed and fallback to AI
+                            _successMessage.value = "Model YOLO gagal mendeteksi makanan. Analisis dilakukan menggunakan Gemini AI."
+                        } catch (e: Exception) {
+                            Log.e("CustomModel", "Failed to parse AI fallback result", e)
+                            _errorMessage.value = "Failed to parse AI analysis result"
+                        }
+                    }
+
                     else -> {
                         Log.w("CustomModel", "Unexpected message: ${body.message}")
-                        _errorMessage.value = "Unexpected response message"
+                        // Try to parse as AI result for any other success message
+                        try {
+                            val aiResult = Gson().fromJson(rawJson, AnalyzeResult::class.java)
+                            _analysisResult.value = ApiResponse("success", body.message, aiResult)
+
+                            // Show fallback notification for unexpected messages
+                            if (body.message.contains("tidak mendeteksi", ignoreCase = true) ||
+                                body.message.contains("eksternal", ignoreCase = true)) {
+                                _successMessage.value = "Model YOLO gagal mendeteksi makanan. Analisis dilakukan menggunakan Gemini AI."
+                            }
+                        } catch (e: Exception) {
+                            Log.e("CustomModel", "Failed to parse unknown response type", e)
+                            _errorMessage.value = "Unexpected response format: ${body.message}"
+                        }
                     }
                 }
 

@@ -279,39 +279,83 @@ fun AnalyzeScreen(
             }
 
             // Add YOLO detection chips and actions
-            if (!yoloDetections.isNullOrEmpty()) {
-                item {
-                    Text(
-                        text = "Detected Foods:",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+            yoloDetections?.let { detections ->
+                if (detections.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = "Detected Foods:",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
 
-                    val selectedDetections = remember { mutableStateListOf<FoodDetectionByMyModelResult>() }
+                        val selectedDetections = remember { mutableStateListOf<FoodDetectionByMyModelResult>() }
+                        var additionalDescription by remember { mutableStateOf("") }
 
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(yoloDetections.orEmpty()) { detection ->
-                            val isSelected = selectedDetections.contains(detection)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(detections) { detection ->
+                                val isSelected = selectedDetections.contains(detection)
 
-                            FilterChip(
-                                selected = isSelected,
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        if (isSelected) {
+                                            selectedDetections.remove(detection)
+                                        } else {
+                                            selectedDetections.add(detection)
+                                        }
+                                    },
+                                    label = { Text("${detection.foodName} (${String.format(Locale.getDefault(), "%.1f%%", detection.confidence * 100)})") }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Additional description input
+                        OutlinedTextField(
+                            value = additionalDescription,
+                            onValueChange = { additionalDescription = it },
+                            label = { Text("Additional Description (Optional)") },
+                            placeholder = { Text("e.g., with rice, extra spicy, etc.") },
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 3
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Action buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
                                 onClick = {
-                                    if (isSelected) {
-                                        selectedDetections.remove(detection)
-                                    } else {
-                                        selectedDetections.add(detection)
+                                    if (selectedDetections.isNotEmpty()) {
+                                        val selectedFoodNames = selectedDetections.joinToString(", ") { it.foodName }
+                                        viewModel.estimateNutritionByName(
+                                            selectedFoodNames,
+                                            additionalDescription.takeIf { it.isNotBlank() }
+                                        )
+                                        viewModel.clearYoloDetections()
                                     }
                                 },
-                                label = { Text(detection.foodName) },
-                                enabled = true,
-                                border = FilterChipDefaults.filterChipBorder(
-                                    enabled = true,
-                                    selected = isSelected,
-                                    borderColor = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline,
-                                    selectedBorderColor = Color.Transparent,
-                                    borderWidth = 1.dp
-                                )
-                            )
+                                enabled = selectedDetections.isNotEmpty() && !isLoading,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Continue Analysis")
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.clearYoloDetections()
+                                    selectedService = "gemini"
+                                    viewModel.analyzeImage(imagePath, "gemini")
+                                },
+                                enabled = !isLoading,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Use AI Analysis")
+                            }
                         }
                     }
                 }
