@@ -291,4 +291,7 @@
     <string name="retry">Coba Lagi</string>
     <string name="insight">Wawasan</string>
 
+    <string name="profile_incomplete_title">Profil Perlu Diatur</string>
+    <string name="profile_incomplete_message">Lengkapi pengaturan profil Anda untuk mendapatkan rekomendasi yang dipersonalisasi. Kami memerlukan informasi dasar dan preferensi Anda untuk memberikan saran terbaik.</string>
+    <string name="complete_profile">Lengkapi Profil</string>
 </resources>

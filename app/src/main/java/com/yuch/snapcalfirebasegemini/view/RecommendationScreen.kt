@@ -113,7 +113,8 @@ fun RecommendationScreen(
                     },
                     isLoading = isLoading,
                     result = result,
-                    onBackToChoice = { showInitialChoice = true }
+                    onBackToChoice = { showInitialChoice = true },
+                    navController = navController
                 )
             }
         }
@@ -290,7 +291,8 @@ fun RecommendationContent(
     onRefresh: () -> Unit,
     isLoading: Boolean,
     result: com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse<RecommendationData>?,
-    onBackToChoice: () -> Unit
+    onBackToChoice: () -> Unit,
+    navController: NavController? = null // Add navController parameter
 ) {
     LazyColumn(
         modifier = Modifier
@@ -378,7 +380,8 @@ fun RecommendationContent(
                 item {
                     ErrorRecommendationState(
                         message = result?.message ?: "Failed to load recommendations",
-                        onRetry = onRefresh
+                        onRetry = onRefresh,
+                        navController = navController // Pass navController to ErrorRecommendationState
                     )
                 }
             }
@@ -717,12 +720,23 @@ fun EmptyRecommendationState() {
 @Composable
 fun ErrorRecommendationState(
     message: String,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    navController: NavController? = null
 ) {
+    // Check if error is related to missing profile data
+    val isProfileDataMissing = message.contains("400", ignoreCase = true) ||
+            message.contains("profile", ignoreCase = true) ||
+            message.contains("personal info", ignoreCase = true) ||
+            message.contains("preferences", ignoreCase = true) ||
+            message.contains("data tidak lengkap", ignoreCase = true) ||
+            message.contains("silakan lengkapi", ignoreCase = true)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF2F2))
+        colors = CardDefaults.cardColors(
+            containerColor = if (isProfileDataMissing) Color(0xFFFEF3C7) else Color(0xFFFEF2F2)
+        )
     ) {
         Column(
             modifier = Modifier
@@ -731,32 +745,78 @@ fun ErrorRecommendationState(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = Icons.Default.ErrorOutline,
+                imageVector = if (isProfileDataMissing) Icons.Default.Person else Icons.Default.ErrorOutline,
                 contentDescription = null,
                 modifier = Modifier.size(48.dp),
-                tint = Color(0xFFDC2626)
+                tint = if (isProfileDataMissing) Color(0xFFD97706) else Color(0xFFDC2626)
             )
+
             Spacer(modifier = Modifier.height(16.dp))
+
             Text(
-                text = stringResource(R.string.something_went_wrong),
+                text = if (isProfileDataMissing)
+                    stringResource(R.string.profile_incomplete_title)
+                else
+                    stringResource(R.string.something_went_wrong),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFDC2626)
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF991B1B),
+                color = if (isProfileDataMissing) Color(0xFFD97706) else Color(0xFFDC2626),
                 textAlign = TextAlign.Center
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = if (isProfileDataMissing)
+                    stringResource(R.string.profile_incomplete_message)
+                else
+                    message,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (isProfileDataMissing) Color(0xFFA16207) else Color(0xFF991B1B),
+                textAlign = TextAlign.Center
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFDC2626)
-                )
-            ) {
-                Text("Try Again", color = Color.White)
+
+            if (isProfileDataMissing && navController != null) {
+                Button(
+                    onClick = {
+                        navController.navigate("profile_onboarding?edit=false")
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFD97706)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.complete_profile),
+                        color = Color.White
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TextButton(onClick = onRetry) {
+                    Text(
+                        stringResource(R.string.try_again),
+                        color = Color(0xFFD97706)
+                    )
+                }
+            } else {
+                Button(
+                    onClick = onRetry,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFDC2626)
+                    )
+                ) {
+                    Text(stringResource(R.string.try_again), color = Color.White)
+                }
             }
         }
     }

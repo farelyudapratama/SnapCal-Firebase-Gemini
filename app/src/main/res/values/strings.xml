@@ -290,4 +290,9 @@
     <string name="retry">Retry</string>
     <string name="insight">Insight</string>
 
+    <!-- Profile Incomplete Error Messages for RecommendationScreen -->
+    <string name="profile_incomplete_title">Profile Setup Required</string>
+    <string name="profile_incomplete_message">Please complete your profile setup to get personalized recommendations. We need your basic information and preferences to provide the best suggestions.</string>
+    <string name="complete_profile">Complete Profile</string>
+
 </resources>
