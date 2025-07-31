@@ -62,6 +62,11 @@ fun ProfileScreen(
         }
     }
 
+    // Tambahkan LaunchedEffect untuk refresh profile data saat screen dibuka
+    LaunchedEffect(Unit) {
+        profileViewModel.refreshProfile()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()

@@ -1001,18 +1001,17 @@ private fun ServiceButton(
 @Composable
 fun YoloDetectionDialog(
     detections: List<FoodDetectionByMyModelResult>,
-    onContinueAnalysis: (String, String?) -> Unit,
+    onContinueAnalysis: (selectedFoods: String, description: String?) -> Unit,
     onDirectAiAnalysis: () -> Unit,
     onDismiss: () -> Unit,
     isLoading: Boolean
 ) {
-    val selectedDetections = remember { mutableStateListOf<FoodDetectionByMyModelResult>() }
-    var description by remember { mutableStateOf("") }
+    var selectedDetections by remember { mutableStateOf(setOf<FoodDetectionByMyModelResult>()) }
+    var additionalDescription by remember { mutableStateOf("") }
 
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
-            usePlatformDefaultWidth = false,
             dismissOnBackPress = true,
             dismissOnClickOutside = false
         )
@@ -1021,143 +1020,117 @@ fun YoloDetectionDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(8.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .padding(24.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Header dengan icon check
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Check,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "🎯 Makanan Terdeteksi!",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
                 Text(
-                    "Model YOLO berhasil mendeteksi ${detections.size} jenis makanan. Pilih satu atau beberapa makanan yang ingin dianalisis nutrisinya:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    text = "Makanan Terdeteksi",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                // Detection chips dalam LazyRow
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
+                Text(
+                    text = "Pilih makanan yang sesuai dengan gambar Anda:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Food detection chips with checkbox behavior
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 200.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(detections) { detection ->
                         val isSelected = selectedDetections.contains(detection)
 
-                        DetectionChip(
-                            detection = detection,
-                            isSelected = isSelected,
-                            onSelectionChanged = {
-                                if (isSelected) {
-                                    selectedDetections.remove(detection)
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                selectedDetections = if (isSelected) {
+                                    selectedDetections - detection
                                 } else {
-                                    selectedDetections.add(detection)
+                                    selectedDetections + detection
                                 }
-                            }
+                            },
+                            label = {
+                                Text(
+                                    text = "${detection.foodName} (${String.format(Locale.getDefault(), "%.1f%%", detection.confidence * 100)})",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            },
+                            enabled = true,
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline,
+                                selectedBorderColor = Color.Transparent,
+                                borderWidth = 1.dp
+                            ),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = Color.White
+                            ),
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
 
-                // Input deskripsi tambahan
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Additional description input
                 OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = {
-                        Text("Deskripsi Tambahan (Opsional)")
-                    },
-                    placeholder = {
-                        Text("Contoh: porsi besar, dengan nasi, digoreng, dll.")
-                    },
+                    value = additionalDescription,
+                    onValueChange = { additionalDescription = it },
+                    label = { Text("Deskripsi Tambahan (Opsional)") },
+                    placeholder = { Text("Contoh: dengan nasi, pedas extra, dll.") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
                     maxLines = 3,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
+                    enabled = !isLoading
                 )
 
-                // Tombol aksi
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Tombol lanjutkan analisis
+                    OutlinedButton(
+                        onClick = onDirectAiAnalysis,
+                        enabled = !isLoading,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Analisis Langsung AI")
+                    }
+
                     Button(
                         onClick = {
                             if (selectedDetections.isNotEmpty()) {
                                 val selectedFoodNames = selectedDetections.joinToString(", ") { it.foodName }
-                                onContinueAnalysis(selectedFoodNames, description.takeIf { it.isNotBlank() })
+                                onContinueAnalysis(
+                                    selectedFoodNames,
+                                    additionalDescription.takeIf { it.isNotBlank() }
+                                )
                             }
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
                         enabled = selectedDetections.isNotEmpty() && !isLoading,
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(4.dp)
+                        modifier = Modifier.weight(1f)
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(16.dp),
+                                color = Color.White
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Menganalisis...")
                         } else {
-                            Text(
-                                "Lanjut estimasi dengan gemini dengan pilihan (${selectedDetections.size})",
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
-                            )
+                            Text("Lanjutkan Analisis")
                         }
-                    }
-
-                    // Tombol analisis langsung dengan AI
-                    OutlinedButton(
-                        onClick = onDirectAiAnalysis,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        enabled = !isLoading,
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Text(
-                            "Analisis Langsung dengan AI Eksternal",
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                            textAlign = TextAlign.Center
-                        )
                     }
                 }
             }

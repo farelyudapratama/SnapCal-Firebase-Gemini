@@ -1,5 +1,6 @@
 package com.yuch.snapcalfirebasegemini.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yuch.snapcalfirebasegemini.data.api.response.ProfileRequest
@@ -36,39 +37,48 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
         fetchUserPreferences()
     }
 
-    private fun fetchUserPreferences() {
+    fun fetchUserPreferences() {
         viewModelScope.launch {
             _fetchStatus.value = ApiStatus.Loading
             _isLoading.value = true
+
             try {
-                // Panggil fungsi dari repository
+                Log.d("ProfileViewModel", "Fetching user preferences...")
                 val result = repository.getProfile()
                 _userPreferences.value = result
-                _fetchStatus.value = ApiStatus.Success("Profile loaded")
-            } catch (e: ProfileNotFoundException) { // <-- Tangkap exception kustom ini
+                _fetchStatus.value = ApiStatus.Success("Profile loaded successfully")
+                Log.d("ProfileViewModel", "Profile loaded: ${result.personalInfo != null}")
+
+            } catch (e: ProfileNotFoundException) {
+                Log.w("ProfileViewModel", "Profile not found: ${e.message}")
                 _userPreferences.value = null
                 _fetchStatus.value = ApiStatus.Success("No profile found, ready for onboarding.")
+
             } catch (e: Exception) {
-                _fetchStatus.value = ApiStatus.Error(e.message ?: "Failed to fetch profile")
+                Log.e("ProfileViewModel", "Error fetching profile: ${e.message}")
+                _userPreferences.value = null
+                _fetchStatus.value = ApiStatus.Error(e.message ?: "Failed to load profile")
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-
     fun saveOrUpdateProfile(profileRequest: ProfileRequest, onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
             _updateStatus.value = ApiStatus.Loading
             _isLoading.value = true
+
             try {
-                // Panggil fungsi dari repository
-                repository.saveProfile(profileRequest)
-                _updateStatus.value = ApiStatus.Success("Profile saved successfully!")
-                // Setelah sukses, fetch data terbaru untuk memperbarui semua layar
-                fetchUserPreferences() // Anda bisa memanggil ini atau langsung update state lokal
+                Log.d("ProfileViewModel", "Saving/updating user profile...")
+                val result = repository.updateProfile(profileRequest)
+                _userPreferences.value = result
+                _updateStatus.value = ApiStatus.Success("Profile saved successfully")
+                Log.d("ProfileViewModel", "Profile saved successfully")
                 onComplete(true)
+
             } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Error saving profile: ${e.message}")
                 _updateStatus.value = ApiStatus.Error(e.message ?: "Failed to save profile")
                 onComplete(false)
             } finally {
@@ -77,14 +87,14 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
         }
     }
 
-    fun refreshProfile() {
-        fetchUserPreferences()
-    }
-
     fun clearData() {
         _userPreferences.value = null
         _fetchStatus.value = ApiStatus.Idle
         _updateStatus.value = ApiStatus.Idle
         _isLoading.value = false
+    }
+
+    fun refreshProfile() {
+        fetchUserPreferences()
     }
 }

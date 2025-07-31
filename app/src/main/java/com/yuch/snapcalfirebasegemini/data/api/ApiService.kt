@@ -120,7 +120,6 @@ interface ApiService {
 
     @GET("profile")
     suspend fun getProfile(): Response<ApiResponse<UserPreferences>>
-
     @POST("profile")
     suspend fun postProfile(
         @Body request: ProfileRequest

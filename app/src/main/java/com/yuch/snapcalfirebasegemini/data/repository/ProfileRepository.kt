@@ -1,5 +1,6 @@
 package com.yuch.snapcalfirebasegemini.data.repository
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
@@ -13,42 +14,79 @@ import java.io.IOException
 class ProfileNotFoundException(message: String = "User profile not found") : Exception(message)
 
 class ProfileRepository(private val apiService: ApiService) {
+
     suspend fun getProfile(): UserPreferences {
         try {
+            Log.d("ProfileRepository", "Fetching profile from backend...")
             val response = apiService.getProfile()
 
             if (response.isSuccessful) {
                 val apiResponse: ApiResponse<UserPreferences>? = response.body()
-                return apiResponse?.data ?: throw Exception("Profile data is null in the response.")
-            } else {
-                if (response.code() == 404) {
-                    throw ProfileNotFoundException()
+                Log.d("ProfileRepository", "Profile response: ${apiResponse?.status}")
+
+                if (apiResponse?.status == "success" && apiResponse.data != null) {
+                    Log.d("ProfileRepository", "Profile data found: ${apiResponse.data}")
+                    return apiResponse.data
+                } else {
+                    Log.w("ProfileRepository", "Profile not found or empty response")
+                    throw ProfileNotFoundException("Profile not found")
                 }
-                throw HttpException(response)
+            } else {
+                when (response.code()) {
+                    404 -> {
+                        Log.w("ProfileRepository", "Profile not found (404)")
+                        throw ProfileNotFoundException("Profile not found")
+                    }
+                    else -> {
+                        Log.e("ProfileRepository", "Failed to fetch profile: ${response.code()}")
+                        throw Exception("Failed to fetch profile: ${response.message()}")
+                    }
+                }
             }
-        } catch (e: HttpException) {
-            throw e
         } catch (e: IOException) {
-            throw IOException("Network error occurred while fetching profile.", e)
+            Log.e("ProfileRepository", "Network error: ${e.message}")
+            throw Exception("Network error. Please check your internet connection.")
+        } catch (e: HttpException) {
+            Log.e("ProfileRepository", "HTTP error: ${e.code()}")
+            if (e.code() == 404) {
+                throw ProfileNotFoundException("Profile not found")
+            }
+            throw Exception("Server error: ${e.message()}")
+        } catch (e: ProfileNotFoundException) {
+            throw e
         } catch (e: Exception) {
-            throw Exception("An unexpected error occurred: ${e.message}", e)
+            Log.e("ProfileRepository", "Unexpected error: ${e.message}")
+            throw e
         }
     }
 
-    suspend fun saveProfile(profileRequest: ProfileRequest): UserPreferences {
+    suspend fun updateProfile(profileRequest: ProfileRequest): UserPreferences {
         try {
+            Log.d("ProfileRepository", "Updating profile...")
             val response = apiService.postProfile(profileRequest)
 
             if (response.isSuccessful) {
                 val apiResponse: ApiResponse<UserPreferences>? = response.body()
-                return apiResponse?.data ?: throw Exception("Profile data is null in the response after saving.")
+
+                if (apiResponse?.status == "success" && apiResponse.data != null) {
+                    Log.d("ProfileRepository", "Profile updated successfully")
+                    return apiResponse.data
+                } else {
+                    throw Exception("Failed to update profile")
+                }
             } else {
-                throw HttpException(response)
+                Log.e("ProfileRepository", "Failed to update profile: ${response.code()}")
+                throw Exception("Failed to update profile: ${response.message()}")
             }
         } catch (e: IOException) {
-            throw IOException("Network error occurred while saving profile.", e)
+            Log.e("ProfileRepository", "Network error during update: ${e.message}")
+            throw Exception("Network error. Please check your internet connection.")
+        } catch (e: HttpException) {
+            Log.e("ProfileRepository", "HTTP error during update: ${e.code()}")
+            throw Exception("Server error: ${e.message()}")
         } catch (e: Exception) {
-            throw Exception("An unexpected error occurred while saving profile: ${e.message}", e)
+            Log.e("ProfileRepository", "Unexpected error during update: ${e.message}")
+            throw e
         }
     }
 
@@ -62,6 +100,7 @@ class ProfileRepository(private val apiService: ApiService) {
             }
     }
 }
+
 class ProfileViewModelFactory(
     private val apiService: ApiService
 ) : ViewModelProvider.Factory {
