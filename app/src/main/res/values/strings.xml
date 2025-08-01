@@ -295,4 +295,17 @@
     <string name="profile_incomplete_message">Please complete your profile setup to get personalized recommendations. We need your basic information and preferences to provide the best suggestions.</string>
     <string name="complete_profile">Complete Profile</string>
 
+    <!-- Profile Edit Mode Strings -->
+    <string name="edit_your_profile">Edit Your Profile</string>
+    <string name="editing_mode">Editing Mode</string>
+    <string name="edit_mode_message">You are currently editing your existing profile. All changes will be saved when you complete the process.</string>
+    <string name="welcome_back">Welcome Back!</string>
+    <string name="welcome_back_message">Let\'s update your profile information. You can modify any section to keep your nutrition recommendations current.</string>
+    <string name="continue_editing">Continue Editing</string>
+
+    <!-- Error Handling Strings for ProfileOnboardingScreen -->
+    <string name="error_saving_profile">Error Saving Profile</string>
+    <string name="profile_incomplete_error_message">Please ensure all required fields are filled out correctly. Some information might be missing or invalid.</string>
+    <string name="unknown_error_occurred">An unknown error occurred. Please try again.</string>
+    <string name="check_profile">Check Profile</string>
 </resources>

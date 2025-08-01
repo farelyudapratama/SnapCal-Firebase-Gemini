@@ -1,6 +1,5 @@
 package com.yuch.snapcalfirebasegemini.view
 
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -22,7 +21,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -148,9 +146,12 @@ fun ProfileOnboardingScreen(
     val userPreferences by profileViewModel.userPreferences.collectAsState()
     val alreadyLoaded = remember { mutableStateOf(false) }
 
+    // Error handling state
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
     if (isEdit) {
         LaunchedEffect(isEdit) {
-
             // 1. Refresh data dari server
             profileViewModel.refreshProfile()
 
@@ -168,7 +169,22 @@ fun ProfileOnboardingScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.setup_your_profile)) },
+                title = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = if (isEdit) stringResource(R.string.edit_your_profile) else stringResource(R.string.setup_your_profile),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (isEdit) {
+                            Text(
+                                text = stringResource(R.string.editing_mode),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     if (currentStep > 0) {
                         IconButton(onClick = { onboardingViewModel.previousStep() }) {
@@ -179,7 +195,11 @@ fun ProfileOnboardingScreen(
                             Icon(Icons.Default.Close, stringResource(R.string.close))
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = if (isEdit) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (isEdit) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                )
             )
         },
         bottomBar = {
@@ -188,24 +208,66 @@ fun ProfileOnboardingScreen(
                 totalSteps = onboardingViewModel.totalSteps,
                 onNext = { onboardingViewModel.nextStep() },
                 onFinish = {
-                    profileViewModel.saveOrUpdateProfile(formData) { success ->
-                        if (success) {
-                            navController.navigate("profile") { popUpTo(0) }
+                    try {
+                        profileViewModel.saveOrUpdateProfile(formData) { success ->
+                            if (success) {
+                                navController.navigate("profile") { popUpTo(0) }
+                            }
                         }
+                    } catch (e: Exception) {
+                        errorMessage = e.message ?: "Failed to save profile"
+                        showErrorDialog = true
                     }
                 },
-                isLoading = updateStatus is ApiStatus.Loading
+                isLoading = updateStatus is ApiStatus.Loading,
+                isEdit = isEdit
             )
-        }
+        },
+        containerColor = if (isEdit) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f) else MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
+            // Edit mode indicator banner
+            if (isEdit) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.edit_mode_message),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+
             LinearProgressIndicator(
                 progress = { (currentStep + 1).toFloat() / onboardingViewModel.totalSteps },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                color = if (isEdit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary,
+                trackColor = if (isEdit) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
             )
             Spacer(Modifier.height(16.dp))
 
@@ -223,8 +285,12 @@ fun ProfileOnboardingScreen(
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     item {
                         when (step) {
-                            0 -> WelcomeStep { onboardingViewModel.nextStep() }
-                            1 -> PersonalInfoStep(formData.personalInfo) { onboardingViewModel.updatePersonalInfo(it) }
+                            0 -> if (isEdit) {
+                                EditWelcomeStep { onboardingViewModel.nextStep() }
+                            } else {
+                                WelcomeStep { onboardingViewModel.nextStep() }
+                            }
+                            1 -> PersonalInfoStep(formData.personalInfo, isEdit) { onboardingViewModel.updatePersonalInfo(it) }
                             2 -> GoalsStep(
                                 initialData = formData.dailyGoals?.let {
                                     DailyGoals(
@@ -237,7 +303,8 @@ fun ProfileOnboardingScreen(
                                     )
                                 },
                                 onDataChange = { onboardingViewModel.updateDailyGoals(it) },
-                                personalInfo = formData.personalInfo
+                                personalInfo = formData.personalInfo,
+                                isEdit = isEdit
                             )
                             3 -> HealthStep(
                                 selectedConditions = formData.healthConditions,
@@ -247,13 +314,15 @@ fun ProfileOnboardingScreen(
                                 onConditionToggle = { onboardingViewModel.toggleHealthCondition(it) },
                                 onAllergyToggle = { onboardingViewModel.toggleAllergy(it) },
                                 onAddCustomCondition = { onboardingViewModel.addCustomHealthCondition(it) },
-                                onAddCustomAllergy = { onboardingViewModel.addCustomAllergy(it) }
+                                onAddCustomAllergy = { onboardingViewModel.addCustomAllergy(it) },
+                                isEdit = isEdit
                             )
                             4 -> DietStep(
                                 selectedDiets = formData.dietaryRestrictions,
                                 customDiets = formData.customDietaryRestrictions,
                                 onDietToggle = { onboardingViewModel.toggleDietaryRestriction(it) },
-                                onAddCustomDiet = { onboardingViewModel.addCustomDietaryRestriction(it) }
+                                onAddCustomDiet = { onboardingViewModel.addCustomDietaryRestriction(it) },
+                                isEdit = isEdit
                             )
                             5 -> FoodPreferencesStep(
                                 likedFoods = formData.likedFoods,
@@ -263,13 +332,57 @@ fun ProfileOnboardingScreen(
                                 onLikeToggle = { onboardingViewModel.toggleLikedFood(it) },
                                 onDislikeToggle = { onboardingViewModel.toggleDislikedFood(it) },
                                 onAddCustomLiked = { onboardingViewModel.addCustomLikedFood(it) },
-                                onAddCustomDisliked = { onboardingViewModel.addCustomDislikedFood(it) }
+                                onAddCustomDisliked = { onboardingViewModel.addCustomDislikedFood(it) },
+                                isEdit = isEdit
                             )
                         }
                     }
                 }
             }
         }
+    }
+
+    // Error Dialog
+    if (showErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showErrorDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.error_saving_profile),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = if (errorMessage.contains("400") || errorMessage.contains("profile") || errorMessage.contains("data tidak lengkap")) {
+                        stringResource(R.string.profile_incomplete_error_message)
+                    } else {
+                        errorMessage.ifBlank { stringResource(R.string.unknown_error_occurred) }
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { showErrorDialog = false }
+                ) {
+                    Text(stringResource(R.string.text_ok))
+                }
+            },
+            dismissButton = if (errorMessage.contains("400") || errorMessage.contains("profile")) {
+                {
+                    TextButton(
+                        onClick = {
+                            showErrorDialog = false
+                            navController.navigate("profile")
+                        }
+                    ) {
+                        Text(stringResource(R.string.check_profile))
+                    }
+                }
+            } else null
+        )
     }
 }
 
@@ -300,7 +413,30 @@ fun WelcomeStep(onGetStarted: () -> Unit) {
 }
 
 @Composable
-fun PersonalInfoStep(initialData: PersonalInfoReq?, onDataChange: (PersonalInfoReq) -> Unit) {
+fun EditWelcomeStep(onGetStarted: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(stringResource(R.string.welcome_back), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(16.dp))
+        Text(
+            stringResource(R.string.welcome_back_message),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(Modifier.height(32.dp))
+        Button(onClick = onGetStarted, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.continue_editing))
+        }
+    }
+}
+
+@Composable
+fun PersonalInfoStep(initialData: PersonalInfoReq?, isEdit: Boolean, onDataChange: (PersonalInfoReq) -> Unit) {
     var age by remember { mutableStateOf(initialData?.age?.toString() ?: "") }
     var gender by remember { mutableStateOf(initialData?.gender ?: "") }
     var height by remember { mutableStateOf(initialData?.height?.toString() ?: "") }
@@ -353,6 +489,7 @@ fun HealthStep(
     onAllergyToggle: (String) -> Unit,
     onAddCustomCondition: (String) -> Unit,
     onAddCustomAllergy: (String) -> Unit,
+    isEdit: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         TagSelectionSection(
@@ -381,7 +518,8 @@ fun DietStep(
     selectedDiets: List<String>,
     customDiets: List<String>,
     onDietToggle: (String) -> Unit,
-    onAddCustomDiet: (String) -> Unit
+    onAddCustomDiet: (String) -> Unit,
+    isEdit: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         TagSelectionSection(
@@ -406,7 +544,8 @@ fun FoodPreferencesStep(
     onLikeToggle: (String) -> Unit,
     onDislikeToggle: (String) -> Unit,
     onAddCustomLiked: (String) -> Unit,
-    onAddCustomDisliked: (String) -> Unit
+    onAddCustomDisliked: (String) -> Unit,
+    isEdit: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         TagSelectionSection(
@@ -526,7 +665,8 @@ fun SelectableCard(title: String, subtitle: String, isSelected: Boolean, onClick
 fun GoalsStep(
     initialData: DailyGoals?,
     onDataChange: (DailyGoals) -> Unit,
-    personalInfo: PersonalInfoReq? // Menerima data dari langkah sebelumnya
+    personalInfo: PersonalInfoReq?, // Menerima data dari langkah sebelumnya
+    isEdit: Boolean // Menerima parameter isEdit
 ) {
     // State lokal untuk setiap input
     var calories by remember { mutableStateOf(initialData?.calories?.toString() ?: "") }
@@ -631,7 +771,7 @@ fun calculateRecommendedCalories(info: PersonalInfoReq?): Int? {
 }
 // Bottom Bar Composable dari kode sebelumnya (sedikit modifikasi)
 @Composable
-fun OnboardingBottomBar(currentStep: Int, totalSteps: Int, onNext: () -> Unit, onFinish: () -> Unit, isLoading: Boolean) {
+fun OnboardingBottomBar(currentStep: Int, totalSteps: Int, onNext: () -> Unit, onFinish: () -> Unit, isLoading: Boolean, isEdit: Boolean) {
     Surface(shadowElevation = 8.dp) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),

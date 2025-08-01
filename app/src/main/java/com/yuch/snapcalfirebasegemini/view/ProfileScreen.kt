@@ -61,8 +61,6 @@ fun ProfileScreen(
             navController.navigate("login") { popUpTo(0) }
         }
     }
-
-    // Tambahkan LaunchedEffect untuk refresh profile data saat screen dibuka
     LaunchedEffect(Unit) {
         profileViewModel.refreshProfile()
     }

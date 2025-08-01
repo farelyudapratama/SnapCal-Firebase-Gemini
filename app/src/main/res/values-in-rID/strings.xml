@@ -294,4 +294,16 @@
     <string name="profile_incomplete_title">Profil Perlu Diatur</string>
     <string name="profile_incomplete_message">Lengkapi pengaturan profil Anda untuk mendapatkan rekomendasi yang dipersonalisasi. Kami memerlukan informasi dasar dan preferensi Anda untuk memberikan saran terbaik.</string>
     <string name="complete_profile">Lengkapi Profil</string>
+
+    <string name="edit_your_profile">Edit Profil Anda</string>
+    <string name="editing_mode">Mode Edit</string>
+    <string name="edit_mode_message">Anda sedang mengedit profil yang sudah ada. Semua perubahan akan disimpan setelah proses selesai.</string>
+    <string name="welcome_back">Selamat Datang Kembali!</string>
+    <string name="welcome_back_message">Yuk perbarui informasi profil Anda. Anda bisa mengubah bagian mana pun agar rekomendasi nutrisi tetap sesuai.</string>
+    <string name="continue_editing">Lanjutkan Mengedit</string>
+
+    <string name="error_saving_profile">Gagal Menyimpan Profil</string>
+    <string name="profile_incomplete_error_message">Pastikan semua kolom wajib sudah diisi dengan benar. Beberapa informasi mungkin belum diisi atau tidak valid.</string>
+    <string name="unknown_error_occurred">Terjadi kesalahan yang tidak diketahui. Silakan coba lagi.</string>
+    <string name="check_profile">Periksa Profil</string>
 </resources>
