@@ -308,4 +308,5 @@
     <string name="profile_incomplete_error_message">Please ensure all required fields are filled out correctly. Some information might be missing or invalid.</string>
     <string name="unknown_error_occurred">An unknown error occurred. Please try again.</string>
     <string name="check_profile">Check Profile</string>
+    <string name="edit_profile_subtitle">Edit Profile</string>
 </resources>

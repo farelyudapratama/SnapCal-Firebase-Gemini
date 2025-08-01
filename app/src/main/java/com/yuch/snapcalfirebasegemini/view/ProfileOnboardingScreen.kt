@@ -1,10 +1,12 @@
 package com.yuch.snapcalfirebasegemini.view
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,7 +22,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -29,8 +35,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
-import com.yuch.snapcalfirebasegemini.data.api.response.*
+import com.yuch.snapcalfirebasegemini.viewmodel.ProfileFieldError
 import com.yuch.snapcalfirebasegemini.viewmodel.ApiStatus
+import kotlinx.coroutines.launch
+import com.yuch.snapcalfirebasegemini.data.api.response.*
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
@@ -145,17 +153,34 @@ fun ProfileOnboardingScreen(
     val updateStatus by profileViewModel.updateStatus.collectAsState()
     val userPreferences by profileViewModel.userPreferences.collectAsState()
     val alreadyLoaded = remember { mutableStateOf(false) }
+    val fieldErrors by profileViewModel.fieldErrors.collectAsState()
+
+    // Membuat snackbarHostState untuk menampilkan Snackbar
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     // Error handling state
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
+    // Koleksi focus requesters untuk setiap field yang bisa error
+    val focusRequesters = remember {
+        mapOf(
+            "age" to FocusRequester(),
+            "height" to FocusRequester(),
+            "weight" to FocusRequester(),
+            "gender" to FocusRequester(),
+            "activityLevel" to FocusRequester(),
+            "calories" to FocusRequester()
+        )
+    }
+
     if (isEdit) {
         LaunchedEffect(isEdit) {
-            // 1. Refresh data dari server
+            // Refresh data dari server
             profileViewModel.refreshProfile()
 
-            // 2. Tunggu sampai userPreferences tidak null
+            // Tunggu sampai userPreferences tidak null
             profileViewModel.userPreferences.collect { prefs ->
                 if (prefs != null && !alreadyLoaded.value) {
                     val profileRequest = prefs.toProfileRequest()
@@ -166,7 +191,57 @@ fun ProfileOnboardingScreen(
         }
     }
 
+    // Monitor perubahan updateStatus untuk menampilkan Snackbar saat error
+    LaunchedEffect(updateStatus) {
+        if (updateStatus is ApiStatus.Error) {
+            val errorMsg = (updateStatus as ApiStatus.Error).message
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(
+                    message = errorMsg,
+                    actionLabel = "OK",
+                    duration = SnackbarDuration.Long
+                )
+
+                // Jika ada field errors, coba fokus ke field pertama yang error
+                if (fieldErrors.isNotEmpty()) {
+                    val firstErrorField = fieldErrors.first().fieldName
+                    focusRequesters[firstErrorField]?.let { requester ->
+                        try {
+                            requester.requestFocus()
+                        } catch (e: Exception) {
+                            // Log error jika terjadi masalah dengan focus requester
+                            Log.e("ProfileOnboardingScreen", "Failed to request focus: ${e.message}")
+                        }
+                    }
+                }
+            }
+        } else if (updateStatus is ApiStatus.Success && !isEdit) {
+            // Tampilkan snackbar sukses HANYA jika bukan dalam mode edit initial load
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(
+                    message = (updateStatus as ApiStatus.Success).message,
+                    duration = SnackbarDuration.Short
+                )
+            }
+        }
+    }
+
+    // Tambahkan LaunchedEffect untuk mode edit
+    LaunchedEffect(isEdit, alreadyLoaded.value) {
+        if (isEdit && alreadyLoaded.value) {
+            // Tampilkan snackbar hanya sekali setelah data dimuat
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(
+                    message = "Mode edit aktif. Profil siap untuk diedit.",
+                    actionLabel = "OK",
+                    duration = SnackbarDuration.Short
+                )
+            }
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -208,15 +283,10 @@ fun ProfileOnboardingScreen(
                 totalSteps = onboardingViewModel.totalSteps,
                 onNext = { onboardingViewModel.nextStep() },
                 onFinish = {
-                    try {
-                        profileViewModel.saveOrUpdateProfile(formData) { success ->
-                            if (success) {
-                                navController.navigate("profile") { popUpTo(0) }
-                            }
+                    profileViewModel.saveOrUpdateProfile(formData) { success ->
+                        if (success) {
+                            navController.navigate("profile") { popUpTo(0) }
                         }
-                    } catch (e: Exception) {
-                        errorMessage = e.message ?: "Failed to save profile"
-                        showErrorDialog = true
                     }
                 },
                 isLoading = updateStatus is ApiStatus.Loading,
@@ -263,6 +333,47 @@ fun ProfileOnboardingScreen(
                 }
             }
 
+            // Jika ada field errors, tampilkan banner peringatan
+            if (fieldErrors.isNotEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = "Ada beberapa error yang perlu diperbaiki",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = fieldErrors.joinToString(", ") { it.errorMessage },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                }
+            }
+
             LinearProgressIndicator(
                 progress = { (currentStep + 1).toFloat() / onboardingViewModel.totalSteps },
                 modifier = Modifier.fillMaxWidth(),
@@ -290,7 +401,14 @@ fun ProfileOnboardingScreen(
                             } else {
                                 WelcomeStep { onboardingViewModel.nextStep() }
                             }
-                            1 -> PersonalInfoStep(formData.personalInfo, isEdit) { onboardingViewModel.updatePersonalInfo(it) }
+                            1 -> PersonalInfoStep(
+                                formData.personalInfo,
+                                isEdit,
+                                fieldErrors.filter { it.fieldName in listOf("age", "height", "weight", "gender", "activityLevel") },
+                                focusRequesters,
+                                onFieldFocus = { profileViewModel.clearFieldError(it) },
+                                onDataChange = { onboardingViewModel.updatePersonalInfo(it) }
+                            )
                             2 -> GoalsStep(
                                 initialData = formData.dailyGoals?.let {
                                     DailyGoals(
@@ -304,7 +422,10 @@ fun ProfileOnboardingScreen(
                                 },
                                 onDataChange = { onboardingViewModel.updateDailyGoals(it) },
                                 personalInfo = formData.personalInfo,
-                                isEdit = isEdit
+                                isEdit = isEdit,
+                                fieldErrors = fieldErrors.filter { it.fieldName in listOf("calories", "protein", "carbs", "fat", "fiber", "sugar") },
+                                focusRequesters = focusRequesters,
+                                onFieldFocus = { profileViewModel.clearFieldError(it) }
                             )
                             3 -> HealthStep(
                                 selectedConditions = formData.healthConditions,
@@ -340,49 +461,6 @@ fun ProfileOnboardingScreen(
                 }
             }
         }
-    }
-
-    // Error Dialog
-    if (showErrorDialog) {
-        AlertDialog(
-            onDismissRequest = { showErrorDialog = false },
-            title = {
-                Text(
-                    text = stringResource(R.string.error_saving_profile),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    text = if (errorMessage.contains("400") || errorMessage.contains("profile") || errorMessage.contains("data tidak lengkap")) {
-                        stringResource(R.string.profile_incomplete_error_message)
-                    } else {
-                        errorMessage.ifBlank { stringResource(R.string.unknown_error_occurred) }
-                    },
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { showErrorDialog = false }
-                ) {
-                    Text(stringResource(R.string.text_ok))
-                }
-            },
-            dismissButton = if (errorMessage.contains("400") || errorMessage.contains("profile")) {
-                {
-                    TextButton(
-                        onClick = {
-                            showErrorDialog = false
-                            navController.navigate("profile")
-                        }
-                    ) {
-                        Text(stringResource(R.string.check_profile))
-                    }
-                }
-            } else null
-        )
     }
 }
 
@@ -436,7 +514,7 @@ fun EditWelcomeStep(onGetStarted: () -> Unit) {
 }
 
 @Composable
-fun PersonalInfoStep(initialData: PersonalInfoReq?, isEdit: Boolean, onDataChange: (PersonalInfoReq) -> Unit) {
+fun PersonalInfoStep(initialData: PersonalInfoReq?, isEdit: Boolean, fieldErrors: List<ProfileFieldError>, focusRequesters: Map<String, FocusRequester>, onFieldFocus: (String) -> Unit, onDataChange: (PersonalInfoReq) -> Unit) {
     var age by remember { mutableStateOf(initialData?.age?.toString() ?: "") }
     var gender by remember { mutableStateOf(initialData?.gender ?: "") }
     var height by remember { mutableStateOf(initialData?.height?.toString() ?: "") }
@@ -457,9 +535,39 @@ fun PersonalInfoStep(initialData: PersonalInfoReq?, isEdit: Boolean, onDataChang
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         SectionTitle(stringResource(R.string.personal_details))
-        OutlinedTextField(value = age, onValueChange = { age = it }, label = { Text(stringResource(R.string.age)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next), modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = height, onValueChange = { height = it }, label = { Text(stringResource(R.string.height_cm)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next), modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = weight, onValueChange = { weight = it }, label = { Text(stringResource(R.string.weight_kg)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done), modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            value = age,
+            onValueChange = { age = it },
+            label = { Text(stringResource(R.string.age)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequesters["age"]!!)
+                .onFocusChanged { if (!it.isFocused) onFieldFocus("age") }
+                .let { if (fieldErrors.any { error -> error.fieldName == "age" }) it.border(BorderStroke(1.dp, MaterialTheme.colorScheme.error)) else it }
+        )
+        OutlinedTextField(
+            value = height,
+            onValueChange = { height = it },
+            label = { Text(stringResource(R.string.height_cm)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequesters["height"]!!)
+                .onFocusChanged { if (!it.isFocused) onFieldFocus("height") }
+                .let { if (fieldErrors.any { error -> error.fieldName == "height" }) it.border(BorderStroke(1.dp, MaterialTheme.colorScheme.error)) else it }
+        )
+        OutlinedTextField(
+            value = weight,
+            onValueChange = { weight = it },
+            label = { Text(stringResource(R.string.weight_kg)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequesters["weight"]!!)
+                .onFocusChanged { if (!it.isFocused) onFieldFocus("weight") }
+                .let { if (fieldErrors.any { error -> error.fieldName == "weight" }) it.border(BorderStroke(1.dp, MaterialTheme.colorScheme.error)) else it }
+        )
 
         Text(stringResource(R.string.gender), style = MaterialTheme.typography.bodyLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -665,8 +773,11 @@ fun SelectableCard(title: String, subtitle: String, isSelected: Boolean, onClick
 fun GoalsStep(
     initialData: DailyGoals?,
     onDataChange: (DailyGoals) -> Unit,
-    personalInfo: PersonalInfoReq?, // Menerima data dari langkah sebelumnya
-    isEdit: Boolean // Menerima parameter isEdit
+    personalInfo: PersonalInfoReq?,
+    isEdit: Boolean,
+    fieldErrors: List<ProfileFieldError> = emptyList(),
+    focusRequesters: Map<String, FocusRequester> = emptyMap(),
+    onFieldFocus: (String) -> Unit = {}
 ) {
     // State lokal untuk setiap input
     var calories by remember { mutableStateOf(initialData?.calories?.toString() ?: "") }
@@ -724,22 +835,88 @@ fun GoalsStep(
             }
         }
 
-        // Form Input untuk setiap Goal
+        // Form Input untuk setiap Goal dengan validasi dan error highlighting
+        val caloriesError = fieldErrors.find { it.fieldName == "calories" }
         OutlinedTextField(
             value = calories,
             onValueChange = { calories = it },
             label = { Text(stringResource(R.string.calories_kcal)) },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            modifier = Modifier
+                .fillMaxWidth()
+                .run {
+                    if (focusRequesters.containsKey("calories"))
+                        this.focusRequester(focusRequesters["calories"]!!)
+                    else this
+                }
+                .onFocusChanged { if (it.isFocused) onFieldFocus("calories") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            isError = caloriesError != null,
+            supportingText = {
+                if (caloriesError != null) {
+                    Text(
+                        text = caloriesError.errorMessage,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         )
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(value = protein, onValueChange = { protein = it }, label = { Text(stringResource(R.string.protein_g)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-            OutlinedTextField(value = carbs, onValueChange = { carbs = it }, label = { Text(stringResource(R.string.carbs_g)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+            OutlinedTextField(
+                value = protein,
+                onValueChange = { protein = it },
+                label = { Text(stringResource(R.string.protein_g)) },
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = fieldErrors.any { it.fieldName == "protein" }
+            )
+            OutlinedTextField(
+                value = carbs,
+                onValueChange = { carbs = it },
+                label = { Text(stringResource(R.string.carbs_g)) },
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = fieldErrors.any { it.fieldName == "carbs" }
+            )
         }
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(value = fat, onValueChange = { fat = it }, label = { Text(stringResource(R.string.fat_g)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-            OutlinedTextField(value = fiber, onValueChange = { fiber = it }, label = { Text(stringResource(R.string.fiber_g)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+            OutlinedTextField(
+                value = fat,
+                onValueChange = { fat = it },
+                label = { Text(stringResource(R.string.fat_g)) },
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = fieldErrors.any { it.fieldName == "fat" }
+            )
+            OutlinedTextField(
+                value = fiber,
+                onValueChange = { fiber = it },
+                label = { Text(stringResource(R.string.fiber_g)) },
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = fieldErrors.any { it.fieldName == "fiber" }
+            )
         }
+
+        // Sugar field dengan error checking
+        val sugarError = fieldErrors.find { it.fieldName == "sugar" }
+        OutlinedTextField(
+            value = sugar,
+            onValueChange = { sugar = it },
+            label = { Text(stringResource(R.string.sugar_g)) },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            isError = sugarError != null,
+            supportingText = {
+                if (sugarError != null) {
+                    Text(
+                        text = sugarError.errorMessage,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        )
     }
 }
 

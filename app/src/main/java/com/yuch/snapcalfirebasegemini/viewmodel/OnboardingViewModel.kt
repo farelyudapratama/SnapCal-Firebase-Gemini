@@ -72,6 +72,8 @@ class OnboardingViewModel : ViewModel() {
     fun loadProfile(existingProfile: ProfileRequest) {
         _formData.value = existingProfile
         _isEditMode.value = true
+        // Reset langkah ke awal saat memulai edit profil
+        _currentStep.value = 0
     }
 
     fun nextStep() {

@@ -306,4 +306,5 @@
     <string name="profile_incomplete_error_message">Pastikan semua kolom wajib sudah diisi dengan benar. Beberapa informasi mungkin belum diisi atau tidak valid.</string>
     <string name="unknown_error_occurred">Terjadi kesalahan yang tidak diketahui. Silakan coba lagi.</string>
     <string name="check_profile">Periksa Profil</string>
+    <string name="edit_profile_subtitle">Edit Profile</string>
 </resources>

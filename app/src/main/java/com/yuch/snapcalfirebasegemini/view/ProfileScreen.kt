@@ -167,9 +167,6 @@ fun ProfileScreen(
                         item {
                             AllPreferencesCard(
                                 userPreferences = userPreferences,
-                                onEditClick = {
-                                    navController.navigate("profile_onboarding?edit=true&section=preferences")
-                                }
                             )
                             Spacer(modifier = Modifier.height(76.dp))
                         }
@@ -236,6 +233,17 @@ fun ProfileScreen(
                     title = "Help & FAQ",
                     subtitle = "Dapatkan bantuan dan FAQ",
                     onClick = { navController.navigate(Screen.Help.route) }
+                )
+
+                // Tambahkan opsi Edit Profile
+                ProfileOptionItem(
+                    icon = Icons.Default.Edit,
+                    title = stringResource(R.string.edit_your_profile),
+                    subtitle = stringResource(R.string.edit_profile_subtitle),
+                    onClick = {
+                        showOptionsBottomSheet = false
+                        navController.navigate("profile_onboarding?edit=true")
+                    }
                 )
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -436,19 +444,13 @@ fun BMICard(height: Int, weight: Int) {
 }
 
 @Composable
-fun AllPreferencesCard(userPreferences: UserPreferences?, onEditClick: () -> Unit) {
+fun AllPreferencesCard(userPreferences: UserPreferences?) {
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.preferences_restrictions), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                IconButton(onClick = onEditClick) {
-                    Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_preferences), tint = Color(0xFF7C3AED))
-                }
-            }
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
             userPreferences?.let {
                 PreferenceItem(
