@@ -307,4 +307,6 @@
     <string name="unknown_error_occurred">Terjadi kesalahan yang tidak diketahui. Silakan coba lagi.</string>
     <string name="check_profile">Periksa Profil</string>
     <string name="edit_profile_subtitle">Edit Profile</string>
+
+    <string name="confused_what_to_eat">Bingung makan apa?</string>
 </resources>

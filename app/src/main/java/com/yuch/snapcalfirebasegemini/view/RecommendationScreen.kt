@@ -43,7 +43,6 @@ fun RecommendationScreen(
     onBack: () -> Unit
 ) {
     var selectedMealType by remember { mutableStateOf("breakfast") }
-    var showInitialChoice by remember { mutableStateOf(true) }
 
     val isLoading by viewModel.isLoading.collectAsState()
     val result by viewModel.recommendationResult.collectAsState()
@@ -61,7 +60,7 @@ fun RecommendationScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -83,203 +82,25 @@ fun RecommendationScreen(
                 )
                 .padding(paddingValues)
         ) {
-            if (showInitialChoice) {
-                InitialChoiceScreen(
-                    onRecommendationChoice = {
-                        showInitialChoice = false
-                        // Auto-load recommendations when user chooses recommendation option
-                        viewModel.loadRecommendations(selectedMealType, refresh = false)
-                    },
-                    onChatChoice = {
-                        navController?.navigate(Screen.AiChat.route)
-                    }
-                )
-            } else {
-                // Auto-load recommendations when entering recommendation screen
-                LaunchedEffect(Unit) {
-                    if (result == null) {
-                        viewModel.loadRecommendations(selectedMealType, refresh = false)
-                    }
-                }
-
-                RecommendationContent(
-                    selectedMealType = selectedMealType,
-                    onMealTypeChanged = { newType ->
-                        selectedMealType = newType
-                        viewModel.loadRecommendations(newType, refresh = false)
-                    },
-                    onRefresh = {
-                        viewModel.loadRecommendations(selectedMealType, refresh = true)
-                    },
-                    isLoading = isLoading,
-                    result = result,
-                    onBackToChoice = { showInitialChoice = true },
-                    navController = navController
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun InitialChoiceScreen(
-    onRecommendationChoice: () -> Unit,
-    onChatChoice: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = Color(0xFFB67321)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = stringResource(R.string.what_can_i_help_you_with),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = stringResource(R.string.choose_nutrition_guidance),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Recommendation Option
-                ElevatedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onRecommendationChoice() },
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .background(
-                                    Color(0xFFB67321).copy(alpha = 0.1f),
-                                    CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Restaurant,
-                                contentDescription = null,
-                                tint = Color(0xFFB67321),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.get_meal_recommendations),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = stringResource(R.string.smart_suggestions_meals),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        Icon(
-                            imageVector = Icons.Default.ChevronRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Chat Option
-                ElevatedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onChatChoice() },
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .background(
-                                    Color(0xFFEA4233).copy(alpha = 0.1f),
-                                    CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Chat,
-                                contentDescription = null,
-                                tint = Color(0xFFEA4233),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.chat_with_ai_nutritionist),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = stringResource(R.string.ask_questions_nutrition),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        Icon(
-                            imageVector = Icons.Default.ChevronRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+            LaunchedEffect(Unit) {
+                if (result == null) {
+                    viewModel.loadRecommendations(selectedMealType, refresh = false)
                 }
             }
+
+            RecommendationContent(
+                selectedMealType = selectedMealType,
+                onMealTypeChanged = { newType ->
+                    selectedMealType = newType
+                    viewModel.loadRecommendations(newType, refresh = false)
+                },
+                onRefresh = {
+                    viewModel.loadRecommendations(selectedMealType, refresh = true)
+                },
+                isLoading = isLoading,
+                result = result,
+                navController = navController
+            )
         }
     }
 }
@@ -291,7 +112,6 @@ fun RecommendationContent(
     onRefresh: () -> Unit,
     isLoading: Boolean,
     result: com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse<RecommendationData>?,
-    onBackToChoice: () -> Unit,
     navController: NavController? = null // Add navController parameter
 ) {
     LazyColumn(
@@ -310,18 +130,6 @@ fun RecommendationContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(
-                    onClick = onBackToChoice
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.back_to_options))
-                }
-
                 IconButton(onClick = onRefresh) {
                     Icon(Icons.Default.Refresh, "Refresh")
                 }
@@ -361,7 +169,7 @@ fun RecommendationContent(
 
             result?.status == "success" && result.data != null -> {
                 val recommendations = result.data.recommendations
-                if (!recommendations.isNullOrEmpty()) {
+                if (recommendations.isNotEmpty()) {
                     item {
                         RecommendationMetadataCard(result.data.metadata)
                     }
