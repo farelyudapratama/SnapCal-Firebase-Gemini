@@ -8,25 +8,31 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,9 +47,31 @@ import kotlin.random.Random
 fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, authViewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     val authState = authViewModel.authState.observeAsState()
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+
+    // Real-time validation dengan optimasi menggunakan derivedStateOf
+    val isEmailValid by remember(email) {
+        derivedStateOf {
+            email.trim().matches(Regex("^[\\w.-]+@[\\w.-]+\\.\\w{2,}$")) || email.isEmpty()
+        }
+    }
+
+    val isPasswordValid by remember(password) {
+        derivedStateOf {
+            password.length >= 6 || password.isEmpty()
+        }
+    }
+
+    val isFormValid by remember(email, password) {
+        derivedStateOf {
+            email.trim().matches(Regex("^[\\w.-]+@[\\w.-]+\\.\\w{2,}$")) &&
+            password.length >= 6
+        }
+    }
 
     LaunchedEffect(authState.value) {
         when(authState.value){
@@ -68,18 +96,25 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                 )
             )
     ) {
-        // Lingkaran dekoratif di background
+        // Lingkaran dekoratif di background - optimized with static positioning
         Box(modifier = Modifier.fillMaxSize()) {
-            repeat(15) {
+            val circlePositions = remember {
+                List(15) {
+                    Triple(
+                        (80..140).random().dp,
+                        (-30..350).random().dp to (-30..700).random().dp,
+                        Random.nextFloat() * (0.08f - 0.03f) + 0.03f
+                    )
+                }
+            }
+
+            circlePositions.forEach { (size, position, alpha) ->
                 Box(
                     modifier = Modifier
-                        .size((80..140).random().dp)
-                        .offset(
-                            x = (-30..350).random().dp,
-                            y = (-30..700).random().dp
-                        )
+                        .size(size)
+                        .offset(x = position.first, y = position.second)
                         .background(
-                            color = Color.White.copy(alpha = Random.nextFloat() * (0.08f - 0.03f) + 0.03f),
+                            color = Color.White.copy(alpha = alpha),
                             shape = CircleShape
                         )
                 )
@@ -140,7 +175,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                     textAlign = TextAlign.Center
                 )
 
-                // Email field
+                // Email field dengan validasi real-time
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
@@ -149,50 +184,90 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    ),
                     singleLine = true,
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Email,
                             contentDescription = "Email",
-                            tint = Color(0xFF1A237E)
+                            tint = if (isEmailValid) Color(0xFF1A237E) else Color(0xFFE53E3E)
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF1A237E),
-                        unfocusedBorderColor = Color.Gray,
-                        focusedLabelColor = Color(0xFF1A237E),
+                        focusedBorderColor = if (isEmailValid) Color(0xFF1A237E) else Color(0xFFE53E3E),
+                        unfocusedBorderColor = if (isEmailValid) Color.Gray else Color(0xFFE53E3E),
+                        focusedLabelColor = if (isEmailValid) Color(0xFF1A237E) else Color(0xFFE53E3E),
                         cursorColor = Color(0xFF1A237E)
-                    )
+                    ),
+                    isError = !isEmailValid && email.isNotEmpty(),
+                    supportingText = {
+                        if (!isEmailValid && email.isNotEmpty()) {
+                            Text(
+                                text = "Format email tidak valid",
+                                color = Color(0xFFE53E3E),
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
                 )
 
-                // Password field
+                // Password field dengan validasi real-time
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text("Password") },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Lock,
                             contentDescription = "Password",
-                            tint = Color(0xFF1A237E)
+                            tint = if (isPasswordValid) Color(0xFF1A237E) else Color(0xFFE53E3E)
                         )
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = "Toggle Password Visibility",
+                                tint = Color(0xFF1A237E)
+                            )
+                        }
                     },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Next
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            if (isFormValid) {
+                                authViewModel.login(email, password)
+                            }
+                        }
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF1A237E),
-                        unfocusedBorderColor = Color.Gray,
-                        focusedLabelColor = Color(0xFF1A237E),
+                        focusedBorderColor = if (isPasswordValid) Color(0xFF1A237E) else Color(0xFFE53E3E),
+                        unfocusedBorderColor = if (isPasswordValid) Color.Gray else Color(0xFFE53E3E),
+                        focusedLabelColor = if (isPasswordValid) Color(0xFF1A237E) else Color(0xFFE53E3E),
                         cursorColor = Color(0xFF1A237E)
-                    )
+                    ),
+                    isError = !isPasswordValid && password.isNotEmpty(),
+                    supportingText = {
+                        if (!isPasswordValid && password.isNotEmpty()) {
+                            Text(
+                                text = "Password minimal 6 karakter",
+                                color = Color(0xFFE53E3E),
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
                 )
 
                 Text(
@@ -204,10 +279,13 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                     fontSize = 12.sp
                 )
 
-                // Login button
+                // Login button dengan optimasi state
                 Button(
-                    onClick = { authViewModel.login(email, password) },
-                    enabled = authState.value != AuthState.Loading,
+                    onClick = {
+                        focusManager.clearFocus()
+                        authViewModel.login(email, password)
+                    },
+                    enabled = isFormValid && authState.value != AuthState.Loading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
@@ -218,7 +296,8 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                     ),
                     elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 4.dp,
-                        pressedElevation = 8.dp
+                        pressedElevation = 8.dp,
+                        disabledElevation = 0.dp
                     )
                 ) {
                     if (authState.value == AuthState.Loading) {
