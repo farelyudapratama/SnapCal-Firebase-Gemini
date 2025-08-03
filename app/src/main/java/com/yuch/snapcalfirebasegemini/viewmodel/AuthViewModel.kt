@@ -100,20 +100,6 @@ class AuthViewModel : ViewModel() {
             }
     }
 
-    // anonymous login
-    fun anonymousLogin() {
-        _authState.value = AuthState.Loading
-        auth.signInAnonymously()
-            .addOnCompleteListener { task -> // HAPUS `this`
-                if (task.isSuccessful) {
-                    _authState.value = AuthState.Authenticated
-                    _userUid.value = auth.currentUser?.uid  // Simpan UID
-                } else {
-                    _authState.value = AuthState.Error(task.exception?.message ?: "Authentication failed.")
-                }
-            }
-    }
-
     // Reset Password
     fun sendPasswordReset(email: String) {
         _authState.value = AuthState.Loading

@@ -12,9 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Games
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -235,81 +233,6 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Divider dengan teks
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        color = Color.LightGray
-                    )
-                    Text(
-                        text = "  ${stringResource(R.string.or_login_with)}  ",
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        color = Color.LightGray
-                    )
-                }
-
-                // Social login options
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    // Google login
-                    OutlinedButton(
-                        onClick = { /* Implementasi login Google */ },
-                        enabled = false, // Disable button
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, Color.LightGray),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFFDB4437)
-                        )
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Games,
-                                contentDescription = "Google",
-                                tint = Color(0xFFDB4437),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text("Google", fontSize = 14.sp)
-                        }
-                    }
-
-                    // Anonymous login
-                    OutlinedButton(
-                        onClick = { authViewModel.anonymousLogin() },
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, Color.LightGray),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color.Gray
-                        )
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Anonymous",
-                                tint = Color.Gray,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text("Anonim", fontSize = 14.sp)
-                        }
                     }
                 }
 
