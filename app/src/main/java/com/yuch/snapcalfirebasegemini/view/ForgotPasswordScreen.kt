@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.yuch.snapcalfirebasegemini.view
 
 import android.widget.Toast
@@ -31,6 +33,7 @@ import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import kotlin.random.Random
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(
     modifier: Modifier = Modifier,
@@ -71,244 +74,242 @@ fun ForgotPasswordScreen(
     }
 
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         Color(0xFF1A237E),
                         Color(0xFF3949AB)
-                    )
+                    ),
+                    endY = 400f
                 )
             )
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            repeat(15) {
-                Box(
-                    modifier = Modifier
-                        .size((80..140).random().dp)
-                        .offset(
-                            x = (-30..350).random().dp,
-                            y = (-30..700).random().dp
-                        )
-                        .background(
-                            color = Color.White.copy(alpha = Random.nextFloat() * (0.08f - 0.03f) + 0.03f),
-                            shape = CircleShape
-                        )
-                )
-            }
-        }
-
-        IconButton(
-            onClick = { navController.popBackStack() },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-                .size(48.dp)
-                .background(Color.White.copy(alpha = 0.2f), CircleShape)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Kembali",
-                tint = Color.White
-            )
-        }
-
-        Card(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-                .align(Alignment.Center)
-                .graphicsLayer {
-                    alpha = 0.8f
-                    shadowElevation = 8f
-                },
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.9f)
-            ),
-            shape = RoundedCornerShape(20.dp)
-        ) {
-            Column(
+        Scaffold(
+            containerColor = Color.Transparent,
+        ) { paddingValues ->
+            Box(
                 modifier = Modifier
-                    .padding(24.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .fillMaxSize()
+                    .padding(paddingValues),
             ) {
-                Text(
-                    text = "Reset Password",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1A237E)
-                )
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(16.dp)
+                        .size(48.dp)
+                        .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Kembali",
+                        tint = Color.White
+                    )
+                }
 
-                if (resetEmailSent) {
+                Card(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                        .align(Alignment.Center)
+                        .graphicsLayer {
+                            alpha = 0.8f
+                            shadowElevation = 8f
+                        },
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White.copy(alpha = 0.9f)
+                    ),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
                     Column(
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Email,
-                            contentDescription = "Email Terkirim",
-                            tint = Color(0xFF1A237E),
-                            modifier = Modifier.size(64.dp)
-                        )
-
                         Text(
-                            text = "Periksa Email Anda",
-                            fontSize = 20.sp,
+                            text = "Reset Password",
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1A237E)
                         )
 
-                        Text(
-                            text = "Jika email anda terdaftar maka anda akan segera menerima intruksi reset password. Silakan periksa kotak masuk Anda.",
-                            fontSize = 14.sp,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center
-                        )
+                        if (resetEmailSent) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Email,
+                                    contentDescription = "Email Terkirim",
+                                    tint = Color(0xFF1A237E),
+                                    modifier = Modifier.size(64.dp)
+                                )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Periksa Email Anda",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1A237E)
+                                )
 
-                        // Tombol kembali ke login setelah email terkirim
-                        Button(
-                            onClick = {
-                                // Arahkan kembali ke layar login
-                                navController.navigate(Screen.Login.route) {
-                                    // Hapus layar Forgot Password dari backstack
-                                    popUpTo(Screen.Login.route) {
-                                        inclusive = false
-                                    }
+                                Text(
+                                    text = "Jika email anda terdaftar maka anda akan segera menerima intruksi reset password. Silakan periksa kotak masuk Anda.",
+                                    fontSize = 14.sp,
+                                    color = Color.Gray,
+                                    textAlign = TextAlign.Center
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Tombol kembali ke login setelah email terkirim
+                                Button(
+                                    onClick = {
+                                        // Arahkan kembali ke layar login
+                                        navController.navigate(Screen.Login.route) {
+                                            // Hapus layar Forgot Password dari backstack
+                                            popUpTo(Screen.Login.route) {
+                                                inclusive = false
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(50.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF1A237E)
+                                    ),
+                                    elevation = ButtonDefaults.buttonElevation(
+                                        defaultElevation = 4.dp,
+                                        pressedElevation = 8.dp
+                                    )
+                                ) {
+                                    Text(
+                                        "Kembali ke Login",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF1A237E)
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(
-                                defaultElevation = 4.dp,
-                                pressedElevation = 8.dp
-                            )
-                        ) {
-                            Text(
-                                "Kembali ke Login",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                } else {
-                    // Form reset password
-                    Text(
-                        text = "Masukkan alamat email Anda dan kami akan mengirimkan instruksi untuk mengatur ulang password Anda.",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Field email
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email") },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Done
-                        ),
-                        singleLine = true,
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Email,
-                                contentDescription = "Email",
-                                tint = Color(0xFF1A237E)
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF1A237E),
-                            unfocusedBorderColor = Color.Gray,
-                            focusedLabelColor = Color(0xFF1A237E),
-                            cursorColor = Color(0xFF1A237E)
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Tombol kirim reset
-                    Button(
-                        onClick = {
-                            if (email.isNotEmpty()) {
-                                // Perbarui state otentikasi ke Loading terlebih dahulu
-                                authViewModel.sendPasswordReset(email)
-                            } else {
-                                Toast.makeText(context, "Silakan masukkan alamat email Anda", Toast.LENGTH_SHORT).show()
                             }
-                        },
-                        enabled = authState.value != AuthState.Loading,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1A237E),
-                            disabledContainerColor = Color(0xFF1A237E).copy(alpha = 0.5f)
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 4.dp,
-                            pressedElevation = 8.dp
-                        )
-                    ) {
-                        if (authState.value == AuthState.Loading) {
-                            CircularProgressIndicator(
-                                color = Color.White,
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
-                            )
                         } else {
+                            // Form reset password
                             Text(
-                                "Reset Password",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
+                                text = "Masukkan alamat email Anda dan kami akan mengirimkan instruksi untuk mengatur ulang password Anda.",
+                                fontSize = 14.sp,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center
                             )
-                        }
-                    }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                    // Opsi kembali ke login
-                    Row(
-                        modifier = Modifier
-                            .clickable {
-                                // Arahkan kembali ke layar login
-                                navController.navigate(Screen.Login.route) {
-                                    // Hapus layar Forgot Password dari backstack
-                                    popUpTo(Screen.Login.route) {
-                                        inclusive = false
+                            // Field email
+                            OutlinedTextField(
+                                value = email,
+                                onValueChange = { email = it },
+                                label = { Text("Email") },
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Email,
+                                    imeAction = ImeAction.Done
+                                ),
+                                singleLine = true,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Email,
+                                        contentDescription = "Email",
+                                        tint = Color(0xFF1A237E)
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF1A237E),
+                                    unfocusedBorderColor = Color.Gray,
+                                    focusedLabelColor = Color(0xFF1A237E),
+                                    cursorColor = Color(0xFF1A237E)
+                                )
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Tombol kirim reset
+                            Button(
+                                onClick = {
+                                    if (email.isNotEmpty()) {
+                                        // Perbarui state otentikasi ke Loading terlebih dahulu
+                                        authViewModel.sendPasswordReset(email)
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Silakan masukkan alamat email Anda",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
+                                },
+                                enabled = authState.value != AuthState.Loading,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF1A237E),
+                                    disabledContainerColor = Color(0xFF1A237E).copy(alpha = 0.5f)
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(
+                                    defaultElevation = 4.dp,
+                                    pressedElevation = 8.dp
+                                )
+                            ) {
+                                if (authState.value == AuthState.Loading) {
+                                    CircularProgressIndicator(
+                                        color = Color.White,
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text(
+                                        "Reset Password",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Ingat password Anda? ",
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
-                        Text(
-                            "Login",
-                            color = Color(0xFF1A237E),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Opsi kembali ke login
+                            Row(
+                                modifier = Modifier
+                                    .clickable {
+                                        // Arahkan kembali ke layar login
+                                        navController.navigate(Screen.Login.route) {
+                                            // Hapus layar Forgot Password dari backstack
+                                            popUpTo(Screen.Login.route) {
+                                                inclusive = false
+                                            }
+                                        }
+                                    }
+                                    .padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "Ingat password Anda? ",
+                                    color = Color.Gray,
+                                    fontSize = 14.sp
+                                )
+                                Text(
+                                    "Login",
+                                    color = Color(0xFF1A237E),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
                     }
                 }
             }
