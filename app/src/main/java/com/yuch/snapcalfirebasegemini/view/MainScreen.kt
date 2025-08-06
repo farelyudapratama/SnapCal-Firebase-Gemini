@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NavigateBefore
+import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.*
@@ -79,6 +81,7 @@ fun MainScreen(
 
     val foodList by foodViewModel.foodList.collectAsState()
     val isLoading by foodViewModel.isLoading.collectAsState()
+    val isLoadingMore by foodViewModel.isLoadingMore.collectAsState()
     val hasMoreData by foodViewModel.hasMoreData.collectAsStateWithLifecycle()
     val errorMessage by foodViewModel.errorMessage.collectAsState()
 
@@ -161,8 +164,8 @@ fun MainScreen(
             },
             containerColor = Color.Transparent,
         ) { paddingValues ->
-            // Date selector card
-            if (isLoading) {
+            // Hanya tampilkan full screen loading untuk initial load dan ketika foodList masih kosong
+            if (isLoading && foodList.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Color.White)
                 }
@@ -276,6 +279,17 @@ fun MainScreen(
                                     FoodItemCard(foodItem, navController)
                                 }
                             }
+
+                            // Load more section
+                            if (!isFilterActive) {
+                                item {
+                                    LoadingAndLoadMore(
+                                        isLoading = isLoadingMore,
+                                        hasMoreData = hasMoreData,
+                                        onLoadMore = { foodViewModel.loadNextPage() }
+                                    )
+                                }
+                            }
                         }
                         item {
                             Spacer(modifier = Modifier.height(100.dp))
@@ -387,7 +401,7 @@ fun DateSelectorCard(
                     )
             ) {
                 Icon(
-                    imageVector = Icons.Default.NavigateBefore,
+                    imageVector = Icons.AutoMirrored.Filled.NavigateBefore,
                     contentDescription = "Previous Day",
                     tint = MaterialTheme.colorScheme.primary
                 )
@@ -469,7 +483,7 @@ fun DateSelectorCard(
                     )
             ) {
                 Icon(
-                    imageVector = Icons.Default.NavigateNext,
+                    imageVector = Icons.AutoMirrored.Filled.NavigateNext,
                     contentDescription = "Next Day",
                     tint = MaterialTheme.colorScheme.primary
                 )

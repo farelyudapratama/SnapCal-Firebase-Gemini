@@ -40,6 +40,10 @@ class GetFoodViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    // State loading untuk pagination (load more)
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore: StateFlow<Boolean> = _isLoadingMore
+
     private val _isDeleted = MutableStateFlow(false)
     val isDeleted: StateFlow<Boolean> = _isDeleted
 
@@ -73,7 +77,14 @@ class GetFoodViewModel(
     private fun fetchFood(page: Int = _currentPage.value) {
         viewModelScope.launch {
             Log.d("GetFoodViewModel", "Fetching food data for page: $page")
-            _isLoading.value = true
+
+            // Gunakan isLoading untuk initial load dan isLoadingMore untuk pagination
+            if (page == 1) {
+                _isLoading.value = true
+            } else {
+                _isLoadingMore.value = true
+            }
+
             _errorMessage.value = null
             try {
                 // Coba ambil data dari API
@@ -119,7 +130,11 @@ class GetFoodViewModel(
                 // Set flag hasMoreData false jika data cache digunakan (atau Anda bisa logika lain)
                 _hasMoreData.value = false
             } finally {
-                _isLoading.value = false
+                if (page == 1) {
+                    _isLoading.value = false
+                } else {
+                    _isLoadingMore.value = false
+                }
             }
         }
     }
@@ -294,6 +309,7 @@ class GetFoodViewModel(
         _totalPages.value = 1
         _hasMoreData.value = true
         _isLoading.value = false
+        _isLoadingMore.value = false
         _isDeleted.value = false
         _errorMessage.value = null
         _imageDeletedMessage.value = null
