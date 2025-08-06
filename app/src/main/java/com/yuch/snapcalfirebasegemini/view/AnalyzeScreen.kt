@@ -83,7 +83,7 @@ fun AnalyzeScreen(
 
     // Show food composition section toggle
     // TODO: This will control whether to show the food composition section
-    var showComposition by remember { mutableStateOf(false) }
+//    var showComposition by remember { mutableStateOf(false) }
 
     // Update editable data when new analysis results arrive
     LaunchedEffect(analysisResult) {
@@ -159,10 +159,10 @@ fun AnalyzeScreen(
     var loadingPhase by remember { mutableStateOf<String?>(null) } // "analyzing", "uploading", or null
 
     LaunchedEffect(isLoading) {
-        if (isLoading) {
-            loadingPhase = if (analysisResult.data == null) "analyzing" else "uploading"
+        loadingPhase = if (isLoading) {
+            if (analysisResult.data == null) "analyzing" else "uploading"
         } else {
-            loadingPhase = null
+            null
         }
     }
 

@@ -49,11 +49,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -153,228 +155,256 @@ fun EditFoodScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Edit",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Medium
-                        )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    endY = 400f
                 )
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    try {
-                        val foodData = try {
-                            UpdateFoodData(
-                                foodName = foodName,
-                                mealType = mealType,
-                                weightInGrams = weightInGrams ?: "0",
-                                calories = calories.toDoubleOrNull() ?: 0.0,
-                                carbs = carbs.toDoubleOrNull() ?: 0.0,
-                                protein = protein.toDoubleOrNull() ?: 0.0,
-                                totalFat = totalFat.toDoubleOrNull() ?: 0.0,
-                                saturatedFat = saturatedFat.toDoubleOrNull() ?: 0.0,
-                                fiber = fiber.toDoubleOrNull() ?: 0.0,
-                                sugar = sugar.toDoubleOrNull() ?: 0.0
+    ) {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "Edit",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White
+                    )
+                )
+            },
+            containerColor = Color.Transparent,
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        try {
+                            val foodData = try {
+                                UpdateFoodData(
+                                    foodName = foodName,
+                                    mealType = mealType,
+                                    weightInGrams = weightInGrams ?: "0",
+                                    calories = calories.toDoubleOrNull() ?: 0.0,
+                                    carbs = carbs.toDoubleOrNull() ?: 0.0,
+                                    protein = protein.toDoubleOrNull() ?: 0.0,
+                                    totalFat = totalFat.toDoubleOrNull() ?: 0.0,
+                                    saturatedFat = saturatedFat.toDoubleOrNull() ?: 0.0,
+                                    fiber = fiber.toDoubleOrNull() ?: 0.0,
+                                    sugar = sugar.toDoubleOrNull() ?: 0.0
+                                )
+                            } catch (e: Exception) {
+                                Log.e("EditFoodScreen", "Error parsing food data: ${e.message}")
+                                return@FloatingActionButton
+                            }
+
+                            onUpdateFood(
+                                foodId,
+                                selectedImageUri?.let { uriToFile(context, it).absolutePath },
+                                foodData
                             )
                         } catch (e: Exception) {
-                            Log.e("EditFoodScreen", "Error parsing food data: ${e.message}")
-                            return@FloatingActionButton
+                            Log.e("EditFoodScreen", "Error updating food: ${e.message}")
                         }
-
-                        onUpdateFood(foodId, selectedImageUri?.let { uriToFile(context, it).absolutePath }, foodData)
-                    } catch (e: Exception) {
-                        Log.e("EditFoodScreen", "Error updating food: ${e.message}")
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Default.Save, contentDescription = "Save Changes")
-            }
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp)
-                    ) {
-                        // Image Selection with Preview
-                        ImageSelectionPreview(
-                            selectedImageUri = selectedImageUri,
-                            currentImageUrl = foodItem?.imageUrl,
-                            onSelectImage = {
-                                galleryLauncher.launch(
-                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                )
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Image actions (Change/Delete buttons)
-                        ImageActionButtons(
-                            hasExistingImage = foodItem?.imageUrl != null || selectedImageUri != null,
-                            canDeleteImage = foodItem?.imageUrl != null,
-                            onSelectImage = {
-                                galleryLauncher.launch(
-                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                )
-                            },
-                            onDeleteImage = {
-                                getFoodViewModel.deleteFoodImageById(foodId)
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Meal Type Selection
-                        MealTypeDropdown(
-                            selectedMealType = mealType,
-                            onMealTypeSelected = { mealType = it }
-                        )
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Text(
-                            stringResource(R.string.food_information),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-
-                        // Weight Input
-                        TextField(
-                            value = weightInGrams,
-                            onValueChange = { weightInGrams = it },
-                            label = stringResource(R.string.weight_g),
-                            leadingIcon = { Icon(Icons.Default.Restaurant, "Weight") },
-                            focusRequester = FocusRequester(),
-                            onNext = { focusManager.clearFocus() },
-                            keyboardType = KeyboardType.Number
-                        )
-
-                        // Food Name Input
-                        TextField(
-                            value = foodName,
-                            onValueChange = { foodName = it },
-                            label = stringResource(R.string.food_name),
-                            leadingIcon = { Icon(Icons.Default.Restaurant, "Food") },
-                            focusRequester = foodNameFocus,
-                            onNext = { caloriesFocus.requestFocus() }
-                        )
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Nutrition Section
-                        Text(
-                            stringResource(R.string.nutrition_values),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-
-                        // Nutrition Inputs
-                        NutritionField(
-                            label = stringResource(R.string.nutrient_calories) + " (kcal)",
-                            value = calories,
-                            onValueChange = { calories = it },
-                            focusRequester = caloriesFocus,
-                            onNext = { carbsFocus.requestFocus() },
-                            icon = Icons.Default.LocalFireDepartment
-                        )
-
-                        NutritionField(
-                            label = stringResource(R.string.nutrient_carbs) + " (g)",
-                            value = carbs,
-                            onValueChange = { carbs = it },
-                            focusRequester = carbsFocus,
-                            onNext = { proteinFocus.requestFocus() },
-                            icon = Icons.Default.Grain
-                        )
-
-                        NutritionField(
-                            label = stringResource(R.string.nutrient_protein) + " (g)",
-                            value = protein,
-                            onValueChange = { protein = it },
-                            focusRequester = proteinFocus,
-                            onNext = { totalFatFocus.requestFocus() },
-                            icon = Icons.Default.FitnessCenter
-                        )
-
-                        NutritionField(
-                            label = stringResource(R.string.nutrient_fat) + " (g)",
-                            value = totalFat,
-                            onValueChange = { totalFat = it },
-                            focusRequester = totalFatFocus,
-                            onNext = { saturatedFatFocus.requestFocus() },
-                            icon = Icons.Default.WaterDrop
-                        )
-
-                        NutritionField(
-                            label = "Saturated Fat (g)",
-                            value = saturatedFat,
-                            onValueChange = { saturatedFat = it },
-                            focusRequester = saturatedFatFocus,
-                            onNext = { fiberFocus.requestFocus() },
-                            icon = Icons.Default.WaterDrop
-                        )
-
-                        NutritionField(
-                            label = stringResource(R.string.nutrient_fiber) + " (g)",
-                            value = fiber,
-                            onValueChange = { fiber = it },
-                            focusRequester = fiberFocus,
-                            onNext = { sugarFocus.requestFocus() },
-                            icon = Icons.Default.Grass
-                        )
-
-                        NutritionField(
-                            label = stringResource(R.string.nutrient_sugar) + " (g)",
-                            value = sugar,
-                            onValueChange = { sugar = it },
-                            focusRequester = sugarFocus,
-                            onNext = { focusManager.clearFocus() },
-                            icon = Icons.Default.Cookie
-                        )
-                    }
+                    Icon(Icons.Default.Save, contentDescription = "Save Changes")
                 }
             }
+        ) { padding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        top = 88.dp,
+                        bottom = padding.calculateBottomPadding(),
+                        start = padding.calculateStartPadding(LocalLayoutDirection.current),
+                        end = padding.calculateEndPadding(LocalLayoutDirection.current)
+                    )
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp)
+                        ) {
+                            // Image Selection with Preview
+                            ImageSelectionPreview(
+                                selectedImageUri = selectedImageUri,
+                                currentImageUrl = foodItem?.imageUrl,
+                                onSelectImage = {
+                                    galleryLauncher.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                }
+                            )
 
-            item { Spacer(modifier = Modifier.height(80.dp)) }
-        }
+                            Spacer(modifier = Modifier.height(8.dp))
 
-        if (isLoading) {
-            LoadingOverlay()
+                            // Image actions (Change/Delete buttons)
+                            ImageActionButtons(
+                                hasExistingImage = foodItem?.imageUrl != null || selectedImageUri != null,
+                                canDeleteImage = foodItem?.imageUrl != null,
+                                onSelectImage = {
+                                    galleryLauncher.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                },
+                                onDeleteImage = {
+                                    getFoodViewModel.deleteFoodImageById(foodId)
+                                }
+                            )
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            // Meal Type Selection
+                            MealTypeDropdown(
+                                selectedMealType = mealType,
+                                onMealTypeSelected = { mealType = it }
+                            )
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            Text(
+                                stringResource(R.string.food_information),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+
+                            // Weight Input
+                            TextField(
+                                value = weightInGrams,
+                                onValueChange = { weightInGrams = it },
+                                label = stringResource(R.string.weight_g),
+                                leadingIcon = { Icon(Icons.Default.Restaurant, "Weight") },
+                                focusRequester = FocusRequester(),
+                                onNext = { focusManager.clearFocus() },
+                                keyboardType = KeyboardType.Number
+                            )
+
+                            // Food Name Input
+                            TextField(
+                                value = foodName,
+                                onValueChange = { foodName = it },
+                                label = stringResource(R.string.food_name),
+                                leadingIcon = { Icon(Icons.Default.Restaurant, "Food") },
+                                focusRequester = foodNameFocus,
+                                onNext = { caloriesFocus.requestFocus() }
+                            )
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            // Nutrition Section
+                            Text(
+                                stringResource(R.string.nutrition_values),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+
+                            // Nutrition Inputs
+                            NutritionField(
+                                label = stringResource(R.string.nutrient_calories) + " (kcal)",
+                                value = calories,
+                                onValueChange = { calories = it },
+                                focusRequester = caloriesFocus,
+                                onNext = { carbsFocus.requestFocus() },
+                                icon = Icons.Default.LocalFireDepartment
+                            )
+
+                            NutritionField(
+                                label = stringResource(R.string.nutrient_carbs) + " (g)",
+                                value = carbs,
+                                onValueChange = { carbs = it },
+                                focusRequester = carbsFocus,
+                                onNext = { proteinFocus.requestFocus() },
+                                icon = Icons.Default.Grain
+                            )
+
+                            NutritionField(
+                                label = stringResource(R.string.nutrient_protein) + " (g)",
+                                value = protein,
+                                onValueChange = { protein = it },
+                                focusRequester = proteinFocus,
+                                onNext = { totalFatFocus.requestFocus() },
+                                icon = Icons.Default.FitnessCenter
+                            )
+
+                            NutritionField(
+                                label = stringResource(R.string.nutrient_fat) + " (g)",
+                                value = totalFat,
+                                onValueChange = { totalFat = it },
+                                focusRequester = totalFatFocus,
+                                onNext = { saturatedFatFocus.requestFocus() },
+                                icon = Icons.Default.WaterDrop
+                            )
+
+                            NutritionField(
+                                label = "Saturated Fat (g)",
+                                value = saturatedFat,
+                                onValueChange = { saturatedFat = it },
+                                focusRequester = saturatedFatFocus,
+                                onNext = { fiberFocus.requestFocus() },
+                                icon = Icons.Default.WaterDrop
+                            )
+
+                            NutritionField(
+                                label = stringResource(R.string.nutrient_fiber) + " (g)",
+                                value = fiber,
+                                onValueChange = { fiber = it },
+                                focusRequester = fiberFocus,
+                                onNext = { sugarFocus.requestFocus() },
+                                icon = Icons.Default.Grass
+                            )
+
+                            NutritionField(
+                                label = stringResource(R.string.nutrient_sugar) + " (g)",
+                                value = sugar,
+                                onValueChange = { sugar = it },
+                                focusRequester = sugarFocus,
+                                onNext = { focusManager.clearFocus() },
+                                icon = Icons.Default.Cookie
+                            )
+                        }
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(80.dp)) }
+            }
+
+            if (isLoading) {
+                LoadingOverlay()
+            }
         }
     }
 }
