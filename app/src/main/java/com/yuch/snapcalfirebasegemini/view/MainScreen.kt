@@ -330,6 +330,15 @@ fun MainTopAppBar(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clickable { onRecommendationClick() }
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.25f),
+                                Color.White.copy(alpha = 0.05f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(20.dp)
+                    )
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Box(
