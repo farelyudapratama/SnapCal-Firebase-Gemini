@@ -3,14 +3,13 @@ package com.yuch.snapcalfirebasegemini.view
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -28,6 +27,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -61,7 +61,6 @@ fun DetailFoodScreen(
 ) {
     val authState = authViewModel.authState.observeAsState()
     val context = LocalContext.current
-    val scrollState = rememberScrollState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val food by viewModel.food.collectAsStateWithLifecycle()
@@ -107,91 +106,151 @@ fun DetailFoodScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.detail_food_title),
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { onBack() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { showDialog = true }) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Delete Food",
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        caloriesColor.copy(alpha = 0.8f),
+                        caloriesColor.copy(alpha = 0.4f)
+                    ),
+                    start = Offset(0f, 0f),
+                    end = Offset(1000f, 1000f)
                 )
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate("edit-food/$foodId") },
-                containerColor = caloriesColor
-            ) {
-                Icon(
-                    Icons.Default.Edit,
-                    contentDescription = "Edit Food",
-                    tint = Color.White
+    ) {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(R.string.detail_food_title),
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { onBack() }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = { showDialog = true },
+                            modifier = Modifier
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete Food",
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White
+                    )
                 )
+            },
+            containerColor = Color.Transparent,
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = { navController.navigate("edit-food/$foodId") },
+                    containerColor = caloriesColor
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Edit Food",
+                        tint = Color.White
+                    )
+                }
             }
-        }
-    ) { paddingValues ->
-        if (isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            food?.let { foodItem ->
-                FoodDetailsContent(
-                    foodItem = foodItem,
-                    modifier = modifier.padding(paddingValues),
-                    scrollState = scrollState,
-                    context = context
-                )
-            } ?: run {
-                // Error state
+        ) { paddingValues ->
+            if (isLoading) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.ErrorOutline,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(64.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.food_details_not_available),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    CircularProgressIndicator(color = Color.White)
+                }
+            } else {
+                food?.let { foodItem ->
+                    LazyColumn(
+                        modifier = modifier
+                            .fillMaxSize()
+                            .padding(
+                                top = 56.dp,
+                                bottom = paddingValues.calculateBottomPadding(),
+                                start = paddingValues.calculateStartPadding(LocalLayoutDirection.current),
+                                end = paddingValues.calculateEndPadding(LocalLayoutDirection.current)
+                            )
+                            .background(
+                                color = Color(0xFFF9FAFB)
+                            ),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        item {
+                            FoodHeaderSection(foodItem, context)
+                        }
+
+                        item {
+                            NutritionInfoCard(foodItem)
+                        }
+
+                        item {
+                            FatBreakdownCard(foodItem.nutritionData)
+                        }
+
+                        item {
+                            DateInfoCard(foodItem.createdAt ?: "N/A")
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+                } ?: run {
+                    // Error state
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.ErrorOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(64.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.food_details_not_available),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
@@ -221,32 +280,6 @@ fun DetailFoodScreen(
                 }
             }
         )
-    }
-}
-
-@Composable
-fun FoodDetailsContent(
-    foodItem: com.yuch.snapcalfirebasegemini.data.api.response.FoodItem,
-    modifier: Modifier = Modifier,
-    scrollState: ScrollState,
-    context: Context
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-    ) {
-        // Image dengan teks overlay atau stylish header jika tidak ada gambar
-        FoodHeaderSection(foodItem, context)
-
-        // Main nutrition card dengan chart dan macros
-        NutritionInfoCard(foodItem)
-
-        // Fat breakdown card (termasuk saturated fat)
-        FatBreakdownCard(foodItem.nutritionData)
-
-        // Date info
-        DateInfoCard(foodItem.createdAt)
     }
 }
 
@@ -347,7 +380,7 @@ fun FoodHeaderSection(
                                 caloriesColor.copy(alpha = 0.4f)
                             ),
                             start = Offset(0f, 0f),
-                            end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                            end = Offset(1000f, 1000f)
                         )
                     )
             )
