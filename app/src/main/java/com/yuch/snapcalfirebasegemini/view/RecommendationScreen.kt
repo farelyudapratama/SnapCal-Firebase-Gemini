@@ -1,11 +1,11 @@
 package com.yuch.snapcalfirebasegemini.view
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -14,26 +14,26 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodRecommendation
-import com.yuch.snapcalfirebasegemini.data.api.response.RecommendationData
-import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
+import com.yuch.snapcalfirebasegemini.viewmodel.RecommendationState
 import com.yuch.snapcalfirebasegemini.viewmodel.RecommendationViewModel
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
+
+// Create a tag for better logging
+private const val TAG = "RecommendationScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,11 +43,39 @@ fun RecommendationScreen(
     onBack: () -> Unit
 ) {
     var selectedMealType by remember { mutableStateOf("breakfast") }
+    var initialLoadDone by remember { mutableStateOf(false) }
 
-    val isLoading by viewModel.isLoading.collectAsState()
-    val result by viewModel.recommendationResult.collectAsState()
+    val state by viewModel.state.collectAsState()
 
-    val context = LocalContext.current
+    Log.d(TAG, "Screen recomposition - Current state: $state")
+    when (state) {
+        is RecommendationState.Success -> {
+            val data = (state as RecommendationState.Success).data
+            Log.d(TAG, "SUCCESS STATE - Recommendations count: ${data.recommendations.size}")
+        }
+        is RecommendationState.Error -> {
+            Log.d(TAG, "ERROR STATE - Message: ${(state as RecommendationState.Error).message}")
+        }
+        is RecommendationState.Loading -> {
+            Log.d(TAG, "LOADING STATE")
+        }
+        is RecommendationState.Initial -> {
+            Log.d(TAG, "INITIAL STATE")
+        }
+    }
+
+    var autoRefreshAttempted by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state) {
+        if (state is RecommendationState.Initial && initialLoadDone && !autoRefreshAttempted) {
+            delay(1000)
+            if (state is RecommendationState.Initial) {
+                Log.d(TAG, "Auto-triggering refresh because we're stuck in Initial state")
+                viewModel.loadRecommendations(selectedMealType, refresh = true)
+                autoRefreshAttempted = true
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -82,115 +110,163 @@ fun RecommendationScreen(
                 )
                 .padding(paddingValues)
         ) {
+            // Load data on first launch
             LaunchedEffect(Unit) {
-                if (result == null) {
-                    viewModel.loadRecommendations(selectedMealType, refresh = false)
-                }
-            }
-
-            RecommendationContent(
-                selectedMealType = selectedMealType,
-                onMealTypeChanged = { newType ->
-                    selectedMealType = newType
-                    viewModel.loadRecommendations(newType, refresh = false)
-                },
-                onRefresh = {
+                if (!initialLoadDone) {
+                    Log.d(TAG, "Initial load triggered with refresh=true")
                     viewModel.loadRecommendations(selectedMealType, refresh = true)
-                },
-                isLoading = isLoading,
-                result = result,
-                navController = navController
-            )
-        }
-    }
-}
-
-@Composable
-fun RecommendationContent(
-    selectedMealType: String,
-    onMealTypeChanged: (String) -> Unit,
-    onRefresh: () -> Unit,
-    isLoading: Boolean,
-    result: com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse<RecommendationData>?,
-    navController: NavController? = null // Add navController parameter
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                color = Color(0xFFF9FAFB),
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-            ),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onRefresh) {
-                    Icon(Icons.Default.Refresh, "Refresh")
+                    initialLoadDone = true
                 }
             }
-        }
 
-        item {
-            MealTypeSelector(
-                selectedMealType = selectedMealType,
-                onMealTypeSelected = onMealTypeChanged
-            )
-        }
-
-        when {
-            isLoading -> {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        color = Color(0xFFF9FAFB),
+                        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                    ),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Refresh button at top
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator(color = Color(0xFFB67321))
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                stringResource(R.string.generating_recommendations),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        IconButton(onClick = {
+                            Log.d(TAG, "Manual refresh triggered")
+                            viewModel.loadRecommendations(selectedMealType, refresh = true)
+                        }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        }
+
+                        // Debug info to show current state - remove in production
+                        Text(
+                            text = when(state) {
+                                is RecommendationState.Initial -> "Initial"
+                                is RecommendationState.Loading -> "Loading"
+                                is RecommendationState.Success -> "Success"
+                                is RecommendationState.Error -> "Error"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                // Meal type selector
+                item {
+                    MealTypeSelector(
+                        selectedMealType = selectedMealType,
+                        onMealTypeSelected = { newType ->
+                            selectedMealType = newType
+                            Log.d(TAG, "Meal type changed to: $newType")
+                            viewModel.loadRecommendations(newType, refresh = false)
+                        }
+                    )
+                }
+
+                // Content based on state
+                when (state) {
+                    is RecommendationState.Loading -> {
+                        item {
+                            Log.d(TAG, "Rendering loading state")
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    CircularProgressIndicator(color = Color(0xFFB67321))
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        stringResource(R.string.generating_recommendations),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    is RecommendationState.Success -> {
+                        val data = (state as RecommendationState.Success).data
+                        Log.d(TAG, "Rendering success state with ${data.recommendations.size} recommendations")
+
+                        if (data.recommendations.isNotEmpty()) {
+                            // Metadata card
+                            item {
+                                RecommendationMetadataCard(data.metadata)
+                            }
+
+                            // Food recommendations
+                            items(data.recommendations) { recommendation ->
+                                FoodRecommendationCard(recommendation)
+                            }
+                        } else {
+                            item {
+                                EmptyRecommendationState()
+                            }
+                        }
+                    }
+
+                    is RecommendationState.Error -> {
+                        item {
+                            val message = (state as RecommendationState.Error).message
+                            Log.d(TAG, "Rendering error state: $message")
+                            ErrorRecommendationState(
+                                message = message,
+                                onRetry = {
+                                    viewModel.loadRecommendations(selectedMealType, refresh = true)
+                                },
+                                navController = navController
                             )
                         }
                     }
-                }
-            }
 
-            result?.status == "success" && result.data != null -> {
-                val recommendations = result.data.recommendations
-                if (recommendations.isNotEmpty()) {
-                    item {
-                        RecommendationMetadataCard(result.data.metadata)
-                    }
+                    is RecommendationState.Initial -> {
+                        item {
+                            Log.d(TAG, "Rendering initial state")
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    CircularProgressIndicator(color = Color(0xFFB67321))
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "Mempersiapkan rekomendasi makanan...",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
 
-                    items(recommendations) { recommendation ->
-                        FoodRecommendationCard(recommendation)
+                                    if (initialLoadDone) {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Button(
+                                            onClick = {
+                                                viewModel.loadRecommendations(selectedMealType, refresh = true)
+                                            },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFFB67321)
+                                            )
+                                        ) {
+                                            Text("Coba Lagi", color = Color.White)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                } else {
-                    item {
-                        EmptyRecommendationState()
-                    }
-                }
-            }
-
-            else -> {
-                item {
-                    ErrorRecommendationState(
-                        message = result?.message ?: "Failed to load recommendations",
-                        onRetry = onRefresh,
-                        navController = navController // Pass navController to ErrorRecommendationState
-                    )
                 }
             }
         }

@@ -93,7 +93,7 @@
     <string name="bottom_navigation_home">Beranda</string>
     <string name="bottom_navigation_tracking">History</string>
     <string name="bottom_navigation_ai_assistant">Ai Assistant</string>
-    <string name="bottom_navigation_profile">Akun</string>
+    <string name="bottom_navigation_profile">Profile</string>
 
     <!--  FAB  -->
     <string name="fab_add_food_entry_ai">Deteksi Makanan dari Kamera</string>

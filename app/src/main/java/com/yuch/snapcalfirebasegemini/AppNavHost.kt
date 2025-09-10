@@ -10,6 +10,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.view.AiChatScreen
@@ -193,8 +194,9 @@ fun AppNavHost(
             )
         }
         composable(Screen.Recommendation.route) {
+            val apiService = ApiConfig.getApiService()
             RecommendationScreen(
-                viewModel = RecommendationViewModel(),
+                viewModel = RecommendationViewModel(apiService),
                 navController = navController,
                 onBack = { navController.popBackStack() }
             )
