@@ -27,6 +27,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
+import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
@@ -42,7 +43,8 @@ fun SnapCalApp(
     cameraViewModel: CameraViewModel,
     getFoodViewModel: GetFoodViewModel,
     profileViewModel: ProfileViewModel,
-    onboardingViewModel: OnboardingViewModel
+    onboardingViewModel: OnboardingViewModel,
+    announcementViewModel: AnnouncementViewModel? = null
 ) {
     val navController = rememberNavController()
 
@@ -129,7 +131,8 @@ fun SnapCalApp(
                 cameraViewModel = cameraViewModel,
                 getFoodViewModel = getFoodViewModel,
                 profileViewModel = profileViewModel,
-                onboardingViewModel = onboardingViewModel
+                onboardingViewModel = onboardingViewModel,
+                announcementViewModel = announcementViewModel
             )
         }
         if (showBottomSheet) {

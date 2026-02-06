@@ -1,18 +1,23 @@
 @file:OptIn(
-    ExperimentalMaterial3Api::class
+    ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class
 )
 
 package com.yuch.snapcalfirebasegemini.view
 
+import android.content.Intent
+import android.net.Uri
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -51,10 +56,12 @@ import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.yuch.snapcalfirebasegemini.R
+import com.yuch.snapcalfirebasegemini.data.api.response.Announcement
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.ui.theme.*
+import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
@@ -72,7 +79,8 @@ fun MainScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
-    foodViewModel: GetFoodViewModel
+    foodViewModel: GetFoodViewModel,
+    announcementViewModel: AnnouncementViewModel? = null
 ) {
     val authState = authViewModel.authState.observeAsState()
     val email by authViewModel.userEmail.observeAsState("")
@@ -84,6 +92,8 @@ fun MainScreen(
     val isLoadingMore by foodViewModel.isLoadingMore.collectAsState()
     val hasMoreData by foodViewModel.hasMoreData.collectAsStateWithLifecycle()
     val errorMessage by foodViewModel.errorMessage.collectAsState()
+    
+    val announcements = announcementViewModel?.announcements?.collectAsState()?.value ?: emptyList()
 
     var isRefreshing by remember { mutableStateOf(false) }
     val refreshState = rememberPullToRefreshState()
@@ -118,6 +128,7 @@ fun MainScreen(
     LaunchedEffect(authState.value) {
         if (authState.value is AuthState.Authenticated) {
             foodViewModel.refreshFood()
+            announcementViewModel?.fetchAnnouncements()
         }
     }
 
@@ -184,6 +195,7 @@ fun MainScreen(
                                 foodViewModel.fetchFoodDate(formattedDate)
                             } else {
                                 foodViewModel.refreshFood()
+                                announcementViewModel?.fetchAnnouncements()
                             }
                             isRefreshing = false
                         }
@@ -200,6 +212,13 @@ fun MainScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        
+                        if (announcements.isNotEmpty()) {
+                            item {
+                                AnnouncementCarousel(announcements = announcements)
+                            }
+                        }
+                        
                         item {
                             // Date selector card
                             DateSelectorCard(
@@ -294,6 +313,157 @@ fun MainScreen(
                         item {
                             Spacer(modifier = Modifier.height(100.dp))
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AnnouncementCarousel(announcements: List<Announcement>) {
+    val pagerState = rememberPagerState(pageCount = { announcements.size })
+    
+    // Sort by priority (higher priority first)
+    val sortedAnnouncements = remember(announcements) {
+        announcements.sortedByDescending { it.priority }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 0.dp),
+            pageSpacing = 16.dp
+        ) { page ->
+            AnnouncementItem(announcement = sortedAnnouncements[page])
+        }
+        
+        if (sortedAnnouncements.size > 1) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                repeat(pagerState.pageCount) { iteration ->
+                    val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else Color.LightGray
+                    Box(
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .clip(CircleShape)
+                            .background(color)
+                            .size(6.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AnnouncementItem(announcement: Announcement) {
+    val context = LocalContext.current
+    
+    val cardColor = when (announcement.type) {
+        "info" -> Color(0xFFE3F2FD) // Blue 50
+        "promo" -> Color(0xFFF3E5F5) // Purple 50
+        "survey" -> Color(0xFFE8F5E9) // Green 50
+        "warning" -> Color(0xFFFFEBEE) // Red 50
+        "update" -> Color(0xFFE0F2F1) // Teal 50
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
+
+    val icon = when (announcement.type) {
+        "info" -> Icons.Default.Info
+        "promo" -> Icons.Default.Star
+        "survey" -> Icons.Default.Assignment
+        "warning" -> Icons.Default.Warning
+        "update" -> Icons.Default.Update
+        else -> Icons.Default.Notifications
+    }
+    
+    val iconColor = when (announcement.type) {
+        "info" -> Color(0xFF1976D2) // Blue 700
+        "promo" -> Color(0xFF7B1FA2) // Purple 700
+        "survey" -> Color(0xFF388E3C) // Green 700
+        "warning" -> Color(0xFFD32F2F) // Red 700
+        "update" -> Color(0xFF00796B) // Teal 700
+        else -> MaterialTheme.colorScheme.primary
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = announcement.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = announcement.message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Black.copy(alpha = 0.8f)
+            )
+
+            if (announcement.actionType != "none" && !announcement.actionUrl.isNullOrEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                if (announcement.actionType == "button") {
+                    Button(
+                        onClick = {
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(announcement.actionUrl))
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Cannot open link", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = iconColor),
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text(text = announcement.actionText ?: "Open")
+                    }
+                } else if (announcement.actionType == "link") {
+                    TextButton(
+                        onClick = {
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(announcement.actionUrl))
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Cannot open link", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text(
+                            text = announcement.actionText ?: "Learn More",
+                            color = iconColor,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
             }

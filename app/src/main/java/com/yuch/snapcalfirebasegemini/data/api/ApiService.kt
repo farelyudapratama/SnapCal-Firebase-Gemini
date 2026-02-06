@@ -6,6 +6,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.AiChatRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeMyModelResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
+import com.yuch.snapcalfirebasegemini.data.api.response.Announcement
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.Food
@@ -124,6 +125,9 @@ interface ApiService {
     suspend fun postProfile(
         @Body request: ProfileRequest
     ): Response<ApiResponse<UserPreferences>>
+
+    @GET("announcements/active")
+    suspend fun getActiveAnnouncements(): Response<ApiResponse<List<Announcement>>>
 //    @GET("api/chat/history")
 //    suspend fun getChatHistory(): Response<List<ChatMessage>>
 }

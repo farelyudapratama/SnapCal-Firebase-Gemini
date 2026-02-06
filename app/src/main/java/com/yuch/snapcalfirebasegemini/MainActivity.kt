@@ -21,6 +21,7 @@ import com.yuch.snapcalfirebasegemini.data.local.AppDatabase
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.data.repository.ProfileViewModelFactory
 import com.yuch.snapcalfirebasegemini.data.repository.ViewModelFactory
+import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
@@ -57,6 +58,14 @@ class MainActivity : ComponentActivity() {
         ProfileViewModelFactory(ApiConfig.getApiService())
     }
     private val onboardingViewModel: OnboardingViewModel by viewModels()
+    private val announcementViewModel: AnnouncementViewModel by viewModels {
+        ViewModelFactory(
+            ApiRepository(
+                apiService = ApiConfig.getApiService(),
+                foodDao = null
+            )
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,11 +75,13 @@ class MainActivity : ComponentActivity() {
         subscribeToTopic()
         // Setup callback untuk menghapus semua data saat logout
         setupClearDataCallback()
+        
+        announcementViewModel.fetchAnnouncements()
 
         setContent {
             MaterialTheme {
                 SnapCalApp(authViewModel = authViewModel, cameraViewModel = cameraViewModel, getFoodViewModel = getFoodViewModel,
-                    profileViewModel = profileViewModel, onboardingViewModel = onboardingViewModel)
+                    profileViewModel = profileViewModel, onboardingViewModel = onboardingViewModel, announcementViewModel = announcementViewModel)
             }
         }
     }

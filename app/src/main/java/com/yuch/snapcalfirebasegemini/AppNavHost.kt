@@ -29,6 +29,7 @@ import com.yuch.snapcalfirebasegemini.view.RecommendationScreen
 import com.yuch.snapcalfirebasegemini.view.RegisterScreen
 import com.yuch.snapcalfirebasegemini.view.camera.ScanScreen
 import com.yuch.snapcalfirebasegemini.viewmodel.AiChatViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
@@ -46,7 +47,8 @@ fun AppNavHost(
     profileViewModel: ProfileViewModel,
     onboardingViewModel: OnboardingViewModel,
     cameraViewModel: CameraViewModel,
-    getFoodViewModel: GetFoodViewModel
+    getFoodViewModel: GetFoodViewModel,
+    announcementViewModel: AnnouncementViewModel? = null
     ) {
     val authState = authViewModel.authState.observeAsState()
 
@@ -67,7 +69,7 @@ fun AppNavHost(
             ForgotPasswordScreen(modifier, navController, authViewModel)
         }
         composable(Screen.Main.route) {
-            MainScreen(modifier, navController, authViewModel, getFoodViewModel)
+            MainScreen(modifier, navController, authViewModel, getFoodViewModel, announcementViewModel)
         }
         composable(Screen.Profile.route) {
             ProfileScreen(modifier, navController, authViewModel, profileViewModel)

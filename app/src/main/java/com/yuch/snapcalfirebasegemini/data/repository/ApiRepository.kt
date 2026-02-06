@@ -3,6 +3,7 @@ package com.yuch.snapcalfirebasegemini.data.repository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
+import com.yuch.snapcalfirebasegemini.data.api.response.Announcement
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
@@ -13,6 +14,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.local.FoodDao
 import com.yuch.snapcalfirebasegemini.data.local.FoodEntity
 import com.yuch.snapcalfirebasegemini.utils.parseCreatedAt
+import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 
 class ApiRepository(
@@ -203,6 +205,19 @@ class ApiRepository(
             null
         }
     }
+
+    suspend fun getActiveAnnouncements(): ApiResponse<List<Announcement>>? {
+        return try {
+            val response = apiService.getActiveAnnouncements()
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
 }
 
 class ViewModelFactory(private val repository: ApiRepository) : ViewModelProvider.Factory {
@@ -210,6 +225,7 @@ class ViewModelFactory(private val repository: ApiRepository) : ViewModelProvide
         return when {
 //            modelClass.isAssignableFrom(FoodViewModel::class.java) -> FoodViewModel(repository) as T
             modelClass.isAssignableFrom(GetFoodViewModel::class.java) -> GetFoodViewModel(repository) as T
+            modelClass.isAssignableFrom(AnnouncementViewModel::class.java) -> AnnouncementViewModel(repository) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
