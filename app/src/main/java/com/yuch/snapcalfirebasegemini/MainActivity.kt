@@ -20,7 +20,7 @@ import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.yuch.snapcalfirebasegemini.data.local.AppDatabase
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.data.repository.ProfileViewModelFactory
-import com.yuch.snapcalfirebasegemini.data.repository.ViewModelFactory
+import com.yuch.snapcalfirebasegemini.viewmodel.ViewModelFactory
 import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
@@ -39,33 +39,38 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // Inisialisasi Database dan Repository sekali saja agar efisien
+    private val appDatabase by lazy {
+        Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java,
+            "snapcal_database"
+        ).build()
+    }
+
+    private val apiRepository by lazy {
+        ApiRepository(
+            apiService = ApiConfig.getApiService(),
+            foodDao = appDatabase.foodDao()
+        )
+    }
+
+    // Satu Factory untuk semua ViewModel yang butuh Repository
+    private val viewModelFactory by lazy {
+        ViewModelFactory(apiRepository)
+    }
 
     private val authViewModel: AuthViewModel by viewModels()
     private val cameraViewModel: CameraViewModel by viewModels()
-    private val getFoodViewModel: GetFoodViewModel by viewModels {
-        ViewModelFactory(
-            ApiRepository(
-                apiService = ApiConfig.getApiService(),
-                foodDao = Room.databaseBuilder(
-                    applicationContext,
-                    AppDatabase::class.java,
-                    "snapcal_database"
-                ).build().foodDao()
-            )
-        )
-    }
+    
+    // Gunakan factory yang sama
+    private val getFoodViewModel: GetFoodViewModel by viewModels { viewModelFactory }
+    private val announcementViewModel: AnnouncementViewModel by viewModels { viewModelFactory }
+    
     private val profileViewModel: ProfileViewModel by viewModels {
         ProfileViewModelFactory(ApiConfig.getApiService())
     }
     private val onboardingViewModel: OnboardingViewModel by viewModels()
-    private val announcementViewModel: AnnouncementViewModel by viewModels {
-        ViewModelFactory(
-            ApiRepository(
-                apiService = ApiConfig.getApiService(),
-                foodDao = null
-            )
-        )
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,15 +78,21 @@ class MainActivity : ComponentActivity() {
         createNotificationChannel()
         askNotificationPermission()
         subscribeToTopic()
-        // Setup callback untuk menghapus semua data saat logout
         setupClearDataCallback()
         
         announcementViewModel.fetchAnnouncements()
 
         setContent {
             MaterialTheme {
-                SnapCalApp(authViewModel = authViewModel, cameraViewModel = cameraViewModel, getFoodViewModel = getFoodViewModel,
-                    profileViewModel = profileViewModel, onboardingViewModel = onboardingViewModel, announcementViewModel = announcementViewModel)
+                SnapCalApp(
+                    authViewModel = authViewModel, 
+                    cameraViewModel = cameraViewModel, 
+                    getFoodViewModel = getFoodViewModel,
+                    profileViewModel = profileViewModel, 
+                    onboardingViewModel = onboardingViewModel, 
+                    announcementViewModel = announcementViewModel,
+                    viewModelFactory = viewModelFactory // Passing factory ke bawah
+                )
             }
         }
     }

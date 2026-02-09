@@ -17,9 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +31,7 @@ import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.ViewModelFactory
 
 @OptIn(
     ExperimentalMaterial3Api::class
@@ -44,7 +43,8 @@ fun SnapCalApp(
     getFoodViewModel: GetFoodViewModel,
     profileViewModel: ProfileViewModel,
     onboardingViewModel: OnboardingViewModel,
-    announcementViewModel: AnnouncementViewModel? = null
+    announcementViewModel: AnnouncementViewModel? = null,
+    viewModelFactory: ViewModelFactory
 ) {
     val navController = rememberNavController()
 
@@ -132,7 +132,8 @@ fun SnapCalApp(
                 getFoodViewModel = getFoodViewModel,
                 profileViewModel = profileViewModel,
                 onboardingViewModel = onboardingViewModel,
-                announcementViewModel = announcementViewModel
+                announcementViewModel = announcementViewModel,
+                viewModelFactory = viewModelFactory
             )
         }
         if (showBottomSheet) {
@@ -306,13 +307,3 @@ fun BottomNavbar(
         }
     }
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun PreviewSnapCalApp() {
-//    // Menampilkan preview tampilan dengan parameter default (bisa ganti dengan data sebenarnya)
-//    SnapCalApp(authViewModel = AuthViewModel(), cameraViewModel = CameraViewModel(), foodViewModel = FoodViewModel(
-//        apiService = TODO(),
-//        repository = TODO()
-//    ))
-//}

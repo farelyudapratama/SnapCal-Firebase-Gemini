@@ -1,14 +1,10 @@
 package com.yuch.snapcalfirebasegemini.viewmodel
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
-import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
-import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeByMyModelResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
@@ -18,6 +14,9 @@ import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionEstimateRequest
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
+import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
+import com.yuch.snapcalfirebasegemini.utils.ImageUtils
+import com.yuch.snapcalfirebasegemini.utils.normalizeDecimal
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -25,15 +24,13 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import retrofit2.Response
-import com.yuch.snapcalfirebasegemini.utils.ImageUtils
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import com.yuch.snapcalfirebasegemini.utils.normalizeDecimal
 import org.json.JSONObject
 
 class FoodViewModel(
-    private val apiService: ApiService = ApiConfig.getApiService()
+    private val repository: ApiRepository
 ) : ViewModel() {
 
     private val _analysisResult = MutableStateFlow<ApiResponse<AnalyzeResult>>(ApiResponse("error", "error", null))
@@ -78,7 +75,7 @@ class FoodViewModel(
                 val (imagePart, mimeType) = ImageUtils.prepareImageForAnalyze(imagePath)
                 val servicePart = service.toRequestBody("text/plain".toMediaTypeOrNull())
 
-                val response = apiService.analyzeFood(imagePart, servicePart)
+                val response = repository.analyzeFood(imagePart, servicePart)
                 handleResponse(response)
 
             } catch (e: Exception) {
@@ -106,7 +103,7 @@ class FoodViewModel(
                 val (imagePart, mimeType) = ImageUtils.prepareImageForAnalyze(imagePath)
                 Log.d("CustomModel", "Image prepared. MimeType: $mimeType")
 
-                val response = apiService.analyzeFoodByMyModel(imagePart)
+                val response = repository.analyzeFoodByMyModel(imagePart)
                 Log.d("CustomModel", "Response code: ${response.code()}, isSuccessful: ${response.isSuccessful}")
 
                 if (!response.isSuccessful) {
@@ -249,7 +246,7 @@ class FoodViewModel(
                 )
                 val nutritionPart = nutritionJson.toRequestBody("application/json".toMediaTypeOrNull())
 
-                val response = apiService.uploadFood(imagePart, foodNamePart, mealTypePart, weightPart, nutritionPart)
+                val response = repository.uploadFood(imagePart, foodNamePart, mealTypePart, weightPart, nutritionPart)
 
                 handleFoodResponse(response)
             } catch (e: Exception) {
@@ -316,7 +313,7 @@ class FoodViewModel(
                 )
                 val nutritionPart = nutritionJson.toRequestBody("application/json".toMediaTypeOrNull())
 
-                val response = apiService.updateFood(
+                val response = repository.updateFood(
                     id = foodId,
                     foodName = foodNamePart,
                     mealType = mealTypePart,
@@ -360,7 +357,7 @@ class FoodViewModel(
                 _isLoading.value = true
 
                 val request = NutritionEstimateRequest(foodName, description)
-                val response = apiService.estimateNutritionByName(request)
+                val response = repository.estimateNutritionByName(request)
                 handleResponse(response)
 
             } catch (e: Exception) {

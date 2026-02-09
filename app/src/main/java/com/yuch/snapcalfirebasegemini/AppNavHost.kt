@@ -5,13 +5,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
-import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.view.AiChatScreen
 import com.yuch.snapcalfirebasegemini.view.AnalyzeScreen
@@ -38,6 +38,7 @@ import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.RecommendationViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.ViewModelFactory
 
 @Composable
 fun AppNavHost(
@@ -48,8 +49,9 @@ fun AppNavHost(
     onboardingViewModel: OnboardingViewModel,
     cameraViewModel: CameraViewModel,
     getFoodViewModel: GetFoodViewModel,
-    announcementViewModel: AnnouncementViewModel? = null
-    ) {
+    announcementViewModel: AnnouncementViewModel? = null,
+    viewModelFactory: ViewModelFactory
+) {
     val authState = authViewModel.authState.observeAsState()
 
     val startDestination = when (authState.value) {
@@ -115,10 +117,13 @@ fun AppNavHost(
             val imagePath = entry.arguments?.getString("imagePath")
             requireNotNull(imagePath) { "Image path cannot be null" }
 
+            // Menggunakan Factory agar instance FoodViewModel mendapatkan Repository yang benar
+            val foodViewModel: FoodViewModel = viewModel(factory = viewModelFactory)
+
             AnalyzeScreen(
                 imagePath = imagePath,
                 onBack = { navController.popBackStack() },
-                viewModel = FoodViewModel(),
+                viewModel = foodViewModel,
                 onSuccessfulUpload = {
                     navController.popBackStack(
                         route = Screen.Main.route,
@@ -128,10 +133,13 @@ fun AppNavHost(
             )
         }
         composable(Screen.ManualEntry.route) {
+            // Menggunakan Factory
+            val foodViewModel: FoodViewModel = viewModel(factory = viewModelFactory)
+            
             ManualEntryScreen(
                 modifier,
                 onBack = { navController.popBackStack() },
-                viewModel = FoodViewModel(),
+                viewModel = foodViewModel,
                 onSuccessfulUpload = {
                     navController.popBackStack(
                         route = Screen.Main.route,
@@ -149,18 +157,20 @@ fun AppNavHost(
             val foodId = backStackEntry.arguments?.getString("foodId")!!
             val viewModelGetFood: GetFoodViewModel = getFoodViewModel
             val foodItem by viewModelGetFood.food.collectAsStateWithLifecycle()
-            val foodViewModel: FoodViewModel = FoodViewModel() // Buat instance FoodViewModel
+            
+            // Menggunakan Factory
+            val foodViewModel: FoodViewModel = viewModel(factory = viewModelFactory)
 
             EditFoodScreen(
                 foodId = foodId,
                 navController = navController,
                 foodItem = foodItem,
                 onUpdateFood = { id, imagePath, foodData ->
-                    foodViewModel.updateFood(id, imagePath, foodData) // Panggil ViewModel
+                    foodViewModel.updateFood(id, imagePath, foodData) 
                 },
                 onBack = { navController.popBackStack() },
                 getFoodViewModel = viewModelGetFood,
-                foodViewModel = foodViewModel // Pass ViewModel ke screen
+                foodViewModel = foodViewModel 
             )
         }
 
@@ -170,15 +180,6 @@ fun AppNavHost(
                 onBackClick = { navController.popBackStack() }
             )
         }
-
-//        composable("profile_onboarding") {
-//            ProfileOnboardingScreen(
-//                navController = navController,
-//                authViewModel = authViewModel,
-//                profileViewModel = profileViewModel,
-//                onboardingViewModel = onboardingViewModel,
-//            )
-//        }
 
         composable("profile_onboarding?edit={edit}",
             arguments = listOf(navArgument("edit") {

@@ -1,28 +1,63 @@
 package com.yuch.snapcalfirebasegemini.data.repository
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
+import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeMyModelResponse
+import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.Announcement
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
+import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
+import com.yuch.snapcalfirebasegemini.data.api.response.NutritionEstimateRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.local.FoodDao
 import com.yuch.snapcalfirebasegemini.data.local.FoodEntity
 import com.yuch.snapcalfirebasegemini.utils.parseCreatedAt
-import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.Response
 
 class ApiRepository(
     private val apiService: ApiService,
     private val foodDao: FoodDao?
 ) {
 
-    // TODO belom sempurna karena masih perlu refresh
+    suspend fun analyzeFood(image: MultipartBody.Part, service: RequestBody): Response<ApiResponse<AnalyzeResult>> {
+        return apiService.analyzeFood(image, service)
+    }
+
+    suspend fun analyzeFoodByMyModel(file: MultipartBody.Part): Response<AnalyzeMyModelResponse> {
+        return apiService.analyzeFoodByMyModel(file)
+    }
+
+    suspend fun estimateNutritionByName(request: NutritionEstimateRequest): Response<ApiResponse<AnalyzeResult>> {
+        return apiService.estimateNutritionByName(request)
+    }
+
+    suspend fun uploadFood(
+        image: MultipartBody.Part?,
+        foodName: RequestBody,
+        mealType: RequestBody,
+        weightInGrams: RequestBody,
+        nutritionData: RequestBody
+    ): Response<ApiResponse<Food>> {
+        return apiService.uploadFood(image, foodName, mealType, weightInGrams, nutritionData)
+    }
+
+    suspend fun updateFood(
+        id: String,
+        image: MultipartBody.Part?,
+        foodName: RequestBody?,
+        weightInGrams: RequestBody?,
+        nutritionData: RequestBody?,
+        mealType: RequestBody?
+    ): Response<ApiResponse<FoodItem>> {
+        return apiService.updateFood(id, image, foodName, weightInGrams, nutritionData, mealType)
+    }
+
     suspend fun getAllFood(page: Int): ApiResponse<FoodPage>? {
         val response = apiService.getAllFood(page)
         val body =
@@ -216,17 +251,6 @@ class ApiRepository(
             }
         } catch (e: Exception) {
             null
-        }
-    }
-}
-
-class ViewModelFactory(private val repository: ApiRepository) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return when {
-//            modelClass.isAssignableFrom(FoodViewModel::class.java) -> FoodViewModel(repository) as T
-            modelClass.isAssignableFrom(GetFoodViewModel::class.java) -> GetFoodViewModel(repository) as T
-            modelClass.isAssignableFrom(AnnouncementViewModel::class.java) -> AnnouncementViewModel(repository) as T
-            else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
 }
