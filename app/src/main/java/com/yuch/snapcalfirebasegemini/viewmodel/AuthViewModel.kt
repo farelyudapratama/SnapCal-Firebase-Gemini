@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.yuch.snapcalfirebasegemini.R
 
@@ -124,6 +125,9 @@ class AuthViewModel : ViewModel() {
     fun signout(){
         // Hapus semua data sebelum logout
         clearAllUserData()
+        
+        // Clear cached token
+        ApiConfig.clearTokenCache()
 
         auth.signOut()
         _authState.value = AuthState.Unauthenticated

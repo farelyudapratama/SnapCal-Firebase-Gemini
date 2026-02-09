@@ -7,29 +7,51 @@ import kotlinx.coroutines.withContext
 import okhttp3.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Headers
-import retrofit2.http.GET
 import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody.Companion.toResponseBody
+import java.util.concurrent.TimeUnit
 
 class ApiConfig {
 
     companion object {
 
         private const val BASE_URL = ""
+        
+        // Token caching untuk mengurangi panggilan Firebase
+        @Volatile
+        private var cachedToken: String? = null
+        @Volatile
+        private var tokenExpireTime: Long = 0
+        
+        // Token valid for 55 minutes (Firebase token expires in 1 hour)
+        private const val TOKEN_CACHE_DURATION_MS = 55 * 60 * 1000L
 
-        // Gunakan suspend function untuk asynchronous token retrieval
-        private suspend fun getFirebaseToken(): String {
+        /**
+         * Get Firebase token with caching
+         * Token di-cache selama 55 menit untuk mengurangi overhead
+         */
+        private suspend fun getFirebaseToken(forceRefresh: Boolean = false): String {
+            val currentTime = System.currentTimeMillis()
+            
+            // Return cached token if still valid and not forcing refresh
+            if (!forceRefresh && cachedToken != null && currentTime < tokenExpireTime) {
+                return cachedToken!!
+            }
+            
             val user = FirebaseAuth.getInstance().currentUser
                 ?: throw Exception("User not authenticated")
 
-            // Menggunakan await() untuk menunggu id token dengan Kotlin coroutines
             return try {
-                // Add timeout for token retrieval
                 withContext(Dispatchers.IO) {
-                    kotlinx.coroutines.withTimeout(10000) { // 10 second timeout
-                        user.getIdToken(true).await()?.token
+                    kotlinx.coroutines.withTimeout(10000) {
+                        val token = user.getIdToken(forceRefresh).await()?.token
                             ?: throw Exception("Token is null")
+                        
+                        // Cache the token
+                        cachedToken = token
+                        tokenExpireTime = currentTime + TOKEN_CACHE_DURATION_MS
+                        
+                        token
                     }
                 }
             } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
@@ -38,41 +60,66 @@ class ApiConfig {
                 throw Exception("Token retrieval failed: ${e.message}")
             }
         }
+        
+        /**
+         * Clear cached token (call on logout)
+         */
+        fun clearTokenCache() {
+            cachedToken = null
+            tokenExpireTime = 0
+        }
 
         fun getApiService(): ApiService {
             val okHttpClient = OkHttpClient.Builder()
-                // Add timeout configurations
-                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                .callTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                .callTimeout(120, TimeUnit.SECONDS)
                 .addInterceptor { chain ->
                     val request = chain.request()
 
-                    // Menjalankan fungsi async di dalam thread background
+                    // runBlocking dengan Dispatchers.IO memastikan ini berjalan di background thread
+                    // OkHttp interceptor sudah dipanggil di background thread oleh OkHttp
                     val token = try {
-                        // Gunakan CoroutineScope.launch untuk menjalankan async token retrieval
                         runBlocking(Dispatchers.IO) {
                             getFirebaseToken()
                         }
                     } catch (e: Exception) {
-                        // Handle error dengan response custom
                         return@addInterceptor Response.Builder()
                             .request(request)
-                            .protocol(okhttp3.Protocol.HTTP_1_1)
+                            .protocol(Protocol.HTTP_1_1)
                             .code(401)
                             .message("Authentication failed: ${e.message}")
                             .body("{ \"error\": \"${e.message}\" }".toResponseBody())
                             .build()
                     }
 
-                    // Membuat request dengan token
                     val newRequest = request.newBuilder()
                         .addHeader("Authorization", "Bearer $token")
                         .build()
 
-                    // Lanjutkan dengan request baru
                     chain.proceed(newRequest)
+                }
+                // Authenticator untuk handle 401 dengan token refresh
+                .authenticator { _, response ->
+                    // Hanya retry sekali untuk menghindari infinite loop
+                    if (response.request.header("Authorization-Retry") != null) {
+                        return@authenticator null
+                    }
+                    
+                    // Force refresh token dan retry request
+                    val newToken = try {
+                        runBlocking(Dispatchers.IO) {
+                            getFirebaseToken(forceRefresh = true)
+                        }
+                    } catch (e: Exception) {
+                        return@authenticator null
+                    }
+                    
+                    response.request.newBuilder()
+                        .header("Authorization", "Bearer $newToken")
+                        .header("Authorization-Retry", "true")
+                        .build()
                 }
                 .build()
 
@@ -85,3 +132,4 @@ class ApiConfig {
         }
     }
 }
+

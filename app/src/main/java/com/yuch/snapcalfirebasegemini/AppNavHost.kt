@@ -101,7 +101,7 @@ fun AppNavHost(
         }
         composable(Screen.Scan.route) {
             ScanScreen(
-                modifier, navController, authViewModel, viewModel = CameraViewModel(),
+                modifier, navController, authViewModel, viewModel = cameraViewModel,
                 onBack = { navController.popBackStack() },
             )
         }
