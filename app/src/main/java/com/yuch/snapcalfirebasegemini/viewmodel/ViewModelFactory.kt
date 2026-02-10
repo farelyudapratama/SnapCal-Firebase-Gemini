@@ -3,19 +3,26 @@ package com.yuch.snapcalfirebasegemini.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
+import com.yuch.snapcalfirebasegemini.data.repository.ProfileRepository
 
-class ViewModelFactory(private val repository: ApiRepository) : ViewModelProvider.Factory {
+class ViewModelFactory(
+    private val apiRepository: ApiRepository,
+    private val profileRepository: ProfileRepository
+) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(FoodViewModel::class.java) -> {
-                FoodViewModel(repository) as T
+                FoodViewModel(apiRepository) as T
             }
             modelClass.isAssignableFrom(GetFoodViewModel::class.java) -> {
-                GetFoodViewModel(repository) as T
+                GetFoodViewModel(apiRepository) as T
             }
             modelClass.isAssignableFrom(AnnouncementViewModel::class.java) -> {
-                AnnouncementViewModel(repository) as T
+                AnnouncementViewModel(apiRepository) as T
+            }
+            modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
+                ProfileViewModel(profileRepository) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: " + modelClass.name)
         }

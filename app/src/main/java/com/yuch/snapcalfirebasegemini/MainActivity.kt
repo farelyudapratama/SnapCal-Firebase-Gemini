@@ -19,7 +19,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.yuch.snapcalfirebasegemini.data.local.AppDatabase
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
-import com.yuch.snapcalfirebasegemini.data.repository.ProfileViewModelFactory
+import com.yuch.snapcalfirebasegemini.data.repository.ProfileRepository
 import com.yuch.snapcalfirebasegemini.viewmodel.ViewModelFactory
 import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -55,9 +55,13 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private val profileRepository by lazy {
+        ProfileRepository.getInstance(ApiConfig.getApiService())
+    }
+
     // Satu Factory untuk semua ViewModel yang butuh Repository
     private val viewModelFactory by lazy {
-        ViewModelFactory(apiRepository)
+        ViewModelFactory(apiRepository, profileRepository)
     }
 
     private val authViewModel: AuthViewModel by viewModels()
@@ -67,9 +71,7 @@ class MainActivity : ComponentActivity() {
     private val getFoodViewModel: GetFoodViewModel by viewModels { viewModelFactory }
     private val announcementViewModel: AnnouncementViewModel by viewModels { viewModelFactory }
     
-    private val profileViewModel: ProfileViewModel by viewModels {
-        ProfileViewModelFactory(ApiConfig.getApiService())
-    }
+    private val profileViewModel: ProfileViewModel by viewModels { viewModelFactory }
     private val onboardingViewModel: OnboardingViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
