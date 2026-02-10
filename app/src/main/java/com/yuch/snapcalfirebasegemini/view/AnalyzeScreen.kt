@@ -81,11 +81,7 @@ fun AnalyzeScreen(
         )
     }
 
-    // Show food composition section toggle
-    // TODO: This will control whether to show the food composition section
-//    var showComposition by remember { mutableStateOf(false) }
 
-    // Update editable data when new analysis results arrive
     LaunchedEffect(analysisResult) {
         analysisResult.data?.let {
             val baseData = EditableFoodData(
@@ -267,12 +263,7 @@ fun AnalyzeScreen(
                             onValueChange = { editableFood = it }
                         )
 
-                        // TODO: Food Composition Section - This section will display detailed
-                        // ingredients and composition information for the analyzed food
-//                        CompositionSectionPlaceholder(
-//                            showComposition = showComposition,
-//                            onToggleComposition = { showComposition = it }
-//                        )
+                        // TODO: Food Composition Section
                     }
                 }
             }
@@ -459,7 +450,6 @@ private fun ServiceSelectionCard(
                 title = "Analisis dengan Model Yolo",
                 description = "Deteksi otomatis menggunakan sistem lokal, lalu dihitung nutrisinya dengan AI.",
                 buttonText = "Analisis dengan Model Saya",
-//                isRecommended = true,
                 onClick = onMyModelClick,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer

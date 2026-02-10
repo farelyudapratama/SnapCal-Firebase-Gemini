@@ -2,7 +2,6 @@ package com.yuch.snapcalfirebasegemini
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,7 +51,7 @@ fun AppNavHost(
     announcementViewModel: AnnouncementViewModel? = null,
     viewModelFactory: ViewModelFactory
 ) {
-    val authState = authViewModel.authState.observeAsState()
+    val authState = authViewModel.authState.collectAsStateWithLifecycle()
 
     val startDestination = when (authState.value) {
         is AuthState.Authenticated -> Screen.Main.route

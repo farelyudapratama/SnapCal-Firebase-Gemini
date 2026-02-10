@@ -1,29 +1,23 @@
 package com.yuch.snapcalfirebasegemini.viewmodel
 
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
-import com.yuch.snapcalfirebasegemini.R
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class AuthViewModel : ViewModel() {
 
     private val auth : FirebaseAuth = FirebaseAuth.getInstance()
 
-    private val _authState = MutableLiveData<AuthState>()
-    val authState: LiveData<AuthState> = _authState
-    private val _userEmail = MutableLiveData<String>()
-    val userEmail: LiveData<String> = _userEmail
+    private val _authState = MutableStateFlow<AuthState>(AuthState.Unauthenticated)
+    val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    private val _firebaseToken = MutableLiveData<String?>()
-    val firebaseToken: MutableLiveData<String?> = _firebaseToken
-
-    private val _userUid = MutableLiveData<String?>()
-    val userUid: LiveData<String?> = _userUid
+    private val _userEmail = MutableStateFlow<String?>(null)
+    val userEmail: StateFlow<String?> = _userEmail.asStateFlow()
 
     // Callback untuk menghapus data di ViewModels lain
     private var clearDataCallback: (() -> Unit)? = null
@@ -61,26 +55,6 @@ class AuthViewModel : ViewModel() {
                     _authState.value = AuthState.Error(task.exception?.message?:"Something went wrong")
                 }
             }
-    }
-
-    fun getFirebaseToken() {
-        val user = auth.currentUser
-        user?.getIdToken(true)?.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val token = task.result?.token
-                // Tampilkan di Logcat
-                Log.d("FIREBASE_DEBUG", "Token berhasil didapatkan : Bearer $token")
-//                Log.d("FIREBASE_DEBUG", "Token length: ${token?.length} characters")
-//                Log.d("FIREBASE_DEBUG", "First 10 chars: ${token?.take(10)}...")
-
-                // Untuk debugging - HAPUS SEBELUM PRODUCTION
-                // _firebaseToken.postValue(token) // Uncomment jika mau tampilkan di UI
-
-                return@addOnCompleteListener
-            } else {
-                Log.e("FIREBASE_DEBUG", "Error getting token:", task.exception)
-            }
-        }
     }
 
     fun signup(email : String,password : String){
@@ -134,8 +108,6 @@ class AuthViewModel : ViewModel() {
 
         // Reset data di AuthViewModel
         _userEmail.value = null
-        _firebaseToken.value = null
-        _userUid.value = null
     }
 
     private fun clearAllUserData() {

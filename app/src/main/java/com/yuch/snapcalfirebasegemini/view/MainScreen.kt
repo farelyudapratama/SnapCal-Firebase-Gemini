@@ -29,7 +29,6 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,8 +81,8 @@ fun MainScreen(
     foodViewModel: GetFoodViewModel,
     announcementViewModel: AnnouncementViewModel? = null
 ) {
-    val authState = authViewModel.authState.observeAsState()
-    val email by authViewModel.userEmail.observeAsState("")
+    val authState = authViewModel.authState.collectAsStateWithLifecycle()
+    val email by authViewModel.userEmail.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var backPressedTime by remember { mutableLongStateOf(0L) }
 
@@ -169,7 +168,7 @@ fun MainScreen(
     ) {
         Scaffold(
             topBar = {
-                MainTopAppBar(email = email, onRecommendationClick = {
+                MainTopAppBar(email = email.orEmpty(), onRecommendationClick = {
                     navController.navigate(Screen.Recommendation.route)
                 })
             },

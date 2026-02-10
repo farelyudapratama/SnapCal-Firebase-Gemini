@@ -128,6 +128,4 @@ interface ApiService {
 
     @GET("announcements/active")
     suspend fun getActiveAnnouncements(): Response<ApiResponse<List<Announcement>>>
-//    @GET("api/chat/history")
-//    suspend fun getChatHistory(): Response<List<ChatMessage>>
 }

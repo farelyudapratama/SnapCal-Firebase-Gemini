@@ -24,7 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,7 +56,7 @@ fun ScanScreen(
     viewModel: CameraViewModel,
     onBack: () -> Unit
 ) {
-    val authState = authViewModel.authState.observeAsState()
+    val authState = authViewModel.authState.collectAsStateWithLifecycle()
     var toastMessage by remember { mutableStateOf<String?>(null) }
     val isFrontCamera by viewModel.isFrontCamera.collectAsState()
     val scaffoldState = rememberBottomSheetScaffoldState()

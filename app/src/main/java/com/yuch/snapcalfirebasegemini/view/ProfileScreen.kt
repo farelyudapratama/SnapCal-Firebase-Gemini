@@ -14,7 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,8 +49,8 @@ fun ProfileScreen(
     authViewModel: AuthViewModel,
     profileViewModel: ProfileViewModel
 ) {
-    val authState = authViewModel.authState.observeAsState()
-    val email by authViewModel.userEmail.observeAsState("")
+    val authState = authViewModel.authState.collectAsStateWithLifecycle()
+    val email by authViewModel.userEmail.collectAsStateWithLifecycle()
     val userPreferences by profileViewModel.userPreferences.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -188,46 +188,6 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                // TODO: Belum ada opsi lain, bisa ditambahkan nanti
-//                Text(
-//                    "Profile Options",
-//                    style = MaterialTheme.typography.titleLarge,
-//                    fontWeight = FontWeight.Bold,
-//                    modifier = Modifier.padding(bottom = 16.dp)
-//                )
-
-//                ProfileOptionItem(
-//                    icon = Icons.Default.Edit,
-//                    title = "Edit All Profile",
-//                    subtitle = "Edit personal info and preferences",
-//                    onClick = {
-//                        showOptionsBottomSheet = false
-//                        navController.navigate("profile_onboarding?edit=true")
-//                    }
-//                )
-
-//                ProfileOptionItem(
-//                    icon = Icons.Default.Refresh,
-//                    title = "Reset Preferences",
-//                    subtitle = "Reset dietary preferences only",
-//                    onClick = {
-//                        showOptionsBottomSheet = false
-//                        // Implement reset preferences
-////                        profileViewModel.resetPreferences()
-//                    }
-//                )
-
-//                ProfileOptionItem(
-//                    icon = Icons.Default.Download,
-//                    title = "Export Data",
-//                    subtitle = "Download your profile data",
-//                    onClick = {
-//                        showOptionsBottomSheet = false
-//                        // Implement export functionality
-////                        profileViewModel.exportData()
-//                    }
-//                )
-
                 ProfileOptionItem(
                     icon = Icons.AutoMirrored.Filled.HelpOutline,
                     title = "Help & FAQ",
@@ -276,8 +236,7 @@ fun ProfileScreen(
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
-//                        profileViewModel.deleteProfile()
-//                        authViewModel.signout()
+                        // TODO: Implement profile deletion
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
                 ) {

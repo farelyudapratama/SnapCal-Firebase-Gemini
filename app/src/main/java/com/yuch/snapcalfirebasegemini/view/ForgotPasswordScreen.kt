@@ -14,7 +14,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -43,7 +43,7 @@ fun ForgotPasswordScreen(
     var email by remember { mutableStateOf("") }
     var resetEmailSent by remember { mutableStateOf(false) }
 
-    val authState = authViewModel.authState.observeAsState()
+    val authState = authViewModel.authState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     // Pengamatan perubahan status otentikasi
