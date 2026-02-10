@@ -12,11 +12,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-sealed class ApiStatus {
-    object Idle : ApiStatus()
-    object Loading : ApiStatus()
-    data class Success(val message: String) : ApiStatus()
-    data class Error(val message: String) : ApiStatus()
+sealed class ProfileState {
+    data object Idle : ProfileState()
+    data object Loading : ProfileState()
+    data class Success(val message: String) : ProfileState()
+    data class Error(val message: String) : ProfileState()
 }
 
 // Tambahkan tipe data untuk menyimpan field error
@@ -30,11 +30,11 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
     private val _userPreferences = MutableStateFlow<UserPreferences?>(null)
     val userPreferences: StateFlow<UserPreferences?> = _userPreferences.asStateFlow()
 
-    private val _fetchStatus = MutableStateFlow<ApiStatus>(ApiStatus.Idle)
-    val fetchStatus: StateFlow<ApiStatus> = _fetchStatus.asStateFlow()
+    private val _fetchStatus = MutableStateFlow<ProfileState>(ProfileState.Idle)
+    val fetchStatus: StateFlow<ProfileState> = _fetchStatus.asStateFlow()
 
-    private val _updateStatus = MutableStateFlow<ApiStatus>(ApiStatus.Idle)
-    val updateStatus: StateFlow<ApiStatus> = _updateStatus.asStateFlow()
+    private val _updateStatus = MutableStateFlow<ProfileState>(ProfileState.Idle)
+    val updateStatus: StateFlow<ProfileState> = _updateStatus.asStateFlow()
 
     private val _isLoading = MutableStateFlow<Boolean>(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -49,25 +49,25 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
 
     fun fetchUserPreferences() {
         viewModelScope.launch {
-            _fetchStatus.value = ApiStatus.Loading
+            _fetchStatus.value = ProfileState.Loading
             _isLoading.value = true
 
             try {
                 Log.d("ProfileViewModel", "Fetching user preferences...")
                 val result = repository.getProfile()
                 _userPreferences.value = result
-                _fetchStatus.value = ApiStatus.Success("Profile loaded successfully")
+                _fetchStatus.value = ProfileState.Success("Profile loaded successfully")
                 Log.d("ProfileViewModel", "Profile loaded: ${result.personalInfo != null}")
 
             } catch (e: ProfileNotFoundException) {
                 Log.w("ProfileViewModel", "Profile not found: ${e.message}")
                 _userPreferences.value = null
-                _fetchStatus.value = ApiStatus.Success("No profile found, ready for onboarding.")
+                _fetchStatus.value = ProfileState.Success("No profile found, ready for onboarding.")
 
             } catch (e: Exception) {
                 Log.e("ProfileViewModel", "Error fetching profile: ${e.message}")
                 _userPreferences.value = null
-                _fetchStatus.value = ApiStatus.Error(e.message ?: "Failed to load profile")
+                _fetchStatus.value = ProfileState.Error(e.message ?: "Failed to load profile")
             } finally {
                 _isLoading.value = false
             }
@@ -76,7 +76,7 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
 
     fun saveOrUpdateProfile(profileRequest: ProfileRequest, onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
-            _updateStatus.value = ApiStatus.Loading
+            _updateStatus.value = ProfileState.Loading
             _isLoading.value = true
 
             // Reset field errors setiap kali submit
@@ -87,7 +87,7 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
                 val validationErrors = validateProfileRequest(profileRequest)
                 if (validationErrors.isNotEmpty()) {
                     _fieldErrors.value = validationErrors
-                    _updateStatus.value = ApiStatus.Error("Please fix the errors in your profile")
+                    _updateStatus.value = ProfileState.Error("Please fix the errors in your profile")
                     onComplete(false)
                     return@launch
                 }
@@ -95,7 +95,7 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
                 Log.d("ProfileViewModel", "Saving/updating user profile...")
                 val result = repository.updateProfile(profileRequest)
                 _userPreferences.value = result
-                _updateStatus.value = ApiStatus.Success("Profile saved successfully")
+                _updateStatus.value = ProfileState.Success("Profile saved successfully")
                 Log.d("ProfileViewModel", "Profile saved successfully")
                 onComplete(true)
 
@@ -105,9 +105,9 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
                 // Check if it's an authorization error
                 if (e.message?.contains("unauthorized", ignoreCase = true) == true ||
                     e.message?.contains("401", ignoreCase = true) == true) {
-                    _updateStatus.value = ApiStatus.Error("Authorization failed. Please login again.")
+                    _updateStatus.value = ProfileState.Error("Authorization failed. Please login again.")
                 } else {
-                    _updateStatus.value = ApiStatus.Error(e.message ?: "Failed to save profile")
+                    _updateStatus.value = ProfileState.Error(e.message ?: "Failed to save profile")
                 }
                 onComplete(false)
             } finally {
@@ -156,8 +156,8 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
 
     fun clearData() {
         _userPreferences.value = null
-        _fetchStatus.value = ApiStatus.Idle
-        _updateStatus.value = ApiStatus.Idle
+        _fetchStatus.value = ProfileState.Idle
+        _updateStatus.value = ProfileState.Idle
         _isLoading.value = false
     }
 

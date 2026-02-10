@@ -149,10 +149,10 @@ class GetFoodViewModel(
                 if (response != null) {
                     _foodList.value = response.data ?: emptyList()
                 } else {
-                    _errorMessage.value = "Data makanan tidak ditemukan"
+                    _errorMessage.value = "Food data not found"
                 }
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Terjadi kesalahan"
+                _errorMessage.value = e.message ?: "An error occurred"
             } finally {
                 _isLoading.value = false
             }
@@ -172,10 +172,10 @@ class GetFoodViewModel(
                 if (foodData != null) {
                     _food.value = foodData
                 } else {
-                    _errorMessage.value = "Makanan tidak ditemukan"
+                    _errorMessage.value = "Food not found"
                 }
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Terjadi kesalahan"
+                _errorMessage.value = e.message ?: "An error occurred"
             } finally {
                 _isLoading.value = false
             }
@@ -199,11 +199,11 @@ class GetFoodViewModel(
                         refreshFood()
                         onComplete()
                     } else {
-                        _errorMessage.value = "Gagal menghapus makanan"
+                        _errorMessage.value = "Failed to delete food"
                     }
                 }
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Terjadi kesalahan"
+                _errorMessage.value = e.message ?: "An error occurred"
             } finally {
                 _isLoading.value = false
             }
@@ -223,11 +223,11 @@ class GetFoodViewModel(
                         refreshFood()
                         _imageDeletedMessage.value = "Food image deleted successfully"
                     } else {
-                        _errorMessage.value = "Gagal menghapus gambar makanan"
+                        _errorMessage.value = "Failed to delete food image"
                     }
                 }
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Terjadi kesalahan"
+                _errorMessage.value = e.message ?: "An error occurred"
             } finally {
                 _isLoading.value = false
             }
@@ -273,7 +273,7 @@ class GetFoodViewModel(
                     _errorMessage.value = response?.message ?: "Failed to fetch user preferences"
                 }
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Terjadi kesalahan saat mengambil preferensi pengguna"
+                _errorMessage.value = e.message ?: "An error occurred while fetching user preferences"
             } finally {
                 _isLoading.value = false
             }

@@ -3,11 +3,10 @@ package com.yuch.snapcalfirebasegemini.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
-import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatMessage
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
+import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +14,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 class AiChatViewModel(
-    private val apiService: ApiService = ApiConfig.getApiService()
+    private val apiRepository: ApiRepository
 ) : ViewModel() {
     private val _chatMessages = MutableStateFlow<List<AiChatMessage>>(emptyList())
     val chatMessages: StateFlow<List<AiChatMessage>> = _chatMessages.asStateFlow()
@@ -45,14 +44,14 @@ class AiChatViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val response = apiService.getAiChatHistory()
+                val response = apiRepository.getAiChatHistory()
                 if (response.isSuccessful) {
                     _chatMessages.value = response.body()?.data ?: emptyList()
                 } else {
-                    _errorMessage.value = "Gagal mengambil data chat"
+                    _errorMessage.value = "Failed to load chat history"
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Terjadi kesalahan: ${e.message}"
+                _errorMessage.value = "An error occurred: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -65,14 +64,14 @@ class AiChatViewModel(
             _isLoading.value = true
             try {
                 val request = AiChatRequest(message, service)
-                val response = apiService.aiMessage(request)
+                val response = apiRepository.sendAiMessage(request)
                 if (response.isSuccessful) {
                     fetchChatHistory()
                 } else {
-                    _errorMessage.value = "Gagal mengirim pesan"
+                    _errorMessage.value = "Failed to send message"
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Terjadi kesalahan: ${e.message}"
+                _errorMessage.value = "An error occurred: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -82,20 +81,20 @@ class AiChatViewModel(
     fun fetchChatUsage() {
         viewModelScope.launch {
             try {
-                val response = apiService.getAiChatUsage()
+                val response = apiRepository.getAiChatUsage()
                 if (response.isSuccessful) {
                     _usageInfo.value = response.body()?.data
                 } else {
                     Log.e("ChatUsage", "Error: ${response.errorBody()?.string()}")
                     // Handle error
                     _usageInfo.value = null
-                    _errorMessage.value = "Gagal mengambil penggunaan chat"
+                    _errorMessage.value = "Failed to load chat usage"
                 }
             } catch (e: Exception) {
                 Log.e("ChatUsage", "Exception: ${e.message}")
                 // Handle exception
                 _usageInfo.value = null
-                _errorMessage.value = "Terjadi kesalahan: ${e.message}"
+                _errorMessage.value = "An error occurred: ${e.message}"
             }
         }
     }
@@ -104,14 +103,14 @@ class AiChatViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val response = apiService.deleteAiChatHistory()
+                val response = apiRepository.deleteAiChatHistory()
                 if (response.isSuccessful) {
                     fetchChatHistory()
                 } else {
-                    _errorMessage.value = "Gagal menghapus riwayat chat"
+                    _errorMessage.value = "Failed to delete chat history"
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Terjadi kesalahan: ${e.message}"
+                _errorMessage.value = "An error occurred: ${e.message}"
             } finally {
                 _isLoading.value = false
             }

@@ -21,7 +21,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodRecommendation
@@ -38,7 +37,7 @@ private const val TAG = "RecommendationScreen"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecommendationScreen(
-    viewModel: RecommendationViewModel = viewModel(),
+    viewModel: RecommendationViewModel,
     navController: NavController? = null,
     onBack: () -> Unit
 ) {

@@ -150,7 +150,7 @@ class FoodViewModel(
                             } else {
                                 Log.w("CustomModel", "No detections found in YOLO response")
                                 _yoloDetectionResult.value = emptyList()
-                                _errorMessage.value = "Model YOLO tidak mendeteksi makanan dalam gambar"
+                                _errorMessage.value = "YOLO model didn't detect any food in the image"
                             }
                         } catch (e: Exception) {
                             Log.e("CustomModel", "Failed to parse YOLO detection result", e)
@@ -167,7 +167,7 @@ class FoodViewModel(
                             _analysisResult.value = ApiResponse("success", body.message, aiResult)
 
                             // Show notification when YOLO failed and fallback to AI
-                            _successMessage.value = "Model YOLO gagal mendeteksi makanan. Analisis dilakukan menggunakan Gemini AI."
+                            _successMessage.value = "YOLO model failed to detect food. Analysis performed using Gemini AI."
                             Log.d("CustomModel", "Fallback to AI external successful")
                         } catch (e: Exception) {
                             Log.e("CustomModel", "Failed to parse AI fallback result", e)
@@ -181,7 +181,7 @@ class FoodViewModel(
                         try {
                             val aiResult = Gson().fromJson(rawJson, AnalyzeResult::class.java)
                             _analysisResult.value = ApiResponse("success", body.message, aiResult)
-                            _successMessage.value = "Analisis berhasil menggunakan AI eksternal."
+                            _successMessage.value = "Analysis completed using external AI."
                         } catch (e: Exception) {
                             Log.e("CustomModel", "Failed to parse unknown response type", e)
                             _errorMessage.value = "Unexpected response format: ${body.message}"

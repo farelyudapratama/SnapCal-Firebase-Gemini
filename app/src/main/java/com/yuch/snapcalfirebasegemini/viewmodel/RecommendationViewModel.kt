@@ -3,10 +3,9 @@ package com.yuch.snapcalfirebasegemini.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
-import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.RecommendationData
+import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,14 +14,14 @@ import kotlinx.coroutines.launch
 private const val TAG = "RecommendationViewModel"
 
 sealed class RecommendationState {
-    object Loading : RecommendationState()
-    object Initial : RecommendationState()
+    data object Loading : RecommendationState()
+    data object Initial : RecommendationState()
     data class Success(val data: RecommendationData) : RecommendationState()
     data class Error(val message: String) : RecommendationState()
 }
 
 class RecommendationViewModel(
-    private val apiService: ApiService = ApiConfig.getApiService()
+    private val apiRepository: ApiRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<RecommendationState>(RecommendationState.Initial)
@@ -64,7 +63,7 @@ class RecommendationViewModel(
                 }
 
                 Log.d(TAG, "Calling API service for recommendations - mealType: $mealType, refresh: $refresh")
-                val response = apiService.getRecommendation(mealType, refresh)
+                val response = apiRepository.getRecommendation(mealType, refresh)
                 Log.d(TAG, "API response received - Code: ${response.code()}, Message: ${response.message()}")
 
                 if (response.isSuccessful) {

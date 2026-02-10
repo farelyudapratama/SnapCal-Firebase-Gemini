@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileFieldError
-import com.yuch.snapcalfirebasegemini.viewmodel.ApiStatus
+import com.yuch.snapcalfirebasegemini.viewmodel.ProfileState
 import kotlinx.coroutines.launch
 import com.yuch.snapcalfirebasegemini.data.api.response.*
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -193,8 +193,8 @@ fun ProfileOnboardingScreen(
 
     // Monitor perubahan updateStatus untuk menampilkan Snackbar saat error
     LaunchedEffect(updateStatus) {
-        if (updateStatus is ApiStatus.Error) {
-            val errorMsg = (updateStatus as ApiStatus.Error).message
+        if (updateStatus is ProfileState.Error) {
+            val errorMsg = (updateStatus as ProfileState.Error).message
             coroutineScope.launch {
                 snackbarHostState.showSnackbar(
                     message = errorMsg,
@@ -215,11 +215,11 @@ fun ProfileOnboardingScreen(
                     }
                 }
             }
-        } else if (updateStatus is ApiStatus.Success && !isEdit) {
+        } else if (updateStatus is ProfileState.Success && !isEdit) {
             // Tampilkan snackbar sukses HANYA jika bukan dalam mode edit initial load
             coroutineScope.launch {
                 snackbarHostState.showSnackbar(
-                    message = (updateStatus as ApiStatus.Success).message,
+                    message = (updateStatus as ProfileState.Success).message,
                     duration = SnackbarDuration.Short
                 )
             }
@@ -289,7 +289,7 @@ fun ProfileOnboardingScreen(
                         }
                     }
                 },
-                isLoading = updateStatus is ApiStatus.Loading,
+                isLoading = updateStatus is ProfileState.Loading,
                 isEdit = isEdit
             )
         },

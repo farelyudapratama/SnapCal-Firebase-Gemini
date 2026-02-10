@@ -18,3 +18,8 @@ val fatColor = Color(0xFF20B4A1)
 val saturatedFatColor = Color(0xFF107A6C)
 val fiberColor = Color(0xFFAE37DC)
 val sugarColor = Color(0xFF2196F3)
+
+// Brand / App-wide colors
+val BrandOrange = Color(0xFFB67321)
+val BrandRed = Color(0xFFEA4233)
+val BackgroundGray = Color(0xFFF9FAFB)

@@ -24,6 +24,12 @@ class ViewModelFactory(
             modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
                 ProfileViewModel(profileRepository) as T
             }
+            modelClass.isAssignableFrom(AiChatViewModel::class.java) -> {
+                AiChatViewModel(apiRepository) as T
+            }
+            modelClass.isAssignableFrom(RecommendationViewModel::class.java) -> {
+                RecommendationViewModel(apiRepository) as T
+            }
             else -> throw IllegalArgumentException("Unknown ViewModel class: " + modelClass.name)
         }
     }

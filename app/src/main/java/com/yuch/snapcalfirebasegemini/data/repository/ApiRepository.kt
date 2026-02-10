@@ -1,6 +1,10 @@
 package com.yuch.snapcalfirebasegemini.data.repository
 
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
+import com.yuch.snapcalfirebasegemini.data.api.response.AiChatDelete
+import com.yuch.snapcalfirebasegemini.data.api.response.AiChatMessage
+import com.yuch.snapcalfirebasegemini.data.api.response.AiChatRequest
+import com.yuch.snapcalfirebasegemini.data.api.response.AiChatResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeMyModelResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.Announcement
@@ -11,6 +15,8 @@ import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionEstimateRequest
+import com.yuch.snapcalfirebasegemini.data.api.response.RecommendationData
+import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.local.FoodDao
@@ -252,5 +258,32 @@ class ApiRepository(
         } catch (e: Exception) {
             null
         }
+    }
+
+    // --- AI Chat ---
+
+    suspend fun getAiChatHistory(): Response<ApiResponse<List<AiChatMessage>>> {
+        return apiService.getAiChatHistory()
+    }
+
+    suspend fun sendAiMessage(request: AiChatRequest): Response<ApiResponse<AiChatResponse>> {
+        return apiService.aiMessage(request)
+    }
+
+    suspend fun getAiChatUsage(): Response<ApiResponse<UsageAiChat>> {
+        return apiService.getAiChatUsage()
+    }
+
+    suspend fun deleteAiChatHistory(): Response<ApiResponse<AiChatDelete>> {
+        return apiService.deleteAiChatHistory()
+    }
+
+    // --- Recommendations ---
+
+    suspend fun getRecommendation(
+        mealType: String,
+        refresh: Boolean = false
+    ): Response<ApiResponse<RecommendationData>> {
+        return apiService.getRecommendation(mealType, refresh)
     }
 }
