@@ -1,5 +1,3 @@
-import com.android.build.api.dsl.AaptOptions
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -27,6 +25,8 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            isShrinkResources = false
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
