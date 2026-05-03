@@ -23,3 +23,8 @@ val sugarColor = Color(0xFF2196F3)
 val BrandOrange = Color(0xFFB67321)
 val BrandRed = Color(0xFFEA4233)
 val BackgroundGray = Color(0xFFF9FAFB)
+
+// Login Screen Colors
+val PrimaryBlue = Color(0xFF1A237E)
+val LightBlue = Color(0xFF3949AB)
+val ErrorRed = Color(0xFFE53E3E)

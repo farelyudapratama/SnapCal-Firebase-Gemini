@@ -1,8 +1,10 @@
 package com.yuch.snapcalfirebasegemini
 
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -10,10 +12,12 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.view.AiChatScreen
 import com.yuch.snapcalfirebasegemini.view.AnalyzeScreen
+import com.yuch.snapcalfirebasegemini.view.AuthActionScreen
 import com.yuch.snapcalfirebasegemini.view.NutriTrackScreen
 import com.yuch.snapcalfirebasegemini.view.DetailFoodScreen
 import com.yuch.snapcalfirebasegemini.view.EditFoodScreen
@@ -29,6 +33,7 @@ import com.yuch.snapcalfirebasegemini.view.RegisterScreen
 import com.yuch.snapcalfirebasegemini.view.camera.ScanScreen
 import com.yuch.snapcalfirebasegemini.viewmodel.AiChatViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.AuthActionViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
@@ -206,6 +211,30 @@ fun AppNavHost(
         }
         composable(Screen.Help.route) {
             HelpScreen(navController)
+        }
+
+        // Rute untuk menangani Deep Link Auth Action
+        composable(
+            route = Screen.AuthAction.route,
+            deepLinks = listOf(navDeepLink {
+                uriPattern = "https://snapcal-project.netlify.app/auth-action.*"
+                action = Intent.ACTION_VIEW
+            })
+        ) {
+            val context = LocalContext.current
+            val activity = context as? android.app.Activity
+            val intent = activity?.intent
+            val authActionViewModel: AuthActionViewModel = viewModel()
+
+            AuthActionScreen(
+                intent = intent,
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.AuthAction.route) { inclusive = true }
+                    }
+                },
+                viewModel = authActionViewModel
+            )
         }
     }
 }

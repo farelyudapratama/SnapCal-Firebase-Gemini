@@ -34,6 +34,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
+import com.yuch.snapcalfirebasegemini.ui.theme.ErrorRed
+import com.yuch.snapcalfirebasegemini.ui.theme.LightBlue
+import com.yuch.snapcalfirebasegemini.ui.theme.PrimaryBlue
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 
@@ -43,52 +46,59 @@ fun RegisterScreen(
     navController: NavController,
     authViewModel: AuthViewModel
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    // State from ViewModel
+    val email by authViewModel.emailInput.collectAsStateWithLifecycle()
+    val password by authViewModel.passwordInput.collectAsStateWithLifecycle()
+    
+    // Local state for confirmation
     var confirmPassword by remember { mutableStateOf("") }
+    
+    // Visibility state
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
-    val authState = authViewModel.authState.collectAsStateWithLifecycle()
+    val authState by authViewModel.authState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
-    // Real-time validation dengan optimasi menggunakan derivedStateOf
-    val isEmailValid by remember(email) {
-        derivedStateOf {
-            email.trim().matches(Regex("^[\\w.-]+@[\\w.-]+\\.\\w{2,}$")) || email.isEmpty()
-        }
-    }
+    // Validation from ViewModel
+    val isEmailValid by authViewModel.isEmailValid.collectAsStateWithLifecycle()
+    val isPasswordValid by authViewModel.isPasswordValid.collectAsStateWithLifecycle()
 
-    val isPasswordValid by remember(password) {
-        derivedStateOf {
-            password.length >= 6 || password.isEmpty()
-        }
-    }
-
+    // Local Validation
     val passwordsMatch by remember(password, confirmPassword) {
         derivedStateOf {
             password == confirmPassword || confirmPassword.isEmpty()
         }
     }
 
-    val isFormValid by remember(email, password, confirmPassword) {
+    // Combine validation for button enablement
+    val isRegisterFormValid by remember(isEmailValid, isPasswordValid, passwordsMatch, confirmPassword) {
         derivedStateOf {
-            email.trim().matches(Regex("^[\\w.-]+@[\\w.-]+\\.\\w{2,}$")) &&
-            password.length >= 6 &&
-            password == confirmPassword &&
+            isEmailValid && isPasswordValid && 
+            password == confirmPassword && 
             confirmPassword.isNotEmpty()
         }
     }
 
-    LaunchedEffect(authState.value) {
-        when (authState.value) {
+    LaunchedEffect(authState) {
+        when (authState) {
             is AuthState.Authenticated -> navController.navigate(Screen.Main.route) {
                 popUpTo(0)
             }
+            is AuthState.EmailNotVerified -> {
+                // Handle case where email verification is required (optional to handle here if needed)
+                // Usually LoginScreen handles the blocking, but RegisterScreen might show "Check email"
+                Toast.makeText(context, "Silakan cek email Anda untuk verifikasi.", Toast.LENGTH_LONG).show()
+                // Navigate to Login or stay? If we enforced "No entry", we should go to Login or show a dialog.
+                // Assuming we want to redirect them to Login to "wait".
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(0)
+                }
+            }
             is AuthState.Error -> Toast.makeText(
                 context,
-                (authState.value as AuthState.Error).message,
+                (authState as AuthState.Error).message,
                 Toast.LENGTH_SHORT
             ).show()
             else -> Unit
@@ -102,8 +112,8 @@ fun RegisterScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF1A237E),
-                        Color(0xFF3949AB)
+                        PrimaryBlue,
+                        LightBlue
                     ),
                     endY = 400f
                 )
@@ -140,7 +150,7 @@ fun RegisterScreen(
                             text = stringResource(R.string.register_title),
                             fontSize = 26.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1A237E)
+                            color = PrimaryBlue
                         )
 
                         Text(
@@ -152,26 +162,26 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Email Field dengan validasi real-time
+                        // Email Field
                         OutlinedTextField(
                             value = email,
-                            onValueChange = { email = it },
+                            onValueChange = { authViewModel.onEmailChange(it) },
                             label = { Text("Email") },
                             singleLine = true,
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Email,
                                     contentDescription = "Email",
-                                    tint = if (isEmailValid) Color(0xFF1A237E) else Color(0xFFE53E3E)
+                                    tint = if (isEmailValid) PrimaryBlue else ErrorRed
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = if (isEmailValid) Color(0xFF1A237E) else Color(0xFFE53E3E),
-                                unfocusedBorderColor = if (isEmailValid) Color.Gray else Color(0xFFE53E3E),
-                                focusedLabelColor = if (isEmailValid) Color(0xFF1A237E) else Color(0xFFE53E3E),
-                                cursorColor = Color(0xFF1A237E)
+                                focusedBorderColor = if (isEmailValid) PrimaryBlue else ErrorRed,
+                                unfocusedBorderColor = if (isEmailValid) Color.Gray else ErrorRed,
+                                focusedLabelColor = if (isEmailValid) PrimaryBlue else ErrorRed,
+                                cursorColor = PrimaryBlue
                             ),
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Email,
@@ -185,17 +195,17 @@ fun RegisterScreen(
                                 if (!isEmailValid && email.isNotEmpty()) {
                                     Text(
                                         text = "Format email tidak valid",
-                                        color = Color(0xFFE53E3E),
+                                        color = ErrorRed,
                                         fontSize = 12.sp
                                     )
                                 }
                             }
                         )
 
-                        // Password Field dengan validasi real-time
+                        // Password Field
                         OutlinedTextField(
                             value = password,
-                            onValueChange = { password = it },
+                            onValueChange = { authViewModel.onPasswordChange(it) },
                             label = { Text("Password") },
                             singleLine = true,
                             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -203,7 +213,7 @@ fun RegisterScreen(
                                 Icon(
                                     Icons.Default.Lock,
                                     contentDescription = "Password Icon",
-                                    tint = if (isPasswordValid) Color(0xFF1A237E) else Color(0xFFE53E3E)
+                                    tint = if (isPasswordValid) PrimaryBlue else ErrorRed
                                 )
                             },
                             trailingIcon = {
@@ -211,17 +221,17 @@ fun RegisterScreen(
                                     Icon(
                                         if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                         contentDescription = "Toggle Password Visibility",
-                                        tint = Color(0xFF1A237E)
+                                        tint = PrimaryBlue
                                     )
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = if (isPasswordValid) Color(0xFF1A237E) else Color(0xFFE53E3E),
-                                unfocusedBorderColor = if (isPasswordValid) Color.Gray else Color(0xFFE53E3E),
-                                focusedLabelColor = if (isPasswordValid) Color(0xFF1A237E) else Color(0xFFE53E3E),
-                                cursorColor = Color(0xFF1A237E)
+                                focusedBorderColor = if (isPasswordValid) PrimaryBlue else ErrorRed,
+                                unfocusedBorderColor = if (isPasswordValid) Color.Gray else ErrorRed,
+                                focusedLabelColor = if (isPasswordValid) PrimaryBlue else ErrorRed,
+                                cursorColor = PrimaryBlue
                             ),
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Password,
@@ -235,14 +245,14 @@ fun RegisterScreen(
                                 if (!isPasswordValid && password.isNotEmpty()) {
                                     Text(
                                         text = "Password minimal 6 karakter",
-                                        color = Color(0xFFE53E3E),
+                                        color = ErrorRed,
                                         fontSize = 12.sp
                                     )
                                 }
                             }
                         )
 
-                        // Confirm Password Field dengan validasi real-time
+                        // Confirm Password Field
                         OutlinedTextField(
                             value = confirmPassword,
                             onValueChange = { confirmPassword = it },
@@ -253,7 +263,7 @@ fun RegisterScreen(
                                 Icon(
                                     Icons.Default.Lock,
                                     contentDescription = "Confirm Password Icon",
-                                    tint = if (passwordsMatch) Color(0xFF1A237E) else Color(0xFFE53E3E)
+                                    tint = if (passwordsMatch) PrimaryBlue else ErrorRed
                                 )
                             },
                             trailingIcon = {
@@ -261,17 +271,17 @@ fun RegisterScreen(
                                     Icon(
                                         if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                         contentDescription = "Toggle Confirm Password Visibility",
-                                        tint = Color(0xFF1A237E)
+                                        tint = PrimaryBlue
                                     )
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = if (passwordsMatch) Color(0xFF1A237E) else Color(0xFFE53E3E),
-                                unfocusedBorderColor = if (passwordsMatch) Color.Gray else Color(0xFFE53E3E),
-                                focusedLabelColor = if (passwordsMatch) Color(0xFF1A237E) else Color(0xFFE53E3E),
-                                cursorColor = Color(0xFF1A237E)
+                                focusedBorderColor = if (passwordsMatch) PrimaryBlue else ErrorRed,
+                                unfocusedBorderColor = if (passwordsMatch) Color.Gray else ErrorRed,
+                                focusedLabelColor = if (passwordsMatch) PrimaryBlue else ErrorRed,
+                                cursorColor = PrimaryBlue
                             ),
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Password,
@@ -280,8 +290,8 @@ fun RegisterScreen(
                             keyboardActions = KeyboardActions(
                                 onDone = {
                                     focusManager.clearFocus()
-                                    if (isFormValid) {
-                                        authViewModel.signup(email, password)
+                                    if (isRegisterFormValid) {
+                                        authViewModel.signup()
                                     }
                                 }
                             ),
@@ -290,7 +300,7 @@ fun RegisterScreen(
                                 if (!passwordsMatch && confirmPassword.isNotEmpty()) {
                                     Text(
                                         text = "Password tidak cocok",
-                                        color = Color(0xFFE53E3E),
+                                        color = ErrorRed,
                                         fontSize = 12.sp
                                     )
                                 }
@@ -299,20 +309,20 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Register Button dengan optimasi state
+                        // Register Button
                         Button(
                             onClick = {
                                 focusManager.clearFocus()
-                                authViewModel.signup(email, password)
+                                authViewModel.signup()
                             },
-                            enabled = isFormValid && authState.value != AuthState.Loading,
+                            enabled = isRegisterFormValid && authState != AuthState.Loading,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF1A237E),
-                                disabledContainerColor = Color(0xFF1A237E).copy(alpha = 0.5f)
+                                containerColor = PrimaryBlue,
+                                disabledContainerColor = PrimaryBlue.copy(alpha = 0.5f)
                             ),
                             elevation = ButtonDefaults.buttonElevation(
                                 defaultElevation = 4.dp,
@@ -320,7 +330,7 @@ fun RegisterScreen(
                                 disabledElevation = 0.dp
                             )
                         ) {
-                            if (authState.value == AuthState.Loading) {
+                            if (authState == AuthState.Loading) {
                                 CircularProgressIndicator(
                                     color = Color.White,
                                     modifier = Modifier.size(24.dp),
@@ -353,7 +363,7 @@ fun RegisterScreen(
                             )
                             Text(
                                 stringResource(R.string.register_login_here),
-                                color = Color(0xFF1A237E),
+                                color = PrimaryBlue,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
                             )
