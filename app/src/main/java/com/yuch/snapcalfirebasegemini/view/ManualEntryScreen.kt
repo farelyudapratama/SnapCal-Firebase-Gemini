@@ -106,10 +106,6 @@ fun ManualEntryScreen(
     ) { uri ->
         uri?.let {
             selectedImageUri = it
-
-            // Handle selected image
-            val file = uriToFile(context, it)
-            viewModel.uploadFood(file.absolutePath, foodData)
         }
     }
 

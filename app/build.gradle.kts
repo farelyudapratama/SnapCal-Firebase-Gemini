@@ -106,9 +106,9 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
 
     // Room
-    implementation("androidx.room:room-ktx:2.6.1")
-    implementation("androidx.room:room-runtime:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
 
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }
