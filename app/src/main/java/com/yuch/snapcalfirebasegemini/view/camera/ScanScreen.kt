@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.ui.components.CameraPermissionHandler
 import com.yuch.snapcalfirebasegemini.ui.components.ImagePermissionHandler
+import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
@@ -86,7 +87,7 @@ fun ScanScreen(
 
     LaunchedEffect(authState.value) {
         when (authState.value) {
-            is AuthState.Unauthenticated -> navController.navigate("login")
+            is AuthState.Unauthenticated -> navController.navigate(Screen.Login.route)
             else -> Unit
         }
     }

@@ -39,6 +39,7 @@ import com.yuch.snapcalfirebasegemini.viewmodel.ProfileFieldError
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileState
 import kotlinx.coroutines.launch
 import com.yuch.snapcalfirebasegemini.data.api.response.*
+import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
@@ -285,7 +286,7 @@ fun ProfileOnboardingScreen(
                 onFinish = {
                     profileViewModel.saveOrUpdateProfile(formData) { success ->
                         if (success) {
-                            navController.navigate("profile") { popUpTo(0) }
+                            navController.navigate(Screen.Profile.route) { popUpTo(0) }
                         }
                     }
                 },

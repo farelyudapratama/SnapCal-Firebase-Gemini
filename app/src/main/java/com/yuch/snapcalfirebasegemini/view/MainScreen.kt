@@ -104,7 +104,7 @@ fun MainScreen(
 
     LaunchedEffect(authState.value) {
         if (authState.value is AuthState.Unauthenticated) {
-            navController.navigate("login")
+            navController.navigate(Screen.Login.route)
         }
     }
 

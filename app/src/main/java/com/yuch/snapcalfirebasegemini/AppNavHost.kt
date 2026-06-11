@@ -1,10 +1,20 @@
 package com.yuch.snapcalfirebasegemini
 
 import android.content.Intent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -158,24 +168,41 @@ fun AppNavHost(
                 navArgument("foodId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val foodId = backStackEntry.arguments?.getString("foodId")!!
-            val viewModelGetFood: GetFoodViewModel = getFoodViewModel
-            val foodItem by viewModelGetFood.food.collectAsStateWithLifecycle()
-            
-            // Menggunakan Factory
-            val foodViewModel: FoodViewModel = viewModel(factory = viewModelFactory)
+            val foodId = backStackEntry.arguments?.getString("foodId")
 
-            EditFoodScreen(
-                foodId = foodId,
-                navController = navController,
-                foodItem = foodItem,
-                onUpdateFood = { id, imagePath, foodData ->
-                    foodViewModel.updateFood(id, imagePath, foodData) 
-                },
-                onBack = { navController.popBackStack() },
-                getFoodViewModel = viewModelGetFood,
-                foodViewModel = foodViewModel 
-            )
+            if (foodId == null) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column (horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Maaf, ID Makanan tidak ditemukan.",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { navController.popBackStack() }) {
+                            Text("Kembali")
+                        }
+                    }
+                }
+            } else {
+                val viewModelGetFood: GetFoodViewModel = getFoodViewModel
+                val foodViewModel: FoodViewModel = viewModel(factory = viewModelFactory)
+                val foodItem by viewModelGetFood.food.collectAsStateWithLifecycle()
+
+                EditFoodScreen(
+                    foodId = foodId,
+                    navController = navController,
+                    foodItem = foodItem,
+                    onUpdateFood = { id, imagePath, foodData ->
+                        foodViewModel.updateFood(id, imagePath, foodData)
+                    },
+                    onBack = { navController.popBackStack() },
+                    getFoodViewModel = viewModelGetFood,
+                    foodViewModel = foodViewModel
+                )
+            }
         }
 
         composable(Screen.AiChat.route) {

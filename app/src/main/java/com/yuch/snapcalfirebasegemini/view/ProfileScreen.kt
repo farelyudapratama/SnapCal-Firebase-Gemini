@@ -58,7 +58,7 @@ fun ProfileScreen(
 
     LaunchedEffect(authState.value) {
         if (authState.value is AuthState.Unauthenticated) {
-            navController.navigate("login") { popUpTo(0) }
+            navController.navigate(Screen.Login.route) { popUpTo(0) }
         }
     }
     LaunchedEffect(Unit) {

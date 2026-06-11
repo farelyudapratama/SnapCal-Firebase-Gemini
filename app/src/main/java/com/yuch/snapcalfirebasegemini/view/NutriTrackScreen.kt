@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.*
+import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
@@ -63,7 +64,7 @@ fun NutriTrackScreen(
     val authState = authViewModel.authState.collectAsStateWithLifecycle()
     LaunchedEffect(authState.value) {
         if (authState.value is AuthState.Unauthenticated) {
-            navController.navigate("login") { popUpTo(0) }
+            navController.navigate(Screen.Login.route) { popUpTo(0) }
         }
     }
 

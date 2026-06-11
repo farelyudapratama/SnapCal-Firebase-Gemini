@@ -351,7 +351,7 @@ fun RegisterScreen(
                         // Login Button
                         Row(
                             modifier = Modifier
-                                .clickable { navController.navigate("login") }
+                                .clickable { navController.navigate(Screen.Login.route) }
                                 .padding(vertical = 8.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically

@@ -312,7 +312,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                             text = stringResource(R.string.forgot_password),
                             modifier = Modifier
                                 .align(Alignment.End)
-                                .clickable { navController.navigate("forgot-password") },
+                                .clickable { navController.navigate(Screen.ForgotPassword.route) },
                             color = PrimaryBlue,
                             fontSize = 12.sp
                         )
@@ -358,7 +358,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController, aut
                         // Register option
                         Row(
                             modifier = Modifier
-                                .clickable { navController.navigate("register") }
+                                .clickable { navController.navigate(Screen.Register.route) }
                                 .padding(vertical = 8.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
