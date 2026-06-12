@@ -17,7 +17,6 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -94,7 +93,7 @@ fun ProfileScreen(
                     EmptyStateCard(
                         message = stringResource(R.string.personal_info_empty),
                         onActionClick = {
-                            navController.navigate("profile_onboarding?edit=false")
+                            navController.navigate(Screen.ProfileOnboarding.createRoute(edit = false))
                         },
                         actionLabel = stringResource(R.string.fill_now)
                     )
@@ -123,7 +122,7 @@ fun ProfileScreen(
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     // Quick edit button untuk personal info
                                     IconButton(
-                                        onClick = { navController.navigate("profile_onboarding?edit=true&section=personal") },
+                                        onClick = { navController.navigate(Screen.ProfileOnboarding.createRoute(edit = true)) },
                                     ) {
                                         Icon(
                                             Icons.Default.Edit,

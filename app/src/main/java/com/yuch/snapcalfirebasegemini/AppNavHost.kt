@@ -36,7 +36,7 @@ import com.yuch.snapcalfirebasegemini.view.HelpScreen
 import com.yuch.snapcalfirebasegemini.view.LoginScreen
 import com.yuch.snapcalfirebasegemini.view.MainScreen
 import com.yuch.snapcalfirebasegemini.view.ManualEntryScreen
-import com.yuch.snapcalfirebasegemini.view.ProfileOnboardingScreen
+import com.yuch.snapcalfirebasegemini.view.onboarding.ProfileOnboardingScreen
 import com.yuch.snapcalfirebasegemini.view.ProfileScreen
 import com.yuch.snapcalfirebasegemini.view.RecommendationScreen
 import com.yuch.snapcalfirebasegemini.view.RegisterScreen
@@ -213,7 +213,7 @@ fun AppNavHost(
             )
         }
 
-        composable("profile_onboarding?edit={edit}",
+        composable(route = Screen.ProfileOnboarding.route,
             arguments = listOf(navArgument("edit") {
                 defaultValue = "false"
             })
@@ -222,7 +222,6 @@ fun AppNavHost(
 
             ProfileOnboardingScreen(
                 navController = navController,
-                authViewModel = authViewModel,
                 profileViewModel = profileViewModel,
                 onboardingViewModel = onboardingViewModel,
                 isEdit = isEdit
