@@ -174,7 +174,7 @@ fun DetailFoodScreen(
             containerColor = Color.Transparent,
             floatingActionButton = {
                 FloatingActionButton(
-                    onClick = { navController.navigate("edit-food/$foodId") },
+                    onClick = { navController.navigate(Screen.EditFood.createRoute(foodId)) },
                     containerColor = caloriesColor
                 ) {
                     Icon(

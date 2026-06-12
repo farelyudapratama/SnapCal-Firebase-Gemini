@@ -243,7 +243,7 @@ fun AppNavHost(
         composable(
             route = Screen.AuthAction.route,
             deepLinks = listOf(navDeepLink {
-                uriPattern = "https://snapcal-project.netlify.app/auth-action.*"
+                uriPattern = "https://snapcal.yudev.my.id/auth-action.*"
                 action = Intent.ACTION_VIEW
             })
         ) {

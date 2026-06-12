@@ -201,7 +201,7 @@ fun ProfileScreen(
                     subtitle = stringResource(R.string.edit_profile_subtitle),
                     onClick = {
                         showOptionsBottomSheet = false
-                        navController.navigate("profile_onboarding?edit=true")
+                        navController.navigate(Screen.ProfileOnboarding.createRoute(edit = true))
                     }
                 )
 

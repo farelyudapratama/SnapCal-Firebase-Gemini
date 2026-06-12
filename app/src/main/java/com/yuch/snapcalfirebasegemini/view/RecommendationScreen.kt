@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodRecommendation
+import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.RecommendationState
 import com.yuch.snapcalfirebasegemini.viewmodel.RecommendationViewModel
 import java.time.Instant
@@ -664,7 +665,7 @@ fun ErrorRecommendationState(
             if (isProfileDataMissing && navController != null) {
                 Button(
                     onClick = {
-                        navController.navigate("profile_onboarding?edit=false")
+                        navController.navigate(Screen.ProfileOnboarding.createRoute(edit = false))
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFD97706)

@@ -111,7 +111,7 @@ fun ScanScreen(
                             viewModel.onTakePhoto(imagePath)
                             // Encode path untuk navigasi
                             val encodedPath = URLEncoder.encode(imagePath, "UTF-8")
-                            navController.navigate("analyze/$encodedPath")
+                            navController.navigate(Screen.Analyze.createRoute(encodedPath))
                         },
                         onError = { error ->
                             toastMessage = "Error: ${error.message}"
@@ -267,7 +267,7 @@ private fun processSelectedImage(
         val encodedPath = java.net.URLEncoder.encode(file.absolutePath, "UTF-8")
 
         // Navigasi ke preview screen
-        navController.navigate("analyze/$encodedPath")
+        navController.navigate(Screen.Analyze.createRoute(encodedPath))
     } catch (e: Exception) {
         Toast.makeText(context, "Failed to process image", Toast.LENGTH_SHORT).show()
     }

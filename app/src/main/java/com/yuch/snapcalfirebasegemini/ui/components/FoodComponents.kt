@@ -29,6 +29,7 @@ import com.github.mikephil.charting.data.PieEntry
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
+import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.ui.theme.*
 import java.time.Instant
 import java.time.ZoneId
@@ -46,7 +47,7 @@ fun FoodItemCard(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable {
-                navController.navigate("detail-food/${food.id}")
+                navController.navigate(Screen.DetailFood.createRoute(food.id))
             },
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
