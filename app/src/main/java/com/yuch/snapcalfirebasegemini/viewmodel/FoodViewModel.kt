@@ -12,6 +12,8 @@ import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodDetectionByMyModelResult
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionEstimateRequest
+import com.yuch.snapcalfirebasegemini.data.api.request.toUpdateFoodParts
+import com.yuch.snapcalfirebasegemini.data.api.request.toUploadFoodParts
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
@@ -224,29 +226,15 @@ class FoodViewModel(
 
         viewModelScope.launch {
             try {
-                val imagePart = imagePath?.let {
-                    val validationError = ImageUtils.validateImageFile(it)
-                    if (validationError != null) throw Exception(validationError)
-                    ImageUtils.prepareImageForUpload(it).first
-                }
+                val foodParts = safeFoodData.toUploadFoodParts(imagePath)
 
-                val foodNamePart = safeFoodData.foodName.toRequestBody("text/plain".toMediaTypeOrNull())
-                val mealTypePart = safeFoodData.mealType!!.toRequestBody("text/plain".toMediaTypeOrNull())
-                val weightPart = safeFoodData.weightInGrams.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-                val nutritionJson = Gson().toJson(
-                    mapOf(
-                        "calories" to safeFoodData.calories,
-                        "carbs" to safeFoodData.carbs,
-                        "protein" to safeFoodData.protein,
-                        "totalFat" to safeFoodData.totalFat,
-                        "saturatedFat" to safeFoodData.saturatedFat,
-                        "fiber" to safeFoodData.fiber,
-                        "sugar" to safeFoodData.sugar
-                    )
+                val response = repository.uploadFood(
+                    image = foodParts.image,
+                    foodName = foodParts.foodName,
+                    mealType = foodParts.mealType,
+                    weightInGrams = foodParts.weightInGrams,
+                    nutritionData = foodParts.nutritionData
                 )
-                val nutritionPart = nutritionJson.toRequestBody("application/json".toMediaTypeOrNull())
-
-                val response = repository.uploadFood(imagePart, foodNamePart, mealTypePart, weightPart, nutritionPart)
 
                 handleFoodResponse(response)
             } catch (e: Exception) {
@@ -289,37 +277,15 @@ class FoodViewModel(
 
         viewModelScope.launch {
             try {
-                val imagePart = imagePath?.let {
-                    val validationError = ImageUtils.validateImageFile(it)
-                    if (validationError != null) throw Exception(validationError)
-                    ImageUtils.prepareImageForUpload(it).first
-                }
-
-                val foodNamePart =
-                    foodData.foodName?.toRequestBody("text/plain".toMediaTypeOrNull())
-                val mealTypePart = foodData.mealType.toRequestBody("text/plain".toMediaTypeOrNull())
-                val weightPart = foodData.weightInGrams.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-
-                val nutritionJson = Gson().toJson(
-                    mapOf(
-                        "calories" to foodData.calories,
-                        "carbs" to foodData.carbs,
-                        "protein" to foodData.protein,
-                        "totalFat" to foodData.totalFat,
-                        "saturatedFat" to foodData.saturatedFat,
-                        "fiber" to foodData.fiber,
-                        "sugar" to foodData.sugar
-                    )
-                )
-                val nutritionPart = nutritionJson.toRequestBody("application/json".toMediaTypeOrNull())
+                val foodParts = foodData.toUpdateFoodParts(imagePath)
 
                 val response = repository.updateFood(
                     id = foodId,
-                    foodName = foodNamePart,
-                    mealType = mealTypePart,
-                    weightInGrams = weightPart,
-                    nutritionData = nutritionPart,
-                    image = imagePart
+                    foodName = foodParts.foodName,
+                    mealType = foodParts.mealType,
+                    weightInGrams = foodParts.weightInGrams,
+                    nutritionData = foodParts.nutritionData,
+                    image = foodParts.image
                 )
 
                 if (response.isSuccessful) {

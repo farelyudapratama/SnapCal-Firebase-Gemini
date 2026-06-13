@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.yuch.snapcalfirebasegemini.data.api.response.ProfileRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.data.repository.ProfileRepository
-import com.yuch.snapcalfirebasegemini.data.repository.ProfileNotFoundException
+import com.yuch.snapcalfirebasegemini.domain.result.AppResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,14 +55,21 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
             try {
                 Log.d("ProfileViewModel", "Fetching user preferences...")
                 val result = repository.getProfile()
-                _userPreferences.value = result
-                _fetchStatus.value = ProfileState.Success("Profile loaded successfully")
-                Log.d("ProfileViewModel", "Profile loaded: ${result.personalInfo != null}")
-
-            } catch (e: ProfileNotFoundException) {
-                Log.w("ProfileViewModel", "Profile not found: ${e.message}")
-                _userPreferences.value = null
-                _fetchStatus.value = ProfileState.Success("No profile found, ready for onboarding.")
+                when (result) {
+                    is AppResult.Success -> {
+                        _userPreferences.value = result.data
+                        _fetchStatus.value = ProfileState.Success("Profile loaded successfully")
+                        Log.d("ProfileViewModel", "Profile loaded successfully")
+                    }
+                    is AppResult.Error -> {
+                        _userPreferences.value = null
+                        _fetchStatus.value = if (result.code == 404 || result.errorCode == "PROFILE_NOT_FOUND") {
+                            ProfileState.Success("No profile found, ready for onboarding.")
+                        } else {
+                            ProfileState.Error(result.message)
+                        }
+                    }
+                }
 
             } catch (e: Exception) {
                 Log.e("ProfileViewModel", "Error fetching profile: ${e.message}")
@@ -94,10 +101,22 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
 
                 Log.d("ProfileViewModel", "Saving/updating user profile...")
                 val result = repository.updateProfile(profileRequest)
-                _userPreferences.value = result
-                _updateStatus.value = ProfileState.Success("Profile saved successfully")
-                Log.d("ProfileViewModel", "Profile saved successfully")
-                onComplete(true)
+                when (result) {
+                    is AppResult.Success -> {
+                        _userPreferences.value = result.data
+                        _updateStatus.value = ProfileState.Success("Profile saved successfully")
+                        Log.d("ProfileViewModel", "Profile saved successfully")
+                        onComplete(true)
+                    }
+                    is AppResult.Error -> {
+                        if (result.code == 401 || result.message.contains("unauthorized", ignoreCase = true)) {
+                            _updateStatus.value = ProfileState.Error("Authorization failed. Please login again.")
+                        } else {
+                            _updateStatus.value = ProfileState.Error(result.message)
+                        }
+                        onComplete(false)
+                    }
+                }
 
             } catch (e: Exception) {
                 Log.e("ProfileViewModel", "Error saving profile: ${e.message}")

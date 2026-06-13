@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.local.AppDatabase
+import com.yuch.snapcalfirebasegemini.data.local.FoodDao
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.data.repository.ProfileRepository
 import com.yuch.snapcalfirebasegemini.viewmodel.ViewModelFactory
@@ -20,8 +21,12 @@ class AppContainer(private val context: Context) {
         ).build()
     }
 
+    val foodDao: FoodDao by lazy {
+        database.foodDao()
+    }
+
     // 2. ApiService Dibuat HANYA SEKALI di sini
-    val apiService by lazy {
+    val apiService: ApiService by lazy {
         ApiConfig.getApiService()
     }
 
@@ -29,7 +34,7 @@ class AppContainer(private val context: Context) {
     val apiRepository by lazy {
         ApiRepository(
             apiService = apiService,
-            foodDao = database.foodDao()
+            foodDao = foodDao
         )
     }
 

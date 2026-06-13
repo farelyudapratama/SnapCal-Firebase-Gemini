@@ -5,15 +5,14 @@ import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.ProfileRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
-import retrofit2.HttpException
-import java.io.IOException
+import com.yuch.snapcalfirebasegemini.domain.result.AppResult
 
-class ProfileNotFoundException(message: String = "User profile not found") : Exception(message)
+private const val ERROR_PROFILE_NOT_FOUND = "PROFILE_NOT_FOUND"
 
 class ProfileRepository(private val apiService: ApiService) {
 
-    suspend fun getProfile(): UserPreferences {
-        try {
+    suspend fun getProfile(): AppResult<UserPreferences> {
+        return try {
             Log.d("ProfileRepository", "Fetching profile from backend...")
             val response = apiService.getProfile()
 
@@ -23,42 +22,45 @@ class ProfileRepository(private val apiService: ApiService) {
 
                 if (apiResponse?.status == "success" && apiResponse.data != null) {
                     Log.d("ProfileRepository", "Profile data found: ${apiResponse.data}")
-                    return apiResponse.data
+                    AppResult.Success(apiResponse.data, apiResponse.message)
                 } else {
                     Log.w("ProfileRepository", "Profile not found or empty response")
-                    throw ProfileNotFoundException("Profile not found")
+                    AppResult.Error(
+                        message = "Profile not found",
+                        code = response.code(),
+                        errorCode = ERROR_PROFILE_NOT_FOUND
+                    )
                 }
             } else {
                 when (response.code()) {
                     404 -> {
                         Log.w("ProfileRepository", "Profile not found (404)")
-                        throw ProfileNotFoundException("Profile not found")
+                        AppResult.Error(
+                            message = "Profile not found",
+                            code = response.code(),
+                            errorCode = ERROR_PROFILE_NOT_FOUND
+                        )
                     }
                     else -> {
                         Log.e("ProfileRepository", "Failed to fetch profile: ${response.code()}")
-                        throw Exception("Failed to fetch profile: ${response.message()}")
+                        AppResult.Error(
+                            message = "Failed to fetch profile: ${response.message()}",
+                            code = response.code()
+                        )
                     }
                 }
             }
-        } catch (e: IOException) {
-            Log.e("ProfileRepository", "Network error: ${e.message}")
-            throw Exception("Network error. Please check your internet connection.")
-        } catch (e: HttpException) {
-            Log.e("ProfileRepository", "HTTP error: ${e.code()}")
-            if (e.code() == 404) {
-                throw ProfileNotFoundException("Profile not found")
-            }
-            throw Exception("Server error: ${e.message()}")
-        } catch (e: ProfileNotFoundException) {
-            throw e
         } catch (e: Exception) {
             Log.e("ProfileRepository", "Unexpected error: ${e.message}")
-            throw e
+            AppResult.Error(
+                message = e.message ?: "Failed to fetch profile",
+                cause = e
+            )
         }
     }
 
-    suspend fun updateProfile(profileRequest: ProfileRequest): UserPreferences {
-        try {
+    suspend fun updateProfile(profileRequest: ProfileRequest): AppResult<UserPreferences> {
+        return try {
             Log.d("ProfileRepository", "Updating profile...")
             val response = apiService.postProfile(profileRequest)
 
@@ -67,23 +69,26 @@ class ProfileRepository(private val apiService: ApiService) {
 
                 if (apiResponse?.status == "success" && apiResponse.data != null) {
                     Log.d("ProfileRepository", "Profile updated successfully")
-                    return apiResponse.data
+                    AppResult.Success(apiResponse.data, apiResponse.message)
                 } else {
-                    throw Exception("Failed to update profile")
+                    AppResult.Error(
+                        message = apiResponse?.message ?: "Failed to update profile",
+                        code = response.code()
+                    )
                 }
             } else {
                 Log.e("ProfileRepository", "Failed to update profile: ${response.code()}")
-                throw Exception("Failed to update profile: ${response.message()}")
+                AppResult.Error(
+                    message = "Failed to update profile: ${response.message()}",
+                    code = response.code()
+                )
             }
-        } catch (e: IOException) {
-            Log.e("ProfileRepository", "Network error during update: ${e.message}")
-            throw Exception("Network error. Please check your internet connection.")
-        } catch (e: HttpException) {
-            Log.e("ProfileRepository", "HTTP error during update: ${e.code()}")
-            throw Exception("Server error: ${e.message()}")
         } catch (e: Exception) {
             Log.e("ProfileRepository", "Unexpected error during update: ${e.message}")
-            throw e
+            AppResult.Error(
+                message = e.message ?: "Failed to update profile",
+                cause = e
+            )
         }
     }
 }

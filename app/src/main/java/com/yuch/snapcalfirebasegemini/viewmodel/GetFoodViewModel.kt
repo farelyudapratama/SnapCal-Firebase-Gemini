@@ -7,11 +7,10 @@ import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
-import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
+import com.yuch.snapcalfirebasegemini.data.mapper.toFoodItem
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
-import com.yuch.snapcalfirebasegemini.utils.formatDateFromLong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -106,27 +105,7 @@ class GetFoodViewModel(
                 // Jika terjadi error (misalnya tidak ada internet), ambil data dari cache
                 _errorMessage.value = e.message
                 val cachedData = repository.getCachedFoods()
-                // Konversikan FoodEntity ke Food (harus Anda implementasikan fungsi mapping-nya)
-                _foodList.value = cachedData.map{
-                    FoodItem(
-                        id = it.id,
-                        userId = it.userId,
-                        foodName = it.foodName,
-                        mealType = it.mealType,
-                        weightInGrams = it.weightInGrams.toString(),
-                        nutritionData = NutritionData(
-                            calories = it.calories,
-                            carbs = it.carbs,
-                            protein = it.protein,
-                            totalFat = it.totalFat,
-                            saturatedFat = it.saturatedFat,
-                            fiber = it.fiber,
-                            sugar = it.sugar
-                        ),
-                        imageUrl = it.imageUrl,
-                        createdAt = formatDateFromLong(it.createdAt)
-                    )
-                }
+                _foodList.value = cachedData.map { it.toFoodItem() }
                 // Set flag hasMoreData false jika data cache digunakan (atau Anda bisa logika lain)
                 _hasMoreData.value = false
             } finally {

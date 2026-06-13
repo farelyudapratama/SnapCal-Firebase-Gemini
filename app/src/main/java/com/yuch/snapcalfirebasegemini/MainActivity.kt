@@ -14,13 +14,7 @@ import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
-import androidx.room.Room
 import com.google.firebase.messaging.FirebaseMessaging
-import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
-import com.yuch.snapcalfirebasegemini.data.local.AppDatabase
-import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
-import com.yuch.snapcalfirebasegemini.data.repository.ProfileRepository
-import com.yuch.snapcalfirebasegemini.viewmodel.ViewModelFactory
 import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
