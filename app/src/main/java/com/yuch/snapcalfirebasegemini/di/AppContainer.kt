@@ -34,8 +34,7 @@ class AppContainer(private val context: Context) {
     }
 
     val profileRepository by lazy {
-        // Jika kamu menghapus getInstance() di ProfileRepository, ubah jadi ProfileRepository(apiService)
-        ProfileRepository.getInstance(apiService)
+        ProfileRepository(apiService)
     }
 
     // 4. ViewModel Factory Tunggal

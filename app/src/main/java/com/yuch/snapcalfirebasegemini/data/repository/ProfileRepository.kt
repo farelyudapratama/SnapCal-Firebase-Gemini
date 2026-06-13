@@ -86,14 +86,4 @@ class ProfileRepository(private val apiService: ApiService) {
             throw e
         }
     }
-
-    companion object {
-        @Volatile
-        private var instance: ProfileRepository? = null
-
-        fun getInstance(apiService: ApiService): ProfileRepository =
-            instance ?: synchronized(this) {
-                instance ?: ProfileRepository(apiService).also { instance = it }
-            }
-    }
 }
