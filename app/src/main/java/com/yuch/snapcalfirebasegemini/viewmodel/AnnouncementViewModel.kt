@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yuch.snapcalfirebasegemini.data.api.response.Announcement
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
+import com.yuch.snapcalfirebasegemini.domain.result.AppResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -26,11 +27,9 @@ class AnnouncementViewModel(
             _isLoading.value = true
             _errorMessage.value = null
             try {
-                val response = repository.getActiveAnnouncements()
-                if (response != null && response.status == "success") {
-                    _announcements.value = response.data ?: emptyList()
-                } else {
-                    _errorMessage.value = response?.message ?: "Failed to fetch announcements"
+                when (val result = repository.getActiveAnnouncements()) {
+                    is AppResult.Success -> _announcements.value = result.data
+                    is AppResult.Error -> _errorMessage.value = result.message
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "An error occurred"

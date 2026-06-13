@@ -22,6 +22,8 @@ class ApiConfig {
         private var cachedToken: String? = null
         @Volatile
         private var tokenExpireTime: Long = 0
+        @Volatile
+        private var apiService: ApiService? = null
         
         // Token valid for 55 minutes (Firebase token expires in 1 hour)
         private const val TOKEN_CACHE_DURATION_MS = 55 * 60 * 1000L
@@ -70,6 +72,16 @@ class ApiConfig {
         }
 
         fun getApiService(): ApiService {
+            apiService?.let { return it }
+
+            synchronized(this) {
+                apiService?.let { return it }
+
+                return createApiService().also { apiService = it }
+            }
+        }
+
+        private fun createApiService(): ApiService {
             val okHttpClient = OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(60, TimeUnit.SECONDS)
@@ -132,4 +144,3 @@ class ApiConfig {
         }
     }
 }
-

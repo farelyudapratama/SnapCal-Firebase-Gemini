@@ -3,14 +3,13 @@ package com.yuch.snapcalfirebasegemini.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.DailySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
-import com.yuch.snapcalfirebasegemini.data.api.response.FoodPage
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.data.api.response.WeeklySummaryResponse
 import com.yuch.snapcalfirebasegemini.data.mapper.toFoodItem
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
+import com.yuch.snapcalfirebasegemini.domain.result.AppResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -87,8 +86,13 @@ class GetFoodViewModel(
             _errorMessage.value = null
             try {
                 // Coba ambil data dari API
-                val response: ApiResponse<FoodPage>? = repository.getAllFood(page)
-                val fetchedItems = response?.data?.items ?: emptyList()
+                val result = repository.getAllFood(page)
+                if (result is AppResult.Error) {
+                    throw Exception(result.message)
+                }
+
+                val foodPage = (result as AppResult.Success).data
+                val fetchedItems = foodPage.items
 
                 // Jika halaman pertama, replace data; jika tidak, append data
                 _foodList.value = if (page == 1) {
@@ -97,9 +101,7 @@ class GetFoodViewModel(
                     _foodList.value + fetchedItems
                 }
                 _currentPage.value = page
-                if (response != null) {
-                    _totalPages.value = response.data?.totalPages ?: 1
-                }
+                _totalPages.value = foodPage.totalPages
                 _hasMoreData.value = _currentPage.value < _totalPages.value
             } catch (e: Exception) {
                 // Jika terjadi error (misalnya tidak ada internet), ambil data dari cache
@@ -124,11 +126,9 @@ class GetFoodViewModel(
             _errorMessage.value = null
 
             try {
-                val response = repository.getFoodDate(date)
-                if (response != null) {
-                    _foodList.value = response.data ?: emptyList()
-                } else {
-                    _errorMessage.value = "Food data not found"
+                when (val result = repository.getFoodDate(date)) {
+                    is AppResult.Success -> _foodList.value = result.data
+                    is AppResult.Error -> _errorMessage.value = result.message
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "An error occurred"
@@ -147,11 +147,9 @@ class GetFoodViewModel(
             _errorMessage.value = null
 
             try {
-                val foodData = repository.getFoodById(foodId, forceRefresh)
-                if (foodData != null) {
-                    _food.value = foodData
-                } else {
-                    _errorMessage.value = "Food not found"
+                when (val result = repository.getFoodById(foodId, forceRefresh)) {
+                    is AppResult.Success -> _food.value = result.data
+                    is AppResult.Error -> _errorMessage.value = result.message
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "An error occurred"
@@ -170,16 +168,14 @@ class GetFoodViewModel(
             _errorMessage.value = null
 
             try {
-                val response = repository.deleteFood(foodId)
-                if (response != null) {
-                    if (response.status == "success") {
+                when (val result = repository.deleteFood(foodId)) {
+                    is AppResult.Success -> {
                         _food.value = null
                         _isDeleted.value = true
                         refreshFood()
                         onComplete()
-                    } else {
-                        _errorMessage.value = "Failed to delete food"
                     }
+                    is AppResult.Error -> _errorMessage.value = result.message
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "An error occurred"
@@ -195,15 +191,13 @@ class GetFoodViewModel(
             _errorMessage.value = null
 
             try {
-                val response = repository.deleteFoodImage(foodId)
-                if (response != null) {
-                    if (response.status == "success") {
+                when (val result = repository.deleteFoodImage(foodId)) {
+                    is AppResult.Success -> {
                         _food.value = _food.value?.copy(imageUrl = null)
                         refreshFood()
                         _imageDeletedMessage.value = "Food image deleted successfully"
-                    } else {
-                        _errorMessage.value = "Failed to delete food image"
                     }
+                    is AppResult.Error -> _errorMessage.value = result.message
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "An error occurred"
@@ -219,11 +213,12 @@ class GetFoodViewModel(
     fun fetchDailySummary() {
         viewModelScope.launch {
             val result = repository.getSummaryToday()
-            if (result != null && result.status == "success") {
-                _dailySummary.value = result.data
-            } else {
-                _dailySummary.value = null
-                _errorMessage.value = result?.message ?: "Failed to fetch daily summary"
+            when (result) {
+                is AppResult.Success -> _dailySummary.value = result.data
+                is AppResult.Error -> {
+                    _dailySummary.value = null
+                    _errorMessage.value = result.message
+                }
             }
         }
     }
@@ -231,11 +226,12 @@ class GetFoodViewModel(
     fun fetchWeeklySummary() {
         viewModelScope.launch {
             val result = repository.getSummaryWeek()
-            if (result != null && result.status == "success") {
-                _weeklySummary.value = result.data
-            } else {
-                _weeklySummary.value = null
-                _errorMessage.value = result?.message ?: "Failed to fetch weekly summary"
+            when (result) {
+                is AppResult.Success -> _weeklySummary.value = result.data
+                is AppResult.Error -> {
+                    _weeklySummary.value = null
+                    _errorMessage.value = result.message
+                }
             }
         }
     }
@@ -246,10 +242,9 @@ class GetFoodViewModel(
             _errorMessage.value = null
             try {
                 val response = repository.getProfile()
-                if (response != null && response.status == "success") {
-                    _userPreferences.value = response.data
-                } else {
-                    _errorMessage.value = response?.message ?: "Failed to fetch user preferences"
+                when (response) {
+                    is AppResult.Success -> _userPreferences.value = response.data
+                    is AppResult.Error -> _errorMessage.value = response.message
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "An error occurred while fetching user preferences"

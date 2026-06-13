@@ -1,5 +1,6 @@
 package com.yuch.snapcalfirebasegemini.data.repository
 
+import com.google.gson.Gson
 import com.yuch.snapcalfirebasegemini.data.api.ApiService
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatDelete
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatMessage
@@ -33,16 +34,16 @@ class ApiRepository(
     private val foodDao: FoodDao?
 ) {
 
-    suspend fun analyzeFood(image: MultipartBody.Part, service: RequestBody): Response<ApiResponse<AnalyzeResult>> {
-        return apiService.analyzeFood(image, service)
+    suspend fun analyzeFood(image: MultipartBody.Part, service: RequestBody): AppResult<AnalyzeResult> {
+        return safeApiResponseCall { apiService.analyzeFood(image, service) }
     }
 
-    suspend fun analyzeFoodByMyModel(file: MultipartBody.Part): Response<AnalyzeMyModelResponse> {
-        return apiService.analyzeFoodByMyModel(file)
+    suspend fun analyzeFoodByMyModel(file: MultipartBody.Part): AppResult<AnalyzeMyModelResponse> {
+        return safeApiCall { apiService.analyzeFoodByMyModel(file) }
     }
 
-    suspend fun estimateNutritionByName(request: NutritionEstimateRequest): Response<ApiResponse<AnalyzeResult>> {
-        return apiService.estimateNutritionByName(request)
+    suspend fun estimateNutritionByName(request: NutritionEstimateRequest): AppResult<AnalyzeResult> {
+        return safeApiResponseCall { apiService.estimateNutritionByName(request) }
     }
 
     suspend fun uploadFood(
@@ -51,8 +52,8 @@ class ApiRepository(
         mealType: RequestBody,
         weightInGrams: RequestBody,
         nutritionData: RequestBody
-    ): Response<ApiResponse<Food>> {
-        return apiService.uploadFood(image, foodName, mealType, weightInGrams, nutritionData)
+    ): AppResult<Food> {
+        return safeApiResponseCall { apiService.uploadFood(image, foodName, mealType, weightInGrams, nutritionData) }
     }
 
     suspend fun updateFood(
@@ -62,17 +63,14 @@ class ApiRepository(
         weightInGrams: RequestBody?,
         nutritionData: RequestBody?,
         mealType: RequestBody?
-    ): Response<ApiResponse<FoodItem>> {
-        return apiService.updateFood(id, image, foodName, weightInGrams, nutritionData, mealType)
+    ): AppResult<FoodItem> {
+        return safeApiResponseCall { apiService.updateFood(id, image, foodName, weightInGrams, nutritionData, mealType) }
     }
 
-    suspend fun getAllFood(page: Int): ApiResponse<FoodPage>? {
-        val response = apiService.getAllFood(page)
-        val body =
-            response.body()
-                ?: return null
-
-        val foodEntities = body.data?.items?.map { food -> food.toEntity() }
+    suspend fun getAllFood(page: Int): AppResult<FoodPage> {
+        val result = safeApiResponseCall { apiService.getAllFood(page) }
+        val foodPage = (result as? AppResult.Success)?.data
+        val foodEntities = foodPage?.items?.map { food -> food.toEntity() }
 
         // Simpan data ke Room jika tidak null
         foodEntities?.let { foodDao?.insertFoods(it) }
@@ -81,45 +79,35 @@ class ApiRepository(
         val sevenDaysAgo = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L
         foodDao?.deleteOldFoods(sevenDaysAgo)
 
-        return body
+        return result
     }
 
-    suspend fun getFoodDate(date: String): ApiResponse<List<FoodItem>>? {
-        return when (val result = safeApiCall { apiService.getFoodEntries(date) }) {
-            is AppResult.Success -> result.data
-            is AppResult.Error -> null
-        }
+    suspend fun getFoodDate(date: String): AppResult<List<FoodItem>> {
+        return safeApiResponseCall { apiService.getFoodEntries(date) }
     }
 
-    suspend fun getFoodById(id: String, forceRefresh: Boolean = false): FoodItem? {
+    suspend fun getFoodById(id: String, forceRefresh: Boolean = false): AppResult<FoodItem> {
         if (!forceRefresh) {
             foodDao?.getFoodById(id)?.let { cachedFood ->
-                return cachedFood.toFoodItem()
+                return AppResult.Success(cachedFood.toFoodItem())
             }
         }
 
         // Ambil data terbaru dari API
-        return try {
-            val response = apiService.getFoodById(id)
-            if (response.isSuccessful && response.body()?.data != null) {
-                response.body()?.data?.also { newData ->
-                    val createdAtMillis = parseCreatedAt(newData.createdAt)
-                    val sevenDaysAgo = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L
-                    if (createdAtMillis >= sevenDaysAgo) {
-                        // Simpan data terbaru ke Room agar cache diperbarui
-                        foodDao?.insertFoods(
-                            listOf(
-                                newData.toEntity()
-                            )
-                        )
-                    }
-                }
-            } else {
-                null
+        val result = safeApiResponseCall { apiService.getFoodById(id) }
+        (result as? AppResult.Success)?.data?.let { newData ->
+            val createdAtMillis = parseCreatedAt(newData.createdAt)
+            val sevenDaysAgo = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L
+            if (createdAtMillis >= sevenDaysAgo) {
+                // Simpan data terbaru ke Room agar cache diperbarui
+                foodDao?.insertFoods(
+                    listOf(
+                        newData.toEntity()
+                    )
+                )
             }
-        } catch (e: Exception) {
-            null
         }
+        return result
     }
 
     private suspend fun <T> safeApiCall(call: suspend () -> Response<T>): AppResult<T> {
@@ -131,7 +119,7 @@ class ApiRepository(
                 AppResult.Success(body)
             } else {
                 AppResult.Error(
-                    message = response.message().ifBlank { "Request failed" },
+                    message = parseErrorMessage(response),
                     code = response.code()
                 )
             }
@@ -143,29 +131,53 @@ class ApiRepository(
         }
     }
 
-    suspend fun deleteFood(id: String): ApiResponse<FoodItem>? {
+    private suspend fun <T> safeApiResponseCall(call: suspend () -> Response<ApiResponse<T>>): AppResult<T> {
         return try {
-            val response = apiService.deleteFood(id)
-            if (response.isSuccessful) {
-                foodDao?.deleteFoodById(id)
+            val response = call()
+            val body = response.body()
+
+            if (response.isSuccessful && body?.status == "success" && body.data != null) {
+                AppResult.Success(body.data, body.message)
+            } else {
+                AppResult.Error(
+                    message = body?.message ?: parseErrorMessage(response),
+                    code = response.code(),
+                    errorCode = body?.error?.code?.toString()
+                )
             }
-            response.body()
         } catch (e: Exception) {
-            null
+            AppResult.Error(
+                message = e.message ?: "Request failed",
+                cause = e
+            )
         }
     }
 
-    // Delete Image Food
-    suspend fun deleteFoodImage(id: String): ApiResponse<FoodItem>? {
+    private fun parseErrorMessage(response: Response<*>): String {
         return try {
-            val response = apiService.deleteFoodImage(id)
-            if (response.isSuccessful) {
-                foodDao?.deleteFoodImageById(id)
-            }
-            response.body()
+            val errorBody = response.errorBody()?.string()
+            val errorResponse = Gson().fromJson(errorBody, ApiResponse::class.java)
+            errorResponse?.message ?: response.message().ifBlank { "Request failed" }
         } catch (e: Exception) {
-            null
+            response.message().ifBlank { "Request failed" }
         }
+    }
+
+    suspend fun deleteFood(id: String): AppResult<FoodItem> {
+        val result = safeApiResponseCall { apiService.deleteFood(id) }
+        if (result is AppResult.Success) {
+            foodDao?.deleteFoodById(id)
+        }
+        return result
+    }
+
+    // Delete Image Food
+    suspend fun deleteFoodImage(id: String): AppResult<FoodItem> {
+        val result = safeApiResponseCall { apiService.deleteFoodImage(id) }
+        if (result is AppResult.Success) {
+            foodDao?.deleteFoodImageById(id)
+        }
+        return result
     }
 
     suspend fun getCachedFoods(): List<FoodEntity> {
@@ -174,74 +186,38 @@ class ApiRepository(
             ?: throw Exception("Database tidak tersedia")
     }
 
-    suspend fun getSummaryToday(): ApiResponse<DailySummaryResponse>? {
-        return try {
-            val response = apiService.getSummaryToday()
-            if (response.isSuccessful) {
-                response.body()
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            null
-        }
+    suspend fun getSummaryToday(): AppResult<DailySummaryResponse> {
+        return safeApiResponseCall { apiService.getSummaryToday() }
     }
 
-    suspend fun getSummaryWeek(): ApiResponse<WeeklySummaryResponse>? {
-        return try {
-            val response = apiService.getSummaryWeekly()
-            if (response.isSuccessful) {
-                response.body()
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            null
-        }
+    suspend fun getSummaryWeek(): AppResult<WeeklySummaryResponse> {
+        return safeApiResponseCall { apiService.getSummaryWeekly() }
     }
 
-    suspend fun getProfile(): ApiResponse<UserPreferences>? {
-        return try {
-            val response = apiService.getProfile()
-            if (response.isSuccessful) {
-                response.body()
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            null
-        }
+    suspend fun getProfile(): AppResult<UserPreferences> {
+        return safeApiResponseCall { apiService.getProfile() }
     }
 
-    suspend fun getActiveAnnouncements(): ApiResponse<List<Announcement>>? {
-        return try {
-            val response = apiService.getActiveAnnouncements()
-            if (response.isSuccessful) {
-                response.body()
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            null
-        }
+    suspend fun getActiveAnnouncements(): AppResult<List<Announcement>> {
+        return safeApiResponseCall { apiService.getActiveAnnouncements() }
     }
 
     // --- AI Chat ---
 
-    suspend fun getAiChatHistory(): Response<ApiResponse<List<AiChatMessage>>> {
-        return apiService.getAiChatHistory()
+    suspend fun getAiChatHistory(): AppResult<List<AiChatMessage>> {
+        return safeApiResponseCall { apiService.getAiChatHistory() }
     }
 
-    suspend fun sendAiMessage(request: AiChatRequest): Response<ApiResponse<AiChatResponse>> {
-        return apiService.aiMessage(request)
+    suspend fun sendAiMessage(request: AiChatRequest): AppResult<AiChatResponse> {
+        return safeApiResponseCall { apiService.aiMessage(request) }
     }
 
-    suspend fun getAiChatUsage(): Response<ApiResponse<UsageAiChat>> {
-        return apiService.getAiChatUsage()
+    suspend fun getAiChatUsage(): AppResult<UsageAiChat> {
+        return safeApiResponseCall { apiService.getAiChatUsage() }
     }
 
-    suspend fun deleteAiChatHistory(): Response<ApiResponse<AiChatDelete>> {
-        return apiService.deleteAiChatHistory()
+    suspend fun deleteAiChatHistory(): AppResult<AiChatDelete> {
+        return safeApiResponseCall { apiService.deleteAiChatHistory() }
     }
 
     // --- Recommendations ---
@@ -249,7 +225,7 @@ class ApiRepository(
     suspend fun getRecommendation(
         mealType: String,
         refresh: Boolean = false
-    ): Response<ApiResponse<RecommendationData>> {
-        return apiService.getRecommendation(mealType, refresh)
+    ): AppResult<RecommendationData> {
+        return safeApiResponseCall { apiService.getRecommendation(mealType, refresh) }
     }
 }

@@ -83,7 +83,7 @@ fun AnalyzeScreen(
 
 
     LaunchedEffect(analysisResult) {
-        analysisResult.data?.let {
+        analysisResult?.let {
             val baseData = EditableFoodData(
                 foodName = it.foodName,
                 calories = it.calories.toString().normalizeDecimal(),
@@ -156,7 +156,7 @@ fun AnalyzeScreen(
 
     LaunchedEffect(isLoading) {
         loadingPhase = if (isLoading) {
-            if (analysisResult.data == null) "analyzing" else "uploading"
+            if (analysisResult == null) "analyzing" else "uploading"
         } else {
             null
         }

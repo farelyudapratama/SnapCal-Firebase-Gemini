@@ -3,9 +3,9 @@ package com.yuch.snapcalfirebasegemini.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.RecommendationData
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
+import com.yuch.snapcalfirebasegemini.domain.result.AppResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,9 +26,6 @@ class RecommendationViewModel(
 
     private val _state = MutableStateFlow<RecommendationState>(RecommendationState.Initial)
     val state: StateFlow<RecommendationState> = _state.asStateFlow()
-
-    private val _recommendationResult = MutableStateFlow<ApiResponse<RecommendationData>?>(null)
-    val recommendationResult = _recommendationResult.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -57,59 +54,33 @@ class RecommendationViewModel(
                     _state.value = RecommendationState.Error(errorMsg)
 
                     _errorMessage.value = errorMsg
-                    _recommendationResult.value = ApiResponse("error", errorMsg)
                     _isLoading.value = false
                     return@launch
                 }
 
                 Log.d(TAG, "Calling API service for recommendations - mealType: $mealType, refresh: $refresh")
-                val response = apiRepository.getRecommendation(mealType, refresh)
-                Log.d(TAG, "API response received - Code: ${response.code()}, Message: ${response.message()}")
 
-                if (response.isSuccessful) {
-                    val body = response.body()
-                    Log.d(TAG, "Response is successful, body null: ${body == null}")
-
-                    if (body != null) {
-                        Log.d(TAG, "Response body - status: ${body.status}, message: ${body.message}")
-                        Log.d(TAG, "Response data null: ${body.data == null}")
-
-                        if (body.data != null) {
-                            Log.d(TAG, "Recommendations count: ${body.data.recommendations.size}")
-                        }
-                    }
-
-                    if (body?.status == "success" && body.data != null) {
+                when (val result = apiRepository.getRecommendation(mealType, refresh)) {
+                    is AppResult.Success -> {
                         Log.d(TAG, "Recommendations loaded successfully")
+                        Log.d(TAG, "Recommendations count: ${result.data.recommendations.size}")
 
-                        _state.value = RecommendationState.Success(body.data)
-                        _recommendationResult.value = body
-                    } else {
-                        val errorMsg = body?.message ?: "Failed to get recommendations"
-                        Log.w(TAG, "Failed to load recommendations - Error: $errorMsg")
-
-                        _state.value = RecommendationState.Error(errorMsg)
-
-                        _errorMessage.value = errorMsg
-                        _recommendationResult.value = ApiResponse("error", errorMsg)
+                        _state.value = RecommendationState.Success(result.data)
                     }
-                } else {
-                    val errorCode = response.code()
-                    Log.e(TAG, "API call failed - HTTP status code: $errorCode")
-
-                    val errorMsg = when (errorCode) {
+                    is AppResult.Error -> {
+                        val errorMsg = when (result.code) {
                         401 -> "Authentication failed. Please login again."
                         400 -> "Bad request. Please check your profile data is complete."
                         404 -> "Recommendations not found"
                         500 -> "Server error. Please try again later."
-                        else -> "Network error: ${response.code()} ${response.message()}"
+                            else -> result.message
+                        }
+
+                        _state.value = RecommendationState.Error(errorMsg)
+                        _errorMessage.value = errorMsg
+
+                        Log.e(TAG, "Error: $errorMsg")
                     }
-
-                    _state.value = RecommendationState.Error(errorMsg)
-                    _errorMessage.value = errorMsg
-                    _recommendationResult.value = ApiResponse("error", errorMsg)
-
-                    Log.e(TAG, "Error: $errorMsg")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Exception during API call", e)
@@ -123,7 +94,6 @@ class RecommendationViewModel(
                 _state.value = RecommendationState.Error(errorMsg)
 
                 _errorMessage.value = errorMsg
-                _recommendationResult.value = ApiResponse("error", errorMsg)
 
                 Log.e(TAG, "Exception: ${e.javaClass.simpleName} - $errorMsg")
             } finally {

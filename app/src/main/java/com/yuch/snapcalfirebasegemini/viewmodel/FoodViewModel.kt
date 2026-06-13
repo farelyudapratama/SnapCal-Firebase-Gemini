@@ -1,22 +1,19 @@
 package com.yuch.snapcalfirebasegemini.viewmodel
 
-import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
-import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeByMyModelResponse
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
-import com.yuch.snapcalfirebasegemini.data.api.response.ApiResponse
-import com.yuch.snapcalfirebasegemini.data.api.response.Food
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodDetectionByMyModelResult
-import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionEstimateRequest
 import com.yuch.snapcalfirebasegemini.data.api.request.toUpdateFoodParts
 import com.yuch.snapcalfirebasegemini.data.api.request.toUploadFoodParts
+import com.yuch.snapcalfirebasegemini.data.mapper.MyModelAnalysisResult
+import com.yuch.snapcalfirebasegemini.data.mapper.toMyModelAnalysisResult
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
+import com.yuch.snapcalfirebasegemini.domain.result.AppResult
 import com.yuch.snapcalfirebasegemini.utils.ImageUtils
 import com.yuch.snapcalfirebasegemini.utils.normalizeDecimal
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,21 +22,14 @@ import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
-import retrofit2.Response
 import java.io.IOException
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import org.json.JSONObject
 
 class FoodViewModel(
     private val repository: ApiRepository
 ) : ViewModel() {
 
-    private val _analysisResult = MutableStateFlow<ApiResponse<AnalyzeResult>>(ApiResponse("error", "error", null))
+    private val _analysisResult = MutableStateFlow<AnalyzeResult?>(null)
     val analysisResult = _analysisResult.asStateFlow()
-
-    private val _yoloAnalysisResult = MutableStateFlow<ApiResponse<AnalyzeByMyModelResponse>>(ApiResponse("error", "error", null))
-    val yoloAnalysisResult = _yoloAnalysisResult.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -62,7 +52,7 @@ class FoodViewModel(
     }
 
     fun analyzeImage(imagePath: String, service: String) {
-        _analysisResult.value = ApiResponse("loading", "loading", null)
+        _analysisResult.value = null
         _errorMessage.value = null
 
         viewModelScope.launch {
@@ -77,8 +67,8 @@ class FoodViewModel(
                 val (imagePart, mimeType) = ImageUtils.prepareImageForAnalyze(imagePath)
                 val servicePart = service.toRequestBody("text/plain".toMediaTypeOrNull())
 
-                val response = repository.analyzeFood(imagePart, servicePart)
-                handleResponse(response)
+                val result = repository.analyzeFood(imagePart, servicePart)
+                handleAnalyzeResult(result)
 
             } catch (e: Exception) {
                 handleError(e)
@@ -105,89 +95,29 @@ class FoodViewModel(
                 val (imagePart, mimeType) = ImageUtils.prepareImageForAnalyze(imagePath)
                 Log.d("CustomModel", "Image prepared. MimeType: $mimeType")
 
-                val response = repository.analyzeFoodByMyModel(imagePart)
-                Log.d("CustomModel", "Response code: ${response.code()}, isSuccessful: ${response.isSuccessful}")
-
-                if (!response.isSuccessful) {
-                    val errorBody = response.errorBody()?.string()
-                    Log.e("CustomModel", "Raw error body: $errorBody")
-                    val message = try {
-                        JSONObject(errorBody ?: "{}").optString("message", "Unknown server error")
-                    } catch (e: Exception) {
-                        "Request failed with code ${response.code()}"
-                    }
-                    _errorMessage.value = "[Code: ${response.code()}] $message"
+                val result = repository.analyzeFoodByMyModel(imagePart)
+                if (result is AppResult.Error) {
+                    _errorMessage.value = result.toDisplayMessage()
                     return@launch
                 }
 
-                val body = response.body()
-                if (body == null) {
-                    _errorMessage.value = "[Code: ${response.code()}] Empty response from server"
-                    return@launch
-                }
-
-                Log.d("CustomModel", "API Status: ${body.status}, Message: ${body.message}")
-
-                if (body.status != "success") {
-                    _errorMessage.value = "[Code: ${response.code()}] ${body.message}"
-                    return@launch
-                }
-
-                val rawJson = Gson().toJson(body.data)
-                Log.d("CustomModel", "Raw JSON response: $rawJson")
-
-                // Handle different response types based on message
-                when {
-                    body.message.contains("Makanan berhasil dideteksi oleh model YoLo", ignoreCase = true) -> {
-                        // YOLO detection successful - parse detections
-                        try {
-                            val detectionResponse = Gson().fromJson(rawJson, AnalyzeByMyModelResponse::class.java)
-                            Log.d("CustomModel", "Parsed YOLO detection response: $detectionResponse")
-
-                            val detections = detectionResponse?.detections
-                            if (!detections.isNullOrEmpty()) {
-                                _yoloDetectionResult.value = detections
-                                Log.d("CustomModel", "YOLO detected ${detections.size} items")
-                                _yoloAnalysisResult.value = ApiResponse("success", body.message, detectionResponse)
-                            } else {
-                                Log.w("CustomModel", "No detections found in YOLO response")
-                                _yoloDetectionResult.value = emptyList()
-                                _errorMessage.value = "YOLO model didn't detect any food in the image"
-                            }
-                        } catch (e: Exception) {
-                            Log.e("CustomModel", "Failed to parse YOLO detection result", e)
-                            _errorMessage.value = "Failed to parse YOLO detection result"
-                        }
+                when (val analysis = (result as AppResult.Success).data.toMyModelAnalysisResult()) {
+                    is MyModelAnalysisResult.YoloDetections -> {
+                        _yoloDetectionResult.value = analysis.detections
+                        Log.d("CustomModel", "YOLO detected ${analysis.detections.size} items")
                     }
-
-                    body.message.contains("tidak mendeteksi", ignoreCase = true) ||
-                    body.message.contains("eksternal", ignoreCase = true) ||
-                    body.message.contains("Image analyzed successfully", ignoreCase = true) -> {
-                        // YOLO failed, fallback to AI external
-                        try {
-                            val aiResult = Gson().fromJson(rawJson, AnalyzeResult::class.java)
-                            _analysisResult.value = ApiResponse("success", body.message, aiResult)
-
-                            // Show notification when YOLO failed and fallback to AI
-                            _successMessage.value = "YOLO model failed to detect food. Analysis performed using Gemini AI."
-                            Log.d("CustomModel", "Fallback to AI external successful")
-                        } catch (e: Exception) {
-                            Log.e("CustomModel", "Failed to parse AI fallback result", e)
-                            _errorMessage.value = "Failed to parse AI analysis result"
+                    is MyModelAnalysisResult.AiFallback -> {
+                        _analysisResult.value = analysis.result
+                        _successMessage.value = if (analysis.isYoloFallback) {
+                            "YOLO model failed to detect food. Analysis performed using Gemini AI."
+                        } else {
+                            "Analysis completed using external AI."
                         }
+                        Log.d("CustomModel", "AI analysis parsed successfully")
                     }
-
-                    else -> {
-                        Log.w("CustomModel", "Unexpected message: ${body.message}")
-                        // Try to parse as AI result for any other success message
-                        try {
-                            val aiResult = Gson().fromJson(rawJson, AnalyzeResult::class.java)
-                            _analysisResult.value = ApiResponse("success", body.message, aiResult)
-                            _successMessage.value = "Analysis completed using external AI."
-                        } catch (e: Exception) {
-                            Log.e("CustomModel", "Failed to parse unknown response type", e)
-                            _errorMessage.value = "Unexpected response format: ${body.message}"
-                        }
+                    is MyModelAnalysisResult.Error -> {
+                        _yoloDetectionResult.value = emptyList()
+                        _errorMessage.value = analysis.message
                     }
                 }
 
@@ -228,7 +158,7 @@ class FoodViewModel(
             try {
                 val foodParts = safeFoodData.toUploadFoodParts(imagePath)
 
-                val response = repository.uploadFood(
+                val result = repository.uploadFood(
                     image = foodParts.image,
                     foodName = foodParts.foodName,
                     mealType = foodParts.mealType,
@@ -236,7 +166,10 @@ class FoodViewModel(
                     nutritionData = foodParts.nutritionData
                 )
 
-                handleFoodResponse(response)
+                when (result) {
+                    is AppResult.Success -> _uploadSuccess.value = true
+                    is AppResult.Error -> _errorMessage.value = result.toDisplayMessage()
+                }
             } catch (e: Exception) {
                 handleError(e)
             } finally {
@@ -245,25 +178,6 @@ class FoodViewModel(
         }
     }
 
-    private fun convertBitmapToByteBuffer(bitmap: Bitmap): ByteBuffer {
-        val byteBuffer = ByteBuffer.allocateDirect(4 * 224 * 224 * 3)
-        byteBuffer.order(ByteOrder.nativeOrder())
-
-        val intValues = IntArray(224 * 224)
-        bitmap.getPixels(intValues, 0, 224, 0, 0, 224, 224)
-
-        for (pixel in intValues) {
-            val r = (pixel shr 16 and 0xFF) / 255.0f
-            val g = (pixel shr 8 and 0xFF) / 255.0f
-            val b = (pixel and 0xFF) / 255.0f
-
-            byteBuffer.putFloat(r)
-            byteBuffer.putFloat(g)
-            byteBuffer.putFloat(b)
-        }
-
-        return byteBuffer
-    }
     // Update Food data
     fun updateFood(
         foodId: String, imagePath: String?, foodData: UpdateFoodData?
@@ -279,7 +193,7 @@ class FoodViewModel(
             try {
                 val foodParts = foodData.toUpdateFoodParts(imagePath)
 
-                val response = repository.updateFood(
+                val result = repository.updateFood(
                     id = foodId,
                     foodName = foodParts.foodName,
                     mealType = foodParts.mealType,
@@ -288,21 +202,9 @@ class FoodViewModel(
                     image = foodParts.image
                 )
 
-                if (response.isSuccessful) {
-                    response.body()?.let { apiResponse ->
-                        when (apiResponse.status) {
-                            "success" -> {
-                                _successMessage.value = "Food updated successfully."
-                            }
-                            else -> {
-                                _errorMessage.value = "[Code: ${response.code()}] ${apiResponse.message}"
-                            }
-                        }
-                    } ?: run {
-                        _errorMessage.value = "[Code: ${response.code()}] Empty response from server"
-                    }
-                } else {
-                    handleErrorResponse(response)
+                when (result) {
+                    is AppResult.Success -> _successMessage.value = "Food updated successfully."
+                    is AppResult.Error -> _errorMessage.value = result.toDisplayMessage()
                 }
             } catch (e: Exception) {
                 handleError(e)
@@ -315,7 +217,7 @@ class FoodViewModel(
 
     // Add method to estimate nutrition by food name
     fun estimateNutritionByName(foodName: String, description: String? = null) {
-        _analysisResult.value = ApiResponse("loading", "Estimating nutrition...", null)
+        _analysisResult.value = null
         _errorMessage.value = null
 
         viewModelScope.launch {
@@ -323,8 +225,8 @@ class FoodViewModel(
                 _isLoading.value = true
 
                 val request = NutritionEstimateRequest(foodName, description)
-                val response = repository.estimateNutritionByName(request)
-                handleResponse(response)
+                val result = repository.estimateNutritionByName(request)
+                handleAnalyzeResult(result)
 
             } catch (e: Exception) {
                 handleError(e)
@@ -339,82 +241,14 @@ class FoodViewModel(
         _yoloDetectionResult.value = null
     }
 
-    private fun handleErrorResponse(response: Response<ApiResponse<FoodItem>>) {
-        try {
-            val errorBody = response.errorBody()?.string()
-            val errorResponse = Gson().fromJson(errorBody, ApiResponse::class.java)
-            _errorMessage.value = "[Code: ${response.code()}] ${errorResponse.message}"
-        } catch (e: Exception) {
-            _errorMessage.value = "[Code: ${response.code()}] ${response.message()}"
-        }
-    }
-
-
-    private fun handleResponse(response: Response<ApiResponse<AnalyzeResult>>) {
-        if (response.isSuccessful) {
-            response.body()?.let { apiResponse ->
-                when (apiResponse.status) {
-                    "success" -> {
-                        _analysisResult.value = apiResponse
-                        _errorMessage.value = null
-                    }
-                    "error" -> {
-                        val statusCode = response.code()
-                        _errorMessage.value = "[Code: $statusCode] ${apiResponse.message}"
-                    }
-                }
-            } ?: run {
-                _errorMessage.value = "[Code: ${response.code()}] Empty response from server"
+    private fun handleAnalyzeResult(result: AppResult<AnalyzeResult>) {
+        when (result) {
+            is AppResult.Success -> {
+                _analysisResult.value = result.data
+                _errorMessage.value = null
             }
-        } else {
-            try {
-                // Parse error response from backend
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = Gson().fromJson(errorBody, ApiResponse::class.java)
-                _errorMessage.value = "[Code: ${response.code()}] ${errorResponse.message}"
-            } catch (e: Exception) {
-                _errorMessage.value = "[Code: ${response.code()}] ${response.message()}"
-            }
-        }
-    }
-
-    private fun handleFoodResponse(response: Response<ApiResponse<Food>>) {
-        if (response.isSuccessful) {
-            response.body()
-                ?.let { apiResponse ->
-                    when (apiResponse.status) {
-                        "success" -> {
-                            _uploadSuccess.value = true
-                        }
-
-                        "error" -> {
-                            val statusCode =
-                                response.code()
-                            _errorMessage.value =
-                                "[Code: $statusCode] ${apiResponse.message}"
-                        }
-                    }
-                }
-                ?: run {
-                    _errorMessage.value =
-                        "[Code: ${response.code()}] Empty response from server"
-                }
-        } else {
-            try {
-                // Parse error response from backend
-                val errorBody =
-                    response.errorBody()
-                        ?.string()
-                val errorResponse =
-                    Gson().fromJson(
-                        errorBody,
-                        ApiResponse::class.java
-                    )
-                _errorMessage.value =
-                    "[Code: ${response.code()}] ${errorResponse.message}"
-            } catch (e: Exception) {
-                _errorMessage.value =
-                    "[Code: ${response.code()}] ${response.message()}"
+            is AppResult.Error -> {
+                _errorMessage.value = result.toDisplayMessage()
             }
         }
     }
@@ -430,14 +264,16 @@ class FoodViewModel(
         }
     }
 
+    private fun AppResult.Error.toDisplayMessage(): String =
+        code?.let { "[Code: $it] $message" } ?: message
+
     fun resetState() {
         _uploadSuccess.value = false
         _errorMessage.value = null
     }
 
     fun clearData() {
-        _analysisResult.value = ApiResponse("error", "error", null)
-        _yoloAnalysisResult.value = ApiResponse("error", "error", null)
+        _analysisResult.value = null
         _isLoading.value = false
         _errorMessage.value = null
         _successMessage.value = null

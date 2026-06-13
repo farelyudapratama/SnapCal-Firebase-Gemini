@@ -7,6 +7,7 @@ import com.yuch.snapcalfirebasegemini.data.api.response.AiChatMessage
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
+import com.yuch.snapcalfirebasegemini.domain.result.AppResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,10 +46,9 @@ class AiChatViewModel(
             _isLoading.value = true
             try {
                 val response = apiRepository.getAiChatHistory()
-                if (response.isSuccessful) {
-                    _chatMessages.value = response.body()?.data ?: emptyList()
-                } else {
-                    _errorMessage.value = "Failed to load chat history"
+                when (response) {
+                    is AppResult.Success -> _chatMessages.value = response.data
+                    is AppResult.Error -> _errorMessage.value = response.message
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "An error occurred: ${e.message}"
@@ -65,10 +65,9 @@ class AiChatViewModel(
             try {
                 val request = AiChatRequest(message, service)
                 val response = apiRepository.sendAiMessage(request)
-                if (response.isSuccessful) {
-                    fetchChatHistory()
-                } else {
-                    _errorMessage.value = "Failed to send message"
+                when (response) {
+                    is AppResult.Success -> fetchChatHistory()
+                    is AppResult.Error -> _errorMessage.value = response.message
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "An error occurred: ${e.message}"
@@ -82,13 +81,13 @@ class AiChatViewModel(
         viewModelScope.launch {
             try {
                 val response = apiRepository.getAiChatUsage()
-                if (response.isSuccessful) {
-                    _usageInfo.value = response.body()?.data
-                } else {
-                    Log.e("ChatUsage", "Error: ${response.errorBody()?.string()}")
-                    // Handle error
-                    _usageInfo.value = null
-                    _errorMessage.value = "Failed to load chat usage"
+                when (response) {
+                    is AppResult.Success -> _usageInfo.value = response.data
+                    is AppResult.Error -> {
+                        Log.e("ChatUsage", "Error: ${response.message}")
+                        _usageInfo.value = null
+                        _errorMessage.value = response.message
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("ChatUsage", "Exception: ${e.message}")
@@ -104,10 +103,9 @@ class AiChatViewModel(
             _isLoading.value = true
             try {
                 val response = apiRepository.deleteAiChatHistory()
-                if (response.isSuccessful) {
-                    fetchChatHistory()
-                } else {
-                    _errorMessage.value = "Failed to delete chat history"
+                when (response) {
+                    is AppResult.Success -> fetchChatHistory()
+                    is AppResult.Error -> _errorMessage.value = response.message
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "An error occurred: ${e.message}"
