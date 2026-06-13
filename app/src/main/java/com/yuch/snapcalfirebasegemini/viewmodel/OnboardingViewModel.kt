@@ -44,7 +44,12 @@ class OnboardingViewModel : ViewModel() {
     fun goToStep(step: Int) { if (step in 0 until totalSteps) _currentStep.value = step }
 
     // --- Update Functions ---
-    fun updatePersonalInfo(info: PersonalInfoReq) = _formData.update { it.copy(personalInfo = info) }
+    fun updatePersonalInfo(info: PersonalInfoReq) {
+        _formData.update { it.copy(personalInfo = info) }
+        if (_isEditMode.value) {
+            calculateAndSetRecommendedGoals()
+        }
+    }
     fun updateDailyGoals(goals: DailyGoals) = _formData.update { it.copy(dailyGoals = goals) }
 
     // --- Logika Kalkulasi Goals ---
@@ -195,7 +200,7 @@ fun UserPreferences.toProfileRequest(): ProfileRequest {
         dietaryRestrictions = this.dietaryRestrictions + (this.customDietaryRestrictions ?: emptyList()),
         customDietaryRestrictions = this.customDietaryRestrictions ?: emptyList(),
 
-        likedFoods = this.likedFoods + (this.customLikedFoods ?: emptyList()),
+        likedFoods = this.likedFoods + (this.customLikedFoods ?: emptyList()).distinct(),
         customLikedFoods = this.customLikedFoods ?: emptyList(),
 
         dislikedFoods = this.dislikedFoods + (this.customDislikedFoods ?: emptyList()),

@@ -38,30 +38,8 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(this, "Izin ditolak. Kamu tidak akan menerima notifikasi.", Toast.LENGTH_SHORT).show()
         }
     }
-
-    // Inisialisasi Database dan Repository sekali saja agar efisien
-    private val appDatabase by lazy {
-        Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            "snapcal_database"
-        ).build()
-    }
-
-    private val apiRepository by lazy {
-        ApiRepository(
-            apiService = ApiConfig.getApiService(),
-            foodDao = appDatabase.foodDao()
-        )
-    }
-
-    private val profileRepository by lazy {
-        ProfileRepository.getInstance(ApiConfig.getApiService())
-    }
-
-    // Satu Factory untuk semua ViewModel yang butuh Repository
     private val viewModelFactory by lazy {
-        ViewModelFactory(apiRepository, profileRepository)
+        (application as SnapcalApplication).container.viewModelFactory
     }
 
     private val authViewModel: AuthViewModel by viewModels()

@@ -73,12 +73,22 @@ fun WelcomeStep(onGetStarted: () -> Unit) {
 }
 
 @Composable
-fun PersonalInfoStep(initialData: PersonalInfoReq?, isEdit: Boolean, fieldErrors: List<ProfileFieldError>, focusRequesters: Map<String, FocusRequester>, onFieldFocus: (String) -> Unit, onDataChange: (PersonalInfoReq) -> Unit) {
+fun PersonalInfoStep(initialData: PersonalInfoReq?, fieldErrors: List<ProfileFieldError>, focusRequesters: Map<String, FocusRequester>, onFieldFocus: (String) -> Unit, onDataChange: (PersonalInfoReq) -> Unit) {
     var age by remember { mutableStateOf(initialData?.age?.toString() ?: "") }
     var gender by remember { mutableStateOf(initialData?.gender ?: "") }
     var height by remember { mutableStateOf(initialData?.height?.toString() ?: "") }
     var weight by remember { mutableStateOf(initialData?.weight?.toString() ?: "") }
     var activityLevel by remember { mutableStateOf(initialData?.activityLevel ?: "") }
+
+    LaunchedEffect(initialData) {
+        if (initialData != null) {
+            if (age.isEmpty() && initialData.age != null) age = initialData.age.toString()
+            if (gender.isEmpty() && initialData.gender != null) gender = initialData.gender
+            if (height.isEmpty() && initialData.height != null) height = initialData.height.toString()
+            if (weight.isEmpty() && initialData.weight != null) weight = initialData.weight.toString()
+            if (activityLevel.isEmpty() && initialData.activityLevel != null) activityLevel = initialData.activityLevel
+        }
+    }
 
     LaunchedEffect(age, gender, height, weight, activityLevel) {
         onDataChange(
@@ -130,8 +140,16 @@ fun PersonalInfoStep(initialData: PersonalInfoReq?, isEdit: Boolean, fieldErrors
 
         Text(stringResource(R.string.gender), style = MaterialTheme.typography.bodyLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TagChip(stringResource(R.string.male), gender == "male") { gender = "male" }
-            TagChip(stringResource(R.string.female), gender == "female") { gender = "female" }
+            TagChip(
+                text = stringResource(R.string.male),
+                isSelected = gender == "male",
+                onClick = { gender = "male" }
+            )
+            TagChip(
+                text = stringResource(R.string.female),
+                isSelected = gender == "female",
+                onClick = { gender = "female" }
+            )
         }
 
         Text(stringResource(R.string.activity_level), style = MaterialTheme.typography.bodyLarge)
@@ -156,7 +174,6 @@ fun HealthStep(
     onAllergyToggle: (String) -> Unit,
     onAddCustomCondition: (String) -> Unit,
     onAddCustomAllergy: (String) -> Unit,
-    isEdit: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         TagSelectionSection(
@@ -186,7 +203,6 @@ fun DietStep(
     customDiets: List<String>,
     onDietToggle: (String) -> Unit,
     onAddCustomDiet: (String) -> Unit,
-    isEdit: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         TagSelectionSection(
@@ -212,7 +228,6 @@ fun FoodPreferencesStep(
     onDislikeToggle: (String) -> Unit,
     onAddCustomLiked: (String) -> Unit,
     onAddCustomDisliked: (String) -> Unit,
-    isEdit: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
         TagSelectionSection(
@@ -243,7 +258,6 @@ fun GoalsStep(
     initialData: DailyGoals?,
     onDataChange: (DailyGoals) -> Unit,
     personalInfo: PersonalInfoReq?,
-    isEdit: Boolean,
     fieldErrors: List<ProfileFieldError> = emptyList(),
     focusRequesters: Map<String, FocusRequester> = emptyMap(),
     onFieldFocus: (String) -> Unit = {}
@@ -255,6 +269,18 @@ fun GoalsStep(
     var fat by remember { mutableStateOf(initialData?.fat?.toString() ?: "") }
     var fiber by remember { mutableStateOf(initialData?.fiber?.toString() ?: "") }
     var sugar by remember { mutableStateOf(initialData?.sugar?.toString() ?: "") }
+
+    // Tangkap Data dari api
+    LaunchedEffect(initialData) {
+        if (initialData != null) {
+            if (calories.isEmpty() && initialData.calories != null) calories = initialData.calories.toString()
+            if (protein.isEmpty() && initialData.protein != null) protein = initialData.protein.toString()
+            if (carbs.isEmpty() && initialData.carbs != null) carbs = initialData.carbs.toString()
+            if (fat.isEmpty() && initialData.fat != null) fat = initialData.fat.toString()
+            if (fiber.isEmpty() && initialData.fiber != null) fiber = initialData.fiber.toString()
+            if (sugar.isEmpty() && initialData.sugar != null) sugar = initialData.sugar.toString()
+        }
+    }
 
     // Memanggil callback saat ada perubahan
     LaunchedEffect(calories, protein, carbs, fat, fiber, sugar) {
@@ -391,7 +417,7 @@ fun GoalsStep(
 
 // Bottom Bar Composable dari kode sebelumnya (sedikit modifikasi)
 @Composable
-fun OnboardingBottomBar(currentStep: Int, totalSteps: Int, onNext: () -> Unit, onFinish: () -> Unit, isLoading: Boolean, isEdit: Boolean) {
+fun OnboardingBottomBar(currentStep: Int, totalSteps: Int, onNext: () -> Unit, onFinish: () -> Unit, isLoading: Boolean) {
     Surface(shadowElevation = 8.dp) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),

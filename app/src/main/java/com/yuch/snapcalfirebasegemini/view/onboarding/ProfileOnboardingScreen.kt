@@ -156,7 +156,6 @@ fun ProfileOnboardingScreen(
                         }
                     },
                     isLoading = updateStatus is ProfileState.Loading,
-                    isEdit = false
                 )
             }
         },
@@ -166,75 +165,85 @@ fun ProfileOnboardingScreen(
 
             if (isEdit) {
                 // ==========================================
-                // MODE 1: LONG SCROLL UNTUK EDIT PROFIL
+                // CEK APAKAH DATA DARI SERVER SUDAH SIAP?
                 // ==========================================
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                    contentPadding = PaddingValues(vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(32.dp)
-                ) {
-                    item {
-                        PersonalInfoStep(
-                            initialData = formData.personalInfo,
-                            isEdit = true,
-                            fieldErrors = fieldErrors.filter { it.fieldName in listOf("age", "height", "weight", "gender", "activityLevel") },
-                            focusRequesters = focusRequesters,
-                            onFieldFocus = { profileViewModel.clearFieldError(it) },
-                            onDataChange = { onboardingViewModel.updatePersonalInfo(it) }
-                        )
+                if (!alreadyLoaded.value) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Memuat data profil...", style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
-                    item { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
-                    item {
-                        GoalsStep(
-                            initialData = formData.dailyGoals,
-                            onDataChange = { onboardingViewModel.updateDailyGoals(it) },
-                            personalInfo = formData.personalInfo,
-                            isEdit = true,
-                            fieldErrors = fieldErrors.filter { it.fieldName in listOf("calories", "protein", "carbs", "fat", "fiber", "sugar") },
-                            focusRequesters = focusRequesters,
-                            onFieldFocus = { profileViewModel.clearFieldError(it) }
-                        )
-                    }
-                    item { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
-                    item {
-                        HealthStep(
-                            selectedConditions = formData.healthConditions,
-                            selectedAllergies = formData.allergies,
-                            customConditions = formData.customHealthConditions,
-                            customAllergies = formData.customAllergies,
-                            onConditionToggle = { onboardingViewModel.toggleHealthCondition(it) },
-                            onAllergyToggle = { onboardingViewModel.toggleAllergy(it) },
-                            onAddCustomCondition = { onboardingViewModel.addCustomHealthCondition(it) },
-                            onAddCustomAllergy = { onboardingViewModel.addCustomAllergy(it) },
-                            isEdit = true
-                        )
-                    }
-                    item { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
-                    item {
-                        DietStep(
-                            selectedDiets = formData.dietaryRestrictions,
-                            customDiets = formData.customDietaryRestrictions,
-                            onDietToggle = { onboardingViewModel.toggleDietaryRestriction(it) },
-                            onAddCustomDiet = { onboardingViewModel.addCustomDietaryRestriction(it) },
-                            isEdit = true
-                        )
-                    }
-                    item { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
-                    item {
-                        FoodPreferencesStep(
-                            likedFoods = formData.likedFoods,
-                            dislikedFoods = formData.dislikedFoods,
-                            customLikedFoods = formData.customLikedFoods,
-                            customDislikedFoods = formData.customDislikedFoods,
-                            onLikeToggle = { onboardingViewModel.toggleLikedFood(it) },
-                            onDislikeToggle = { onboardingViewModel.toggleDislikedFood(it) },
-                            onAddCustomLiked = { onboardingViewModel.addCustomLikedFood(it) },
-                            onAddCustomDisliked = { onboardingViewModel.addCustomDislikedFood(it) },
-                            isEdit = true
-                        )
+                } else {
+                    // ==========================================
+                    // MODE 1: LONG SCROLL UNTUK EDIT PROFIL
+                    // ==========================================
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                        contentPadding = PaddingValues(vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(32.dp)
+                    ) {
+                        item {
+                            PersonalInfoStep(
+                                initialData = formData.personalInfo,
+                                fieldErrors = fieldErrors.filter { it.fieldName in listOf("age", "height", "weight", "gender", "activityLevel") },
+                                focusRequesters = focusRequesters,
+                                onFieldFocus = { profileViewModel.clearFieldError(it) },
+                                onDataChange = { onboardingViewModel.updatePersonalInfo(it) }
+                            )
+                        }
+                        item { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
+                        item {
+                            GoalsStep(
+                                initialData = formData.dailyGoals,
+                                onDataChange = { onboardingViewModel.updateDailyGoals(it) },
+                                personalInfo = formData.personalInfo,
+                                fieldErrors = fieldErrors.filter { it.fieldName in listOf("calories", "protein", "carbs", "fat", "fiber", "sugar") },
+                                focusRequesters = focusRequesters,
+                                onFieldFocus = { profileViewModel.clearFieldError(it) }
+                            )
+                        }
+                        item { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
+                        item {
+                            HealthStep(
+                                selectedConditions = formData.healthConditions,
+                                selectedAllergies = formData.allergies,
+                                customConditions = formData.customHealthConditions,
+                                customAllergies = formData.customAllergies,
+                                onConditionToggle = { onboardingViewModel.toggleHealthCondition(it) },
+                                onAllergyToggle = { onboardingViewModel.toggleAllergy(it) },
+                                onAddCustomCondition = { onboardingViewModel.addCustomHealthCondition(it) },
+                                onAddCustomAllergy = { onboardingViewModel.addCustomAllergy(it) },
+                            )
+                        }
+                        item { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
+                        item {
+                            DietStep(
+                                selectedDiets = formData.dietaryRestrictions,
+                                customDiets = formData.customDietaryRestrictions,
+                                onDietToggle = { onboardingViewModel.toggleDietaryRestriction(it) },
+                                onAddCustomDiet = { onboardingViewModel.addCustomDietaryRestriction(it) },
+                            )
+                        }
+                        item { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
+                        item {
+                            FoodPreferencesStep(
+                                likedFoods = formData.likedFoods,
+                                dislikedFoods = formData.dislikedFoods,
+                                customLikedFoods = formData.customLikedFoods,
+                                customDislikedFoods = formData.customDislikedFoods,
+                                onLikeToggle = { onboardingViewModel.toggleLikedFood(it) },
+                                onDislikeToggle = { onboardingViewModel.toggleDislikedFood(it) },
+                                onAddCustomLiked = { onboardingViewModel.addCustomLikedFood(it) },
+                                onAddCustomDisliked = { onboardingViewModel.addCustomDislikedFood(it) },
+                            )
+                        }
                     }
                 }
-
             } else {
                 // ==========================================
                 // MODE 2: MULTI-STEP WIZARD UNTUK USER BARU
@@ -262,7 +271,6 @@ fun ProfileOnboardingScreen(
                                     0 -> WelcomeStep { onboardingViewModel.nextStep() }
                                     1 -> PersonalInfoStep(
                                         initialData = formData.personalInfo,
-                                        isEdit = false,
                                         fieldErrors = fieldErrors.filter { it.fieldName in listOf("age", "height", "weight", "gender", "activityLevel") },
                                         focusRequesters = focusRequesters,
                                         onFieldFocus = { profileViewModel.clearFieldError(it) },
@@ -272,7 +280,6 @@ fun ProfileOnboardingScreen(
                                         initialData = formData.dailyGoals,
                                         onDataChange = { onboardingViewModel.updateDailyGoals(it) },
                                         personalInfo = formData.personalInfo,
-                                        isEdit = false,
                                         fieldErrors = fieldErrors.filter { it.fieldName in listOf("calories", "protein", "carbs", "fat", "fiber", "sugar") },
                                         focusRequesters = focusRequesters,
                                         onFieldFocus = { profileViewModel.clearFieldError(it) }
@@ -286,14 +293,12 @@ fun ProfileOnboardingScreen(
                                         onAllergyToggle = { onboardingViewModel.toggleAllergy(it) },
                                         onAddCustomCondition = { onboardingViewModel.addCustomHealthCondition(it) },
                                         onAddCustomAllergy = { onboardingViewModel.addCustomAllergy(it) },
-                                        isEdit = false
                                     )
                                     4 -> DietStep(
                                         selectedDiets = formData.dietaryRestrictions,
                                         customDiets = formData.customDietaryRestrictions,
                                         onDietToggle = { onboardingViewModel.toggleDietaryRestriction(it) },
                                         onAddCustomDiet = { onboardingViewModel.addCustomDietaryRestriction(it) },
-                                        isEdit = false
                                     )
                                     5 -> FoodPreferencesStep(
                                         likedFoods = formData.likedFoods,
@@ -304,7 +309,6 @@ fun ProfileOnboardingScreen(
                                         onDislikeToggle = { onboardingViewModel.toggleDislikedFood(it) },
                                         onAddCustomLiked = { onboardingViewModel.addCustomLikedFood(it) },
                                         onAddCustomDisliked = { onboardingViewModel.addCustomDislikedFood(it) },
-                                        isEdit = false
                                     )
                                 }
                             }
