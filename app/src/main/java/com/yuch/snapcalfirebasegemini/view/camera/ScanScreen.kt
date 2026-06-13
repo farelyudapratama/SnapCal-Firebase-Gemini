@@ -46,7 +46,6 @@ import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
 import java.io.File
 import java.io.FileOutputStream
-import java.net.URLEncoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,9 +108,7 @@ fun ScanScreen(
                     CameraPreview(
                         onImageCaptured = { imagePath ->
                             viewModel.onTakePhoto(imagePath)
-                            // Encode path untuk navigasi
-                            val encodedPath = URLEncoder.encode(imagePath, "UTF-8")
-                            navController.navigate(Screen.Analyze.createRoute(encodedPath))
+                            navController.navigate(Screen.Analyze.createRoute(imagePath))
                         },
                         onError = { error ->
                             toastMessage = "Error: ${error.message}"
@@ -263,11 +260,8 @@ private fun processSelectedImage(
         // Simpan ke ViewModel
         viewModel.onTakePhoto(file.absolutePath)
 
-        // Encode path untuk navigasi
-        val encodedPath = java.net.URLEncoder.encode(file.absolutePath, "UTF-8")
-
         // Navigasi ke preview screen
-        navController.navigate(Screen.Analyze.createRoute(encodedPath))
+        navController.navigate(Screen.Analyze.createRoute(file.absolutePath))
     } catch (e: Exception) {
         Toast.makeText(context, "Failed to process image", Toast.LENGTH_SHORT).show()
     }

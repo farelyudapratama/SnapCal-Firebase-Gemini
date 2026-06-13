@@ -96,13 +96,13 @@ fun AppNavHost(
         composable(
             Screen.DetailFood.route,
             arguments = listOf(
-                navArgument("foodId") {
+                navArgument(Screen.DetailFood.ARG_FOOD_ID) {
                     type = NavType.StringType
                     nullable = false
                 }
             )
         ) {
-            val foodId = it.arguments?.getString("foodId")
+            val foodId = it.arguments?.getString(Screen.DetailFood.ARG_FOOD_ID)
             requireNotNull(foodId) { "FoodId cannot be null" }
             DetailFoodScreen(
                 foodId = foodId,
@@ -122,13 +122,13 @@ fun AppNavHost(
         composable(
             Screen.Analyze.route,
             arguments = listOf(
-                navArgument("imagePath") {
+                navArgument(Screen.Analyze.ARG_IMAGE_PATH) {
                     type = NavType.StringType
                     nullable = false
                 }
             )
         ) { entry ->
-            val imagePath = entry.arguments?.getString("imagePath")
+            val imagePath = entry.arguments?.getString(Screen.Analyze.ARG_IMAGE_PATH)
             requireNotNull(imagePath) { "Image path cannot be null" }
 
             // Menggunakan Factory agar instance FoodViewModel mendapatkan Repository yang benar
@@ -165,10 +165,10 @@ fun AppNavHost(
         composable(
             route = Screen.EditFood.route,
             arguments = listOf(
-                navArgument("foodId") { type = NavType.StringType }
+                navArgument(Screen.EditFood.ARG_FOOD_ID) { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val foodId = backStackEntry.arguments?.getString("foodId")
+            val foodId = backStackEntry.arguments?.getString(Screen.EditFood.ARG_FOOD_ID)
 
             if (foodId == null) {
                 Box(
@@ -214,11 +214,11 @@ fun AppNavHost(
         }
 
         composable(route = Screen.ProfileOnboarding.route,
-            arguments = listOf(navArgument("edit") {
+            arguments = listOf(navArgument(Screen.ProfileOnboarding.ARG_EDIT) {
                 defaultValue = "false"
             })
         ) { backStackEntry ->
-            val isEdit = backStackEntry.arguments?.getString("edit") == "true"
+            val isEdit = backStackEntry.arguments?.getString(Screen.ProfileOnboarding.ARG_EDIT) == "true"
 
             ProfileOnboardingScreen(
                 navController = navController,
