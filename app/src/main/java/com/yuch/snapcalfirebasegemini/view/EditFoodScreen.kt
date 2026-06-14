@@ -67,8 +67,11 @@ import coil.compose.rememberAsyncImagePainter
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
-import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.ui.components.food.FoodTextField
+import com.yuch.snapcalfirebasegemini.ui.components.food.MealTypeDropdown
+import com.yuch.snapcalfirebasegemini.ui.components.food.NutritionFields
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodDetailViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodEntryViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -80,8 +83,8 @@ fun EditFoodScreen(
     foodItem: FoodItem?, // Data makanan yang akan diedit harusnya
     onUpdateFood: (String, String?, UpdateFoodData) -> Unit,
     onBack: () -> Unit,
-    getFoodViewModel: GetFoodViewModel,
-    foodViewModel: FoodViewModel
+    detailViewModel: FoodDetailViewModel,
+    foodViewModel: FoodEntryViewModel
 ) {
     var foodName by remember { mutableStateOf(foodItem?.foodName ?: "") }
     var weightInGrams by remember { mutableStateOf(foodItem?.weightInGrams?.toString() ?: "") }
@@ -94,7 +97,7 @@ fun EditFoodScreen(
     var fiber by remember { mutableStateOf(foodItem?.nutritionData?.fiber?.toString() ?: "") }
     var sugar by remember { mutableStateOf(foodItem?.nutritionData?.sugar?.toString() ?: "") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    val imageDeletedMessage by getFoodViewModel.imageDeletedMessage.collectAsState()
+    val imageDeletedMessage by detailViewModel.imageDeletedMessage.collectAsState()
 
     // Focus controllers
     val focusManager = LocalFocusManager.current
@@ -150,7 +153,7 @@ fun EditFoodScreen(
         imageDeletedMessage?.let { message ->
             scope.launch {
                 snackbarHostState.showSnackbar(message)
-                getFoodViewModel.clearImageDeletedMessage()
+                detailViewModel.clearImageDeletedMessage()
             }
         }
     }
@@ -280,7 +283,7 @@ fun EditFoodScreen(
                                     )
                                 },
                                 onDeleteImage = {
-                                    getFoodViewModel.deleteFoodImageById(foodId)
+                                    detailViewModel.deleteFoodImageById(foodId)
                                 }
                             )
 
@@ -289,7 +292,8 @@ fun EditFoodScreen(
                             // Meal Type Selection
                             MealTypeDropdown(
                                 selectedMealType = mealType,
-                                onMealTypeSelected = { mealType = it }
+                                onMealTypeSelected = { mealType = it },
+                                showLabelAbove = true
                             )
 
                             Spacer(modifier = Modifier.height(24.dp))
@@ -302,18 +306,17 @@ fun EditFoodScreen(
                             )
 
                             // Weight Input
-                            TextField(
+                            FoodTextField(
                                 value = weightInGrams,
                                 onValueChange = { weightInGrams = it },
                                 label = stringResource(R.string.weight_g),
                                 leadingIcon = { Icon(Icons.Default.Restaurant, "Weight") },
-                                focusRequester = FocusRequester(),
                                 onNext = { focusManager.clearFocus() },
                                 keyboardType = KeyboardType.Number
                             )
 
                             // Food Name Input
-                            TextField(
+                            FoodTextField(
                                 value = foodName,
                                 onValueChange = { foodName = it },
                                 label = stringResource(R.string.food_name),
@@ -332,68 +335,29 @@ fun EditFoodScreen(
                                 modifier = Modifier.padding(bottom = 16.dp)
                             )
 
-                            // Nutrition Inputs
-                            NutritionField(
-                                label = stringResource(R.string.nutrient_calories) + " (kcal)",
-                                value = calories,
-                                onValueChange = { calories = it },
-                                focusRequester = caloriesFocus,
-                                onNext = { carbsFocus.requestFocus() },
-                                icon = Icons.Default.LocalFireDepartment
-                            )
-
-                            NutritionField(
-                                label = stringResource(R.string.nutrient_carbs) + " (g)",
-                                value = carbs,
-                                onValueChange = { carbs = it },
-                                focusRequester = carbsFocus,
-                                onNext = { proteinFocus.requestFocus() },
-                                icon = Icons.Default.Grain
-                            )
-
-                            NutritionField(
-                                label = stringResource(R.string.nutrient_protein) + " (g)",
-                                value = protein,
-                                onValueChange = { protein = it },
-                                focusRequester = proteinFocus,
-                                onNext = { totalFatFocus.requestFocus() },
-                                icon = Icons.Default.FitnessCenter
-                            )
-
-                            NutritionField(
-                                label = stringResource(R.string.nutrient_fat) + " (g)",
-                                value = totalFat,
-                                onValueChange = { totalFat = it },
-                                focusRequester = totalFatFocus,
-                                onNext = { saturatedFatFocus.requestFocus() },
-                                icon = Icons.Default.WaterDrop
-                            )
-
-                            NutritionField(
-                                label = "Saturated Fat (g)",
-                                value = saturatedFat,
-                                onValueChange = { saturatedFat = it },
-                                focusRequester = saturatedFatFocus,
-                                onNext = { fiberFocus.requestFocus() },
-                                icon = Icons.Default.WaterDrop
-                            )
-
-                            NutritionField(
-                                label = stringResource(R.string.nutrient_fiber) + " (g)",
-                                value = fiber,
-                                onValueChange = { fiber = it },
-                                focusRequester = fiberFocus,
-                                onNext = { sugarFocus.requestFocus() },
-                                icon = Icons.Default.Grass
-                            )
-
-                            NutritionField(
-                                label = stringResource(R.string.nutrient_sugar) + " (g)",
-                                value = sugar,
-                                onValueChange = { sugar = it },
-                                focusRequester = sugarFocus,
-                                onNext = { focusManager.clearFocus() },
-                                icon = Icons.Default.Cookie
+                            NutritionFields(
+                                calories = calories,
+                                carbs = carbs,
+                                protein = protein,
+                                totalFat = totalFat,
+                                saturatedFat = saturatedFat,
+                                fiber = fiber,
+                                sugar = sugar,
+                                onCaloriesChange = { calories = it },
+                                onCarbsChange = { carbs = it },
+                                onProteinChange = { protein = it },
+                                onTotalFatChange = { totalFat = it },
+                                onSaturatedFatChange = { saturatedFat = it },
+                                onFiberChange = { fiber = it },
+                                onSugarChange = { sugar = it },
+                                caloriesFocus = caloriesFocus,
+                                carbsFocus = carbsFocus,
+                                proteinFocus = proteinFocus,
+                                totalFatFocus = totalFatFocus,
+                                saturatedFatFocus = saturatedFatFocus,
+                                fiberFocus = fiberFocus,
+                                sugarFocus = sugarFocus,
+                                onDone = { focusManager.clearFocus() }
                             )
                         }
                     }
@@ -586,161 +550,6 @@ private fun ImageActionButtons(
             )
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MealTypeDropdown(
-    selectedMealType: String?,
-    onMealTypeSelected: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val mealTypes = listOf(
-        "breakfast" to Icons.Default.BreakfastDining,
-        "lunch" to Icons.Default.LunchDining,
-        "dinner" to Icons.Default.DinnerDining,
-        "snack" to Icons.Default.Icecream,
-        "drink" to Icons.Default.LocalCafe
-    )
-
-    Column {
-        Text(
-            "Meal Type",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = it }
-        ) {
-            OutlinedTextField(
-                value = selectedMealType?.replaceFirstChar { it.uppercase() } ?: "",
-                onValueChange = {},
-                readOnly = true,
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary
-                ),
-                placeholder = { Text("Select meal type") }
-            )
-
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                mealTypes.forEach { (type, icon) ->
-                    DropdownMenuItem(
-                        text = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = icon,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Text(type.replaceFirstChar { it.uppercase() })
-                            }
-                        },
-                        onClick = {
-                            onMealTypeSelected(type)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    leadingIcon: @Composable (() -> Unit)? = null,
-    focusRequester: FocusRequester,
-    onNext: () -> Unit,
-    keyboardType: KeyboardType = KeyboardType.Text
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        leadingIcon = leadingIcon,
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester),
-        shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            focusedLabelColor = MaterialTheme.colorScheme.primary,
-            focusedLeadingIconColor = MaterialTheme.colorScheme.primary
-        ),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = keyboardType,
-            imeAction = ImeAction.Next
-        ),
-        keyboardActions = KeyboardActions(
-            onNext = { onNext() }
-        ),
-        singleLine = true
-    )
-}
-
-@Composable
-private fun NutritionField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    focusRequester: FocusRequester,
-    onNext: () -> Unit,
-    icon: ImageVector
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = { newValue ->
-            // Only allow numeric input
-            if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
-                onValueChange(newValue)
-            }
-        },
-        label = { Text(label) },
-        leadingIcon = {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .focusRequester(focusRequester),
-        shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            focusedLabelColor = MaterialTheme.colorScheme.primary,
-            focusedLeadingIconColor = MaterialTheme.colorScheme.primary
-        ),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Decimal,
-            imeAction = ImeAction.Next
-        ),
-        keyboardActions = KeyboardActions(
-            onNext = { onNext() }
-        ),
-        singleLine = true
-    )
 }
 
 @Composable

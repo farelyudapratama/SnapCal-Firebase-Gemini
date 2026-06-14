@@ -35,7 +35,6 @@ import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 import java.util.Locale
 import kotlin.math.pow

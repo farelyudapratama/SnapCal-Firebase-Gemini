@@ -32,34 +32,29 @@ import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.*
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
+import com.yuch.snapcalfirebasegemini.view.nutritrack.AccentAmber
+import com.yuch.snapcalfirebasegemini.view.nutritrack.AccentDeepOrange
+import com.yuch.snapcalfirebasegemini.view.nutritrack.AccentGreen
+import com.yuch.snapcalfirebasegemini.view.nutritrack.AccentOrange
+import com.yuch.snapcalfirebasegemini.view.nutritrack.AccentRed
+import com.yuch.snapcalfirebasegemini.view.nutritrack.AccentYellow
+import com.yuch.snapcalfirebasegemini.view.nutritrack.DarkGreenPrimary
+import com.yuch.snapcalfirebasegemini.view.nutritrack.LightGreenBackground
+import com.yuch.snapcalfirebasegemini.view.nutritrack.MediumGreenSecondary
+import com.yuch.snapcalfirebasegemini.view.nutritrack.TextOnDark
+import com.yuch.snapcalfirebasegemini.view.nutritrack.TextOnLight
+import com.yuch.snapcalfirebasegemini.view.nutritrack.TextSecondaryOnLight
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.NutritionSummaryViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.min
-
-// --- Definisi Warna Baru ---
-val DarkGreenPrimary = Color(0xFF00695C)
-val MediumGreenSecondary = Color(0xFF4DB6AC)
-val LightGreenBackground = Color(0xFFE0F2F1)
-
-val AccentYellow = Color(0xFFFFD54F)
-val AccentOrange = Color(0xFFFFB74D)
-val AccentDeepOrange = Color(0xFFFF8A65)
-val AccentGreen = Color(0xFF4CAF50)
-val AccentRed = Color(0xFFF44336)
-val AccentAmber = Color(0xFFFFC107)
-
-val TextOnDark = Color.White
-val TextOnLight = Color.DarkGray
-val TextSecondaryOnLight = Color.Gray
-// --- Akhir Definisi Warna Baru ---
 
 @Composable
 fun NutriTrackScreen(
     navController: NavController,
     authViewModel: AuthViewModel,
-    viewModel: GetFoodViewModel
+    viewModel: NutritionSummaryViewModel
 ) {
     val authState = authViewModel.authState.collectAsStateWithLifecycle()
     LaunchedEffect(authState.value) {

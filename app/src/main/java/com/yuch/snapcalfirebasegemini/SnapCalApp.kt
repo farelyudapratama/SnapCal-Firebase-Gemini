@@ -28,7 +28,7 @@ import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodListViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ViewModelFactory
@@ -40,7 +40,7 @@ import com.yuch.snapcalfirebasegemini.viewmodel.ViewModelFactory
 fun SnapCalApp(
     authViewModel: AuthViewModel,
     cameraViewModel: CameraViewModel,
-    getFoodViewModel: GetFoodViewModel,
+    getFoodViewModel: FoodListViewModel,
     profileViewModel: ProfileViewModel,
     onboardingViewModel: OnboardingViewModel,
     announcementViewModel: AnnouncementViewModel? = null,

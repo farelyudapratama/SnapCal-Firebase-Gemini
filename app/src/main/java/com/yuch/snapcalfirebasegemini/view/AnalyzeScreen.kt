@@ -38,7 +38,9 @@ import coil.compose.AsyncImage
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodDetectionByMyModelResult
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
+import com.yuch.snapcalfirebasegemini.ui.components.food.MealTypeDropdown
 import com.yuch.snapcalfirebasegemini.utils.normalizeDecimal
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodEntryViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
 import kotlinx.coroutines.launch
 import java.io.File
@@ -49,14 +51,18 @@ import java.util.Locale
 fun AnalyzeScreen(
     imagePath: String,
     viewModel: FoodViewModel,
+    entryViewModel: FoodEntryViewModel,
     onBack: () -> Unit,
     onSuccessfulUpload: () -> Boolean,
 ) {
     var selectedService by remember { mutableStateOf<String?>(null) }
     val analysisResult by viewModel.analysisResult.collectAsStateWithLifecycle()
-    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val isAnalyzing by viewModel.isLoading.collectAsStateWithLifecycle()
+    val isSaving by entryViewModel.isLoading.collectAsStateWithLifecycle()
+    val isLoading = isAnalyzing || isSaving
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
-    val uploadSuccess by viewModel.uploadSuccess.collectAsStateWithLifecycle()
+    val entryErrorMessage by entryViewModel.errorMessage.collectAsStateWithLifecycle()
+    val uploadSuccess by entryViewModel.uploadSuccess.collectAsStateWithLifecycle()
     val yoloDetections by viewModel.yoloDetectionResult.collectAsStateWithLifecycle()
     val successMessage by viewModel.successMessage.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -125,7 +131,7 @@ fun AnalyzeScreen(
                 Toast.LENGTH_SHORT
             ).show()
 
-            viewModel.resetState()
+            entryViewModel.resetState()
             onSuccessfulUpload()
         }
     }
@@ -138,6 +144,16 @@ fun AnalyzeScreen(
                 duration = SnackbarDuration.Long
             )
             viewModel.clearErrorMessage()
+        }
+    }
+
+    LaunchedEffect(entryErrorMessage) {
+        entryErrorMessage?.let {
+            snackbarHostState.showSnackbar(
+                message = it,
+                duration = SnackbarDuration.Long
+            )
+            entryViewModel.clearErrorMessage()
         }
     }
 
@@ -194,7 +210,7 @@ fun AnalyzeScreen(
                     onClick = {
                         editableFood?.let { foodData ->
                             if (foodData.mealType != null) {
-                                viewModel.uploadFood(imagePath, foodData)
+                                entryViewModel.uploadFood(imagePath, foodData)
                             } else {
                                 coroutineScope.launch {
                                     snackbarHostState.showSnackbar(
@@ -648,71 +664,10 @@ private fun EditableAnalysisCard(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
-            val mealTypeMap = mapOf(
-                "breakfast" to stringResource(R.string.breakfast),
-                "lunch" to stringResource(R.string.lunch),
-                "dinner" to stringResource(R.string.dinner),
-                "snack" to stringResource(R.string.snack),
-                "drink" to stringResource(R.string.drink)
+            MealTypeDropdown(
+                selectedMealType = foodData.mealType,
+                onMealTypeSelected = { onValueChange(foodData.copy(mealType = it)) }
             )
-
-            var expanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
-            ) {
-                OutlinedTextField(
-                    value = foodData.mealType
-                        ?.let { mealTypeMap[it] }
-                        ?.replaceFirstChar {
-                            if (it.isLowerCase()) it.titlecase(Locale.getDefault())
-                            else it.toString()
-                        }
-                        ?: stringResource(R.string.select_meal_type),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.meal_type)) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(
-                            type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
-                            enabled = true
-                        ),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    listOf(
-                        stringResource(R.string.breakfast) to "breakfast",
-                        stringResource(R.string.lunch) to "lunch",
-                        stringResource(R.string.dinner) to "dinner",
-                        stringResource(R.string.snack) to "snack",
-                        stringResource(R.string.drink) to "drink"
-                    ).forEach { (label, value) ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(label.replaceFirstChar {
-                                    if (it.isLowerCase()) it.titlecase(Locale.ROOT)
-                                    else it.toString()
-                                })
-                            },
-                            onClick = {
-                                onValueChange(foodData.copy(mealType = value))
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 

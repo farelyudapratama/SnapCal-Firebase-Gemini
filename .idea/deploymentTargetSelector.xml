@@ -4,11 +4,14 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-06-10T16:42:49.314655059Z">
+        <DropdownSelection timestamp="2026-06-13T15:52:29.966261260Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=44d9e89" />
+              <DeviceId pluginId="FirebaseDirectAccess" identifier="reservation=projects/snapcalwithfirebaseandgemini/deviceSessions/session-29amnrsdxgfth" />
             </handle>
+            <template>
+              <DeviceId pluginId="FirebaseDirectAccess" type="TEMPLATE" identifier="model_id=tokay/35" />
+            </template>
           </Target>
         </DropdownSelection>
         <DialogSelection />

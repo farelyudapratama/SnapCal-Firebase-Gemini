@@ -15,8 +15,17 @@ class ViewModelFactory(
             modelClass.isAssignableFrom(FoodViewModel::class.java) -> {
                 FoodViewModel(apiRepository) as T
             }
-            modelClass.isAssignableFrom(GetFoodViewModel::class.java) -> {
-                GetFoodViewModel(apiRepository) as T
+            modelClass.isAssignableFrom(FoodEntryViewModel::class.java) -> {
+                FoodEntryViewModel(apiRepository) as T
+            }
+            modelClass.isAssignableFrom(FoodDetailViewModel::class.java) -> {
+                FoodDetailViewModel(apiRepository) as T
+            }
+            modelClass.isAssignableFrom(FoodListViewModel::class.java) -> {
+                FoodListViewModel(apiRepository) as T
+            }
+            modelClass.isAssignableFrom(NutritionSummaryViewModel::class.java) -> {
+                NutritionSummaryViewModel(apiRepository) as T
             }
             modelClass.isAssignableFrom(AnnouncementViewModel::class.java) -> {
                 AnnouncementViewModel(apiRepository) as T

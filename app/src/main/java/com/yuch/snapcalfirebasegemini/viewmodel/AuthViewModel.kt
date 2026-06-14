@@ -46,9 +46,6 @@ class AuthViewModel : ViewModel() {
         emailValid && passValid && email.isNotEmpty() && pass.isNotEmpty()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    // Callback untuk menghapus data di ViewModels lain
-    private var clearDataCallback: (() -> Unit)? = null
-
     init {
         checkAuthStatus()
     }
@@ -63,10 +60,6 @@ class AuthViewModel : ViewModel() {
 
     fun togglePasswordVisibility() {
         _passwordVisible.value = !_passwordVisible.value
-    }
-
-    fun setClearDataCallback(callback: () -> Unit) {
-        clearDataCallback = callback
     }
 
     private fun checkAuthStatus(){
@@ -184,9 +177,6 @@ class AuthViewModel : ViewModel() {
 
 
     fun signout(){
-        // Hapus semua data sebelum logout
-        clearAllUserData()
-        
         // Clear cached token
         ApiConfig.clearTokenCache()
 
@@ -197,11 +187,6 @@ class AuthViewModel : ViewModel() {
         _userEmail.value = null
         _emailInput.value = ""
         _passwordInput.value = ""
-    }
-
-    private fun clearAllUserData() {
-        // Panggil callback untuk menghapus data di ViewModels lain
-        clearDataCallback?.invoke()
     }
 
     fun resetState() {

@@ -10,6 +10,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,8 +48,11 @@ import com.yuch.snapcalfirebasegemini.viewmodel.AuthActionViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodDetailViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodEntryViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodListViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.NutritionSummaryViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.RecommendationViewModel
@@ -62,7 +66,7 @@ fun AppNavHost(
     profileViewModel: ProfileViewModel,
     onboardingViewModel: OnboardingViewModel,
     cameraViewModel: CameraViewModel,
-    getFoodViewModel: GetFoodViewModel,
+    getFoodViewModel: FoodListViewModel,
     announcementViewModel: AnnouncementViewModel? = null,
     viewModelFactory: ViewModelFactory
 ) {
@@ -91,7 +95,8 @@ fun AppNavHost(
             ProfileScreen(modifier, navController, authViewModel, profileViewModel)
         }
         composable(Screen.Tracking.route) {
-            NutriTrackScreen(navController, authViewModel, getFoodViewModel)
+            val nutritionSummaryViewModel: NutritionSummaryViewModel = viewModel(factory = viewModelFactory)
+            NutriTrackScreen(navController, authViewModel, nutritionSummaryViewModel)
         }
         composable(
             Screen.DetailFood.route,
@@ -104,10 +109,11 @@ fun AppNavHost(
         ) {
             val foodId = it.arguments?.getString(Screen.DetailFood.ARG_FOOD_ID)
             requireNotNull(foodId) { "FoodId cannot be null" }
+            val foodDetailViewModel: FoodDetailViewModel = viewModel(factory = viewModelFactory)
             DetailFoodScreen(
                 foodId = foodId,
                 onBack = { navController.popBackStack() },
-                viewModel = getFoodViewModel,
+                viewModel = foodDetailViewModel,
                 modifier = modifier,
                 navController = navController,
                 authViewModel = authViewModel
@@ -133,11 +139,13 @@ fun AppNavHost(
 
             // Menggunakan Factory agar instance FoodViewModel mendapatkan Repository yang benar
             val foodViewModel: FoodViewModel = viewModel(factory = viewModelFactory)
+            val foodEntryViewModel: FoodEntryViewModel = viewModel(factory = viewModelFactory)
 
             AnalyzeScreen(
                 imagePath = imagePath,
                 onBack = { navController.popBackStack() },
                 viewModel = foodViewModel,
+                entryViewModel = foodEntryViewModel,
                 onSuccessfulUpload = {
                     navController.popBackStack(
                         route = Screen.Main.route,
@@ -148,12 +156,12 @@ fun AppNavHost(
         }
         composable(Screen.ManualEntry.route) {
             // Menggunakan Factory
-            val foodViewModel: FoodViewModel = viewModel(factory = viewModelFactory)
+            val foodEntryViewModel: FoodEntryViewModel = viewModel(factory = viewModelFactory)
             
             ManualEntryScreen(
                 modifier,
                 onBack = { navController.popBackStack() },
-                viewModel = foodViewModel,
+                viewModel = foodEntryViewModel,
                 onSuccessfulUpload = {
                     navController.popBackStack(
                         route = Screen.Main.route,
@@ -187,20 +195,24 @@ fun AppNavHost(
                     }
                 }
             } else {
-                val viewModelGetFood: GetFoodViewModel = getFoodViewModel
-                val foodViewModel: FoodViewModel = viewModel(factory = viewModelFactory)
-                val foodItem by viewModelGetFood.food.collectAsStateWithLifecycle()
+                val foodDetailViewModel: FoodDetailViewModel = viewModel(factory = viewModelFactory)
+                val foodEntryViewModel: FoodEntryViewModel = viewModel(factory = viewModelFactory)
+                val foodItem by foodDetailViewModel.food.collectAsStateWithLifecycle()
+
+                LaunchedEffect(foodId) {
+                    foodDetailViewModel.fetchFoodById(foodId, forceRefresh = true)
+                }
 
                 EditFoodScreen(
                     foodId = foodId,
                     navController = navController,
                     foodItem = foodItem,
                     onUpdateFood = { id, imagePath, foodData ->
-                        foodViewModel.updateFood(id, imagePath, foodData)
+                        foodEntryViewModel.updateFood(id, imagePath, foodData)
                     },
                     onBack = { navController.popBackStack() },
-                    getFoodViewModel = viewModelGetFood,
-                    foodViewModel = foodViewModel
+                    detailViewModel = foodDetailViewModel,
+                    foodViewModel = foodEntryViewModel
                 )
             }
         }

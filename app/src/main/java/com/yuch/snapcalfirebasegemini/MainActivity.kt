@@ -14,13 +14,18 @@ import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.firebase.messaging.FirebaseMessaging
 import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodListViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
@@ -40,11 +45,12 @@ class MainActivity : ComponentActivity() {
     private val cameraViewModel: CameraViewModel by viewModels()
     
     // Gunakan factory yang sama
-    private val getFoodViewModel: GetFoodViewModel by viewModels { viewModelFactory }
+    private val getFoodViewModel: FoodListViewModel by viewModels { viewModelFactory }
     private val announcementViewModel: AnnouncementViewModel by viewModels { viewModelFactory }
     
     private val profileViewModel: ProfileViewModel by viewModels { viewModelFactory }
     private val onboardingViewModel: OnboardingViewModel by viewModels()
+    private var lastAuthState: AuthState? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,7 +58,7 @@ class MainActivity : ComponentActivity() {
         createNotificationChannel()
         askNotificationPermission()
         subscribeToTopic()
-        setupClearDataCallback()
+        observeSessionState()
         
         announcementViewModel.fetchAnnouncements()
 
@@ -100,13 +106,23 @@ class MainActivity : ComponentActivity() {
         FirebaseMessaging.getInstance().subscribeToTopic("announcements_all")
     }
 
-    private fun setupClearDataCallback() {
-        authViewModel.setClearDataCallback {
-            // Hapus data dari semua ViewModels
-            cameraViewModel.clearData()
-            getFoodViewModel.clearData()
-            profileViewModel.clearData()
-            onboardingViewModel.clearData()
+    private fun observeSessionState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                authViewModel.authState.collect { authState ->
+                    if (lastAuthState is AuthState.Authenticated && authState is AuthState.Unauthenticated) {
+                        clearUserData()
+                    }
+                    lastAuthState = authState
+                }
+            }
         }
+    }
+
+    private fun clearUserData() {
+        cameraViewModel.clearData()
+        getFoodViewModel.clearData()
+        profileViewModel.clearData()
+        onboardingViewModel.clearData()
     }
 }

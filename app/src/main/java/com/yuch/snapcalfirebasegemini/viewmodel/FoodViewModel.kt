@@ -6,16 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.yuch.snapcalfirebasegemini.data.api.response.AnalyzeResult
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodDetectionByMyModelResult
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionEstimateRequest
-import com.yuch.snapcalfirebasegemini.data.api.request.toUpdateFoodParts
-import com.yuch.snapcalfirebasegemini.data.api.request.toUploadFoodParts
 import com.yuch.snapcalfirebasegemini.data.mapper.MyModelAnalysisResult
 import com.yuch.snapcalfirebasegemini.data.mapper.toMyModelAnalysisResult
-import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
-import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.domain.result.AppResult
 import com.yuch.snapcalfirebasegemini.utils.ImageUtils
-import com.yuch.snapcalfirebasegemini.utils.normalizeDecimal
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -39,9 +34,6 @@ class FoodViewModel(
 
     private val _successMessage = MutableStateFlow<String?>(null)
     val successMessage = _successMessage.asStateFlow()
-
-    private val _uploadSuccess = MutableStateFlow(false)
-    val uploadSuccess = _uploadSuccess.asStateFlow()
 
     private val _yoloDetectionResult = MutableStateFlow<List<FoodDetectionByMyModelResult>?>(null)
     val yoloDetectionResult = _yoloDetectionResult.asStateFlow()
@@ -133,88 +125,6 @@ class FoodViewModel(
         }
     }
 
-    // Upload Food data
-    fun uploadFood(imagePath: String?, foodData: EditableFoodData) {
-        if (foodData.mealType == null) {
-            _errorMessage.value = "Please select a meal type"
-            return
-        }
-        _isLoading.value = true
-        _errorMessage.value = null
-
-        // Always normalize all nutrition fields and weight before upload
-        val safeFoodData = foodData.copy(
-            calories = foodData.calories.normalizeDecimal(),
-            carbs = foodData.carbs.normalizeDecimal(),
-            protein = foodData.protein.normalizeDecimal(),
-            totalFat = foodData.totalFat.normalizeDecimal(),
-            saturatedFat = foodData.saturatedFat.normalizeDecimal(),
-            fiber = foodData.fiber.normalizeDecimal(),
-            sugar = foodData.sugar.normalizeDecimal(),
-            weightInGrams = foodData.weightInGrams.normalizeDecimal()
-        )
-
-        viewModelScope.launch {
-            try {
-                val foodParts = safeFoodData.toUploadFoodParts(imagePath)
-
-                val result = repository.uploadFood(
-                    image = foodParts.image,
-                    foodName = foodParts.foodName,
-                    mealType = foodParts.mealType,
-                    weightInGrams = foodParts.weightInGrams,
-                    nutritionData = foodParts.nutritionData
-                )
-
-                when (result) {
-                    is AppResult.Success -> _uploadSuccess.value = true
-                    is AppResult.Error -> _errorMessage.value = result.toDisplayMessage()
-                }
-            } catch (e: Exception) {
-                handleError(e)
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    // Update Food data
-    fun updateFood(
-        foodId: String, imagePath: String?, foodData: UpdateFoodData?
-    ) {
-        if (foodData?.mealType == null) {
-            _errorMessage.value = "Please select a meal type"
-            return
-        }
-        _isLoading.value = true
-        _errorMessage.value = null
-
-        viewModelScope.launch {
-            try {
-                val foodParts = foodData.toUpdateFoodParts(imagePath)
-
-                val result = repository.updateFood(
-                    id = foodId,
-                    foodName = foodParts.foodName,
-                    mealType = foodParts.mealType,
-                    weightInGrams = foodParts.weightInGrams,
-                    nutritionData = foodParts.nutritionData,
-                    image = foodParts.image
-                )
-
-                when (result) {
-                    is AppResult.Success -> _successMessage.value = "Food updated successfully."
-                    is AppResult.Error -> _errorMessage.value = result.toDisplayMessage()
-                }
-            } catch (e: Exception) {
-                handleError(e)
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-
     // Add method to estimate nutrition by food name
     fun estimateNutritionByName(foodName: String, description: String? = null) {
         _analysisResult.value = null
@@ -267,17 +177,11 @@ class FoodViewModel(
     private fun AppResult.Error.toDisplayMessage(): String =
         code?.let { "[Code: $it] $message" } ?: message
 
-    fun resetState() {
-        _uploadSuccess.value = false
-        _errorMessage.value = null
-    }
-
     fun clearData() {
         _analysisResult.value = null
         _isLoading.value = false
         _errorMessage.value = null
         _successMessage.value = null
-        _uploadSuccess.value = false
         _yoloDetectionResult.value = null
     }
 }

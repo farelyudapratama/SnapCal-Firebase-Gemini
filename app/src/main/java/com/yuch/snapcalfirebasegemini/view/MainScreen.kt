@@ -35,7 +35,7 @@ import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.GetFoodViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.FoodListViewModel
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -49,7 +49,7 @@ fun MainScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
-    foodViewModel: GetFoodViewModel,
+    foodViewModel: FoodListViewModel,
     announcementViewModel: AnnouncementViewModel? = null
 ) {
     val authState = authViewModel.authState.collectAsStateWithLifecycle()
