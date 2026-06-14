@@ -25,6 +25,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
+import com.yuch.snapcalfirebasegemini.ui.navigation.shouldShowBottomBar
 import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
@@ -48,20 +49,6 @@ fun SnapCalApp(
 ) {
     val navController = rememberNavController()
 
-    val screensWithoutBottomBar = listOf(
-        Screen.Login.route,
-        Screen.Register.route,
-        Screen.ForgotPassword.route,
-        Screen.Scan.route,
-        Screen.Analyze.route,
-        Screen.ManualEntry.route,
-        Screen.DetailFood.route,
-        Screen.EditFood.route,
-        Screen.AiChat.route,
-        Screen.ProfileOnboarding.route,
-        Screen.Recommendation.route,
-    )
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -72,7 +59,7 @@ fun SnapCalApp(
     Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
         Scaffold(
             bottomBar = {
-                if (currentRoute !in screensWithoutBottomBar) {
+                if (shouldShowBottomBar(currentRoute)) {
                     Box(modifier = Modifier.fillMaxWidth()) {
                         BottomNavbar(navController = navController)
                     }

@@ -48,3 +48,11 @@ sealed class Screen(val route: String) {
         fun createRoute(edit: Boolean = false): String = "$PROFILE_ONBOARDING_ROUTE?$ARG_EDIT=$edit"
     }
 }
+
+private val bottomBarRoutes = setOf(
+    Screen.Main.route,
+    Screen.Tracking.route,
+    Screen.Profile.route,
+)
+
+fun shouldShowBottomBar(route: String?): Boolean = route in bottomBarRoutes
