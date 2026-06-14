@@ -41,6 +41,10 @@ import com.yuch.snapcalfirebasegemini.view.nutritrack.AccentYellow
 import com.yuch.snapcalfirebasegemini.view.nutritrack.DarkGreenPrimary
 import com.yuch.snapcalfirebasegemini.view.nutritrack.LightGreenBackground
 import com.yuch.snapcalfirebasegemini.view.nutritrack.MediumGreenSecondary
+import com.yuch.snapcalfirebasegemini.view.nutritrack.NutriTrackEmptyDataScreen
+import com.yuch.snapcalfirebasegemini.view.nutritrack.NutriTrackHeader
+import com.yuch.snapcalfirebasegemini.view.nutritrack.NutriTrackLoadingScreen
+import com.yuch.snapcalfirebasegemini.view.nutritrack.NutriTrackTabNavigation
 import com.yuch.snapcalfirebasegemini.view.nutritrack.TextOnDark
 import com.yuch.snapcalfirebasegemini.view.nutritrack.TextOnLight
 import com.yuch.snapcalfirebasegemini.view.nutritrack.TextSecondaryOnLight
@@ -88,14 +92,14 @@ fun NutriTrackScreen(
         )
 
         if (isLoading && dailySummary == null) {
-            LoadingScreen()
+            NutriTrackLoadingScreen()
         } else if (dailySummary != null) {
             NutriContent(
                 summary = dailySummary!!,
                 weeklySummary = weeklySummary
             )
         } else {
-            EmptyDataScreen {
+            NutriTrackEmptyDataScreen {
                 viewModel.fetchDailySummary()
                 viewModel.fetchWeeklySummary()
             }
@@ -112,8 +116,8 @@ fun NutriContent(
     val scope = rememberCoroutineScope()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        CustomHeader(summary.date)
-        TabNavigation(
+        NutriTrackHeader(summary.date)
+        NutriTrackTabNavigation(
             selectedTab = pagerState.currentPage,
             onTabSelected = { index ->
                 scope.launch {
@@ -129,117 +133,6 @@ fun NutriContent(
                 0 -> DailyOverviewPage(summary)
                 1 -> WeeklyAnalysisPage(weeklySummary)
             }
-        }
-    }
-}
-
-@Composable
-fun CustomHeader(date: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp)
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(DarkGreenPrimary, MediumGreenSecondary)
-                )
-            )
-            .padding(horizontal = 20.dp, vertical = 16.dp)
-    ) {
-        Column(
-            modifier = Modifier.align(Alignment.CenterStart)
-        ) {
-            Text(
-                text = stringResource(R.string.nutritrack_title),
-                color = TextOnDark,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = date,
-                color = TextOnDark.copy(alpha = 0.8f),
-                fontSize = 16.sp
-            )
-        }
-        Icon(
-            imageVector = Icons.Default.Restaurant,
-            contentDescription = null,
-            tint = TextOnDark.copy(alpha = 0.3f),
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .size(60.dp)
-        )
-    }
-}
-
-@Composable
-fun TabNavigation(selectedTab: Int, onTabSelected: (Int) -> Unit) {
-    val tabs = listOf(stringResource(R.string.tab_today), stringResource(R.string.tab_weekly))
-    val icons = listOf(Icons.Default.Dashboard, Icons.Default.Timeline)
-
-    LazyRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(LightGreenBackground)
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        items(tabs.size) { index ->
-            TabItem(
-                title = tabs[index],
-                icon = icons[index],
-                isSelected = selectedTab == index,
-                onClick = { onTabSelected(index) }
-            )
-        }
-    }
-}
-
-@Composable
-fun TabItem(
-    title: String,
-    icon: ImageVector,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val animatedColor by animateColorAsState(
-        targetValue = if (isSelected) DarkGreenPrimary else TextSecondaryOnLight,
-        animationSpec = tween(300), label = ""
-    )
-    val animatedTextColor by animateColorAsState(
-        targetValue = if (isSelected) DarkGreenPrimary else TextSecondaryOnLight,
-        animationSpec = tween(300), label = "tab_text_color"
-    )
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = title,
-            tint = animatedColor,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = title,
-            color = animatedTextColor,
-            fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-        )
-        if (isSelected) {
-            Box(
-                modifier = Modifier
-                    .width(20.dp)
-                    .height(2.dp)
-                    .background(
-                        color = DarkGreenPrimary,
-                        shape = RoundedCornerShape(1.dp)
-                    )
-            )
         }
     }
 }
@@ -824,72 +717,6 @@ fun CompactNutrientInfo(label: String, value: Int, color: Color) {
             style = MaterialTheme.typography.bodySmall,
             color = TextSecondaryOnLight
         )
-    }
-}
-
-@Composable
-fun LoadingScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator(
-                color = TextOnDark,
-                strokeWidth = 3.dp
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                stringResource(R.string.loading_nutrition_data),
-                color = TextOnDark,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-@Composable
-fun EmptyDataScreen(onRetry: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Default.NoFood,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = TextOnDark.copy(alpha = 0.7f)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                stringResource(R.string.no_nutrition_data_available),
-                color = TextOnDark,
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                stringResource(R.string.add_food_entries_to_see_tracking),
-                color = TextOnDark.copy(alpha = 0.8f),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(
-                onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = DarkGreenPrimary
-                )
-            ) {
-                Text(stringResource(R.string.retry))
-            }
-        }
     }
 }
 

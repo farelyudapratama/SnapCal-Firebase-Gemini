@@ -67,6 +67,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.model.UpdateFoodData
+import com.yuch.snapcalfirebasegemini.ui.components.food.FoodImagePickerPreview
 import com.yuch.snapcalfirebasegemini.ui.components.food.FoodTextField
 import com.yuch.snapcalfirebasegemini.ui.components.food.MealTypeDropdown
 import com.yuch.snapcalfirebasegemini.ui.components.food.NutritionFields
@@ -261,14 +262,17 @@ fun EditFoodScreen(
                             modifier = Modifier.padding(24.dp)
                         ) {
                             // Image Selection with Preview
-                            ImageSelectionPreview(
+                            FoodImagePickerPreview(
                                 selectedImageUri = selectedImageUri,
                                 currentImageUrl = foodItem?.imageUrl,
                                 onSelectImage = {
                                     galleryLauncher.launch(
                                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                     )
-                                }
+                                },
+                                emptyText = stringResource(R.string.selected_food_image),
+                                selectedContentDescription = stringResource(R.string.selected_food_image),
+                                changeText = stringResource(R.string.tap_to_change_photo)
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -368,129 +372,6 @@ fun EditFoodScreen(
 
             if (isLoading) {
                 LoadingOverlay()
-            }
-        }
-    }
-}
-
-@Composable
-private fun ImageSelectionPreview(
-    selectedImageUri: Uri?,
-    currentImageUrl: String?,
-    onSelectImage: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .background(
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable { onSelectImage() },
-        contentAlignment = Alignment.Center
-    ) {
-        if (selectedImageUri != null) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Image(
-                    painter = rememberAsyncImagePainter(selectedImageUri),
-                    contentDescription = stringResource(R.string.selected_food_image),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .border(
-                            width = 2.dp,
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.2f))
-                )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    Text(
-                        text = stringResource(R.string.tap_to_change_photo),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .offset(y = (15).dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-        } else if (currentImageUrl != null) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                AsyncImage(
-                    model = currentImageUrl,
-                    contentDescription = "Food Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .border(
-                            width = 2.dp,
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.2f))
-                )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    Text(
-                        text = stringResource(R.string.tap_to_change_photo),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .offset(y = (15).dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-        } else {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AddPhotoAlternate,
-                    contentDescription = "Add Food Image",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.selected_food_image),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
             }
         }
     }

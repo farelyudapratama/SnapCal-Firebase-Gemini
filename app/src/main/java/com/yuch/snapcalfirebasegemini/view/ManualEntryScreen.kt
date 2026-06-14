@@ -57,6 +57,7 @@ import androidx.compose.ui.text.input.ImeAction
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.ui.components.ImagePermissionHandler
 import com.yuch.snapcalfirebasegemini.ui.components.food.FoodTextField
+import com.yuch.snapcalfirebasegemini.ui.components.food.FoodImagePickerPreview
 import com.yuch.snapcalfirebasegemini.ui.components.food.MealTypeDropdown
 import com.yuch.snapcalfirebasegemini.ui.components.food.NutritionFields
 import java.io.File
@@ -229,10 +230,9 @@ fun ManualEntryScreen(
                             ImagePermissionHandler(
                                 onPermissionGranted = { hasPermission = true }
                             ) { showPermissionDialog ->
-                                ImageSelectionButton(
+                                FoodImagePickerPreview(
                                     selectedImageUri = selectedImageUri,
-                                    hasPermission = hasPermission,
-                                    onImageSelect = {
+                                    onSelectImage = {
                                         if (hasPermission) {
                                             galleryLauncher.launch(
                                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -240,7 +240,11 @@ fun ManualEntryScreen(
                                         } else {
                                             showPermissionDialog()
                                         }
-                                    }
+                                    },
+                                    enabled = hasPermission,
+                                    emptyText = "Tap to selected Image",
+                                    selectedContentDescription = "Selected Image",
+                                    changeText = "Tap to change photo"
                                 )
                             }
 
@@ -362,87 +366,6 @@ private fun LoadingOverlay() {
                 Text(
                     "Saving food entry...",
                     style = MaterialTheme.typography.bodyLarge
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ImageSelectionButton(
-    selectedImageUri: Uri?,
-    hasPermission: Boolean,
-    onImageSelect: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .background(
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable(enabled = hasPermission) { onImageSelect() },
-        contentAlignment = Alignment.Center
-    ) {
-        if (selectedImageUri != null) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Image(
-                    painter = rememberAsyncImagePainter(selectedImageUri),
-                    contentDescription = "Selected Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .border(
-                            width = 2.dp,
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.2f))
-                )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    Text(
-                        text = "Tap to change photo",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .offset(y = (15).dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-        } else {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AddPhotoAlternate,
-                    contentDescription = "Selected Image",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Tap to selected Image",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
