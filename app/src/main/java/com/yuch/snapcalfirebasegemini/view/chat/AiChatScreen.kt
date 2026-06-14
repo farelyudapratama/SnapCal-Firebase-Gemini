@@ -28,11 +28,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,11 +53,11 @@ import java.time.format.FormatStyle
 
 @Composable
 fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
-    val chatMessages by aiChatViewModel.chatMessages.collectAsState()
-    val isLoading by aiChatViewModel.isLoading.collectAsState()
-    val errorMessage by aiChatViewModel.errorMessage.collectAsState()
-    val selectedService by aiChatViewModel.selectedService.collectAsState()
-    val usageInfo by aiChatViewModel.usageInfo.collectAsState()
+    val chatMessages by aiChatViewModel.chatMessages.collectAsStateWithLifecycle()
+    val isLoading by aiChatViewModel.isLoading.collectAsStateWithLifecycle()
+    val errorMessage by aiChatViewModel.errorMessage.collectAsStateWithLifecycle()
+    val selectedService by aiChatViewModel.selectedService.collectAsStateWithLifecycle()
+    val usageInfo by aiChatViewModel.usageInfo.collectAsStateWithLifecycle()
 
     var userMessage by remember { mutableStateOf("") }
     var showDeleteConfirmation by remember { mutableStateOf(false) }

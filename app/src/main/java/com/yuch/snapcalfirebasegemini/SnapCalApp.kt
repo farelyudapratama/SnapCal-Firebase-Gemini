@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.yuch.snapcalfirebasegemini.ui.theme.AppColors
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.ui.navigation.shouldShowBottomBar
 import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
@@ -70,7 +71,7 @@ fun SnapCalApp(
                     Screen.Main.route -> {
                         FloatingActionButton(
                             onClick = { showBottomSheet = true },
-                            containerColor = Color(0xFFFF5722),
+                            containerColor = AppColors.OrangePrimary,
                             elevation = FloatingActionButtonDefaults.elevation(
                                 defaultElevation = 6.dp,
                                 pressedElevation = 12.dp
@@ -89,7 +90,7 @@ fun SnapCalApp(
                             onClick = {
                                 navController.navigate(Screen.AiChat.route)
                             },
-                            containerColor = Color(0xFF2196F3),
+                            containerColor = AppColors.BrandBlue,
                             elevation = FloatingActionButtonDefaults.elevation(
                                 defaultElevation = 6.dp,
                                 pressedElevation = 12.dp
@@ -252,10 +253,10 @@ fun BottomNavbar(
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.Blue,
-                    selectedTextColor = Color.Blue,
-                    unselectedIconColor = Color.Gray,
-                    unselectedTextColor = Color.Gray,
+                    selectedIconColor = AppColors.BrandBlue,
+                    selectedTextColor = AppColors.BrandBlue,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     indicatorColor = Color.White
                 )
             )
@@ -284,10 +285,10 @@ fun BottomNavbar(
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.Blue,
-                    selectedTextColor = Color.Blue,
-                    unselectedIconColor = Color.Gray,
-                    unselectedTextColor = Color.Gray,
+                    selectedIconColor = AppColors.BrandBlue,
+                    selectedTextColor = AppColors.BrandBlue,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     indicatorColor = Color.White
                 )
             )

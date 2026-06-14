@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableFloatStateOf
@@ -57,7 +56,7 @@ fun ScanScreen(
 ) {
     val authState = authViewModel.authState.collectAsStateWithLifecycle()
     var toastMessage by remember { mutableStateOf<String?>(null) }
-    val isFrontCamera by viewModel.isFrontCamera.collectAsState()
+    val isFrontCamera by viewModel.isFrontCamera.collectAsStateWithLifecycle()
     val scaffoldState = rememberBottomSheetScaffoldState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -97,7 +96,7 @@ fun ScanScreen(
                 sheetPeekHeight = 0.dp,
                 sheetContent = {
                     PhotoBottomSheetContent(
-                        bitmaps = viewModel.bitmaps.collectAsState().value
+                        bitmaps = viewModel.bitmaps.collectAsStateWithLifecycle().value
                     )
                 },
             ) {

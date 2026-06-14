@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodRecommendation
+import com.yuch.snapcalfirebasegemini.ui.theme.AppColors
 
 @Composable
 fun FoodRecommendationCard(recommendation: FoodRecommendation) {
@@ -66,14 +67,14 @@ fun FoodRecommendationCard(recommendation: FoodRecommendation) {
                 }
 
                 Surface(
-                    color = Color(0xFFB67321).copy(alpha = 0.1f),
+                    color = AppColors.BrandAmber.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
                         text = "${recommendation.calories} kcal",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelLarge,
-                        color = Color(0xFFB67321),
+                        color = AppColors.BrandAmber,
                         fontWeight = FontWeight.Bold
                     )
                 }

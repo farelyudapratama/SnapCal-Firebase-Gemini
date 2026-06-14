@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yuch.snapcalfirebasegemini.R
+import com.yuch.snapcalfirebasegemini.ui.theme.AppColors
 
 @Composable
 fun MealTypeSelector(
@@ -90,7 +91,7 @@ fun MealTypeChip(
             .clickable { onSelected() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) Color(0xFFB67321) else Color.Transparent
+            containerColor = if (isSelected) AppColors.BrandAmber else Color.Transparent
         ),
         border = if (!isSelected) CardDefaults.outlinedCardBorder() else null
     ) {
@@ -103,14 +104,14 @@ fun MealTypeChip(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = if (isSelected) Color.White else Color(0xFFB67321),
+                tint = if (isSelected) Color.White else AppColors.BrandAmber,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = if (isSelected) Color.White else Color(0xFFB67321),
+                color = if (isSelected) Color.White else AppColors.BrandAmber,
                 textAlign = TextAlign.Center
             )
         }

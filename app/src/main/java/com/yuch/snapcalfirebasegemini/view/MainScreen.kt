@@ -57,13 +57,13 @@ fun MainScreen(
     val context = LocalContext.current
     var backPressedTime by remember { mutableLongStateOf(0L) }
 
-    val foodList by foodViewModel.foodList.collectAsState()
-    val isLoading by foodViewModel.isLoading.collectAsState()
-    val isLoadingMore by foodViewModel.isLoadingMore.collectAsState()
+    val foodList by foodViewModel.foodList.collectAsStateWithLifecycle()
+    val isLoading by foodViewModel.isLoading.collectAsStateWithLifecycle()
+    val isLoadingMore by foodViewModel.isLoadingMore.collectAsStateWithLifecycle()
     val hasMoreData by foodViewModel.hasMoreData.collectAsStateWithLifecycle()
-    val errorMessage by foodViewModel.errorMessage.collectAsState()
+    val errorMessage by foodViewModel.errorMessage.collectAsStateWithLifecycle()
     
-    val announcements = announcementViewModel?.announcements?.collectAsState()?.value ?: emptyList()
+    val announcements = announcementViewModel?.announcements?.collectAsStateWithLifecycle()?.value ?: emptyList()
 
     var isRefreshing by remember { mutableStateOf(false) }
     val refreshState = rememberPullToRefreshState()

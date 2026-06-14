@@ -16,8 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.HttpException
-import java.io.IOException
 
 class FoodViewModel(
     private val repository: ApiRepository
@@ -63,7 +61,7 @@ class FoodViewModel(
                 handleAnalyzeResult(result)
 
             } catch (e: Exception) {
-                handleError(e)
+                _errorMessage.value = e.message ?: "An unexpected error occurred"
             } finally {
                 _isLoading.value = false
             }
@@ -116,7 +114,6 @@ class FoodViewModel(
                 Log.d("CustomModel", "Analysis finished")
             } catch (e: Exception) {
                 Log.e("CustomModel", "Exception during analysis", e)
-                handleError(e)
                 _errorMessage.value = e.message ?: "Unknown error"
             } finally {
                 _isLoading.value = false
@@ -139,7 +136,7 @@ class FoodViewModel(
                 handleAnalyzeResult(result)
 
             } catch (e: Exception) {
-                handleError(e)
+                _errorMessage.value = e.message ?: "An unexpected error occurred"
             } finally {
                 _isLoading.value = false
             }
@@ -160,17 +157,6 @@ class FoodViewModel(
             is AppResult.Error -> {
                 _errorMessage.value = result.toDisplayMessage()
             }
-        }
-    }
-
-    private fun handleError(exception: Exception) {
-        when (exception) {
-            is IOException -> _errorMessage.value = "Network error. Please check your internet connection."
-            is HttpException -> {
-                val errorBody = exception.response()?.errorBody()?.string() ?: "Unknown server error"
-                _errorMessage.value = "Server error: $errorBody"
-            }
-            else -> _errorMessage.value = exception.message ?: "An unexpected error occurred"
         }
     }
 

@@ -72,9 +72,9 @@ fun NutriTrackScreen(
         viewModel.fetchWeeklySummary()
     }
 
-    val dailySummary by viewModel.dailySummary.collectAsState()
-    val weeklySummary by viewModel.weeklySummary.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+    val dailySummary by viewModel.dailySummary.collectAsStateWithLifecycle()
+    val weeklySummary by viewModel.weeklySummary.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Box(

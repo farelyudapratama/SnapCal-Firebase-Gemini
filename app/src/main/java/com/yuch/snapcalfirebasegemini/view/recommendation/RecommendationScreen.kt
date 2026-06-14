@@ -31,11 +31,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -43,8 +43,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.yuch.snapcalfirebasegemini.BuildConfig
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
+import com.yuch.snapcalfirebasegemini.ui.theme.AppColors
 import com.yuch.snapcalfirebasegemini.view.recommendation.components.EmptyRecommendationState
 import com.yuch.snapcalfirebasegemini.view.recommendation.components.ErrorRecommendationState
 import com.yuch.snapcalfirebasegemini.view.recommendation.components.FoodRecommendationCard
@@ -67,26 +69,26 @@ fun RecommendationScreen(
     var initialLoadDone by remember { mutableStateOf(false) }
     var autoRefreshAttempted by remember { mutableStateOf(false) }
 
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Log.d(TAG, "Screen recomposition - Current state: $state")
+    if (BuildConfig.DEBUG) Log.d(TAG, "Screen recomposition - Current state: $state")
     when (state) {
         is RecommendationState.Success -> {
             val data = (state as RecommendationState.Success).data
-            Log.d(TAG, "SUCCESS STATE - Recommendations count: ${data.recommendations.size}")
+            if (BuildConfig.DEBUG) Log.d(TAG, "SUCCESS STATE - Recommendations count: ${data.recommendations.size}")
         }
         is RecommendationState.Error -> {
-            Log.d(TAG, "ERROR STATE - Message: ${(state as RecommendationState.Error).message}")
+            if (BuildConfig.DEBUG) Log.d(TAG, "ERROR STATE - Message: ${(state as RecommendationState.Error).message}")
         }
-        is RecommendationState.Loading -> Log.d(TAG, "LOADING STATE")
-        is RecommendationState.Initial -> Log.d(TAG, "INITIAL STATE")
+        is RecommendationState.Loading -> if (BuildConfig.DEBUG) Log.d(TAG, "LOADING STATE")
+        is RecommendationState.Initial -> if (BuildConfig.DEBUG) Log.d(TAG, "INITIAL STATE")
     }
 
     LaunchedEffect(state) {
         if (state is RecommendationState.Initial && initialLoadDone && !autoRefreshAttempted) {
             delay(1000)
             if (state is RecommendationState.Initial) {
-                Log.d(TAG, "Auto-triggering refresh because we're stuck in Initial state")
+                if (BuildConfig.DEBUG) Log.d(TAG, "Auto-triggering refresh because we're stuck in Initial state")
                 viewModel.loadRecommendations(selectedMealType, refresh = true)
                 autoRefreshAttempted = true
             }
@@ -108,7 +110,7 @@ fun RecommendationScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFB67321),
+                    containerColor = AppColors.BrandAmber,
                     titleContentColor = Color.White,
                     navigationIconContentColor = Color.White
                 )
@@ -120,7 +122,7 @@ fun RecommendationScreen(
                 .fillMaxSize()
                 .background(
                     brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFFB67321), Color(0xFFEA4233)),
+                        colors = listOf(AppColors.GradientStart, AppColors.GradientEnd),
                         endY = 200f
                     )
                 )
@@ -128,7 +130,7 @@ fun RecommendationScreen(
         ) {
             LaunchedEffect(Unit) {
                 if (!initialLoadDone) {
-                    Log.d(TAG, "Initial load triggered with refresh=true")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Initial load triggered with refresh=true")
                     viewModel.loadRecommendations(selectedMealType, refresh = true)
                     initialLoadDone = true
                 }
@@ -151,22 +153,12 @@ fun RecommendationScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = {
-                            Log.d(TAG, "Manual refresh triggered")
+                            if (BuildConfig.DEBUG) Log.d(TAG, "Manual refresh triggered")
                             viewModel.loadRecommendations(selectedMealType, refresh = true)
                         }) {
                             Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                         }
 
-                        Text(
-                            text = when (state) {
-                                is RecommendationState.Initial -> "Initial"
-                                is RecommendationState.Loading -> "Loading"
-                                is RecommendationState.Success -> "Success"
-                                is RecommendationState.Error -> "Error"
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
                     }
                 }
 
@@ -175,7 +167,7 @@ fun RecommendationScreen(
                         selectedMealType = selectedMealType,
                         onMealTypeSelected = { newType ->
                             selectedMealType = newType
-                            Log.d(TAG, "Meal type changed to: $newType")
+                            if (BuildConfig.DEBUG) Log.d(TAG, "Meal type changed to: $newType")
                             viewModel.loadRecommendations(newType, refresh = false)
                         }
                     )
@@ -184,7 +176,7 @@ fun RecommendationScreen(
                 when (state) {
                     is RecommendationState.Loading -> {
                         item {
-                            Log.d(TAG, "Rendering loading state")
+                            if (BuildConfig.DEBUG) Log.d(TAG, "Rendering loading state")
                             RecommendationLoadingContent(
                                 message = stringResource(R.string.generating_recommendations)
                             )
@@ -192,7 +184,7 @@ fun RecommendationScreen(
                     }
                     is RecommendationState.Success -> {
                         val data = (state as RecommendationState.Success).data
-                        Log.d(TAG, "Rendering success state with ${data.recommendations.size} recommendations")
+                        if (BuildConfig.DEBUG) Log.d(TAG, "Rendering success state with ${data.recommendations.size} recommendations")
 
                         if (data.recommendations.isNotEmpty()) {
                             item { RecommendationMetadataCard(data.metadata) }
@@ -207,7 +199,7 @@ fun RecommendationScreen(
                     is RecommendationState.Error -> {
                         item {
                             val message = (state as RecommendationState.Error).message
-                            Log.d(TAG, "Rendering error state: $message")
+                            if (BuildConfig.DEBUG) Log.d(TAG, "Rendering error state: $message")
                             ErrorRecommendationState(
                                 message = message,
                                 onRetry = {
@@ -219,7 +211,7 @@ fun RecommendationScreen(
                     }
                     is RecommendationState.Initial -> {
                         item {
-                            Log.d(TAG, "Rendering initial state")
+                            if (BuildConfig.DEBUG) Log.d(TAG, "Rendering initial state")
                             RecommendationLoadingContent(
                                 message = "Mempersiapkan rekomendasi makanan...",
                                 showRetry = initialLoadDone,
@@ -248,7 +240,7 @@ private fun RecommendationLoadingContent(
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CircularProgressIndicator(color = Color(0xFFB67321))
+            CircularProgressIndicator(color = AppColors.BrandAmber)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = message,
@@ -261,7 +253,7 @@ private fun RecommendationLoadingContent(
                 Button(
                     onClick = onRetry,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFB67321)
+                        containerColor = AppColors.BrandAmber
                     )
                 ) {
                     Text("Coba Lagi", color = Color.White)

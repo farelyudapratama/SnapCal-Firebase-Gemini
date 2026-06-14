@@ -18,6 +18,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.mapper.toProfileRequest
@@ -36,11 +37,11 @@ fun ProfileOnboardingScreen(
     onboardingViewModel: OnboardingViewModel,
     isEdit: Boolean
 ) {
-    val currentStep by onboardingViewModel.currentStep.collectAsState()
-    val formData by onboardingViewModel.formData.collectAsState()
-    val updateStatus by profileViewModel.updateStatus.collectAsState()
+    val currentStep by onboardingViewModel.currentStep.collectAsStateWithLifecycle()
+    val formData by onboardingViewModel.formData.collectAsStateWithLifecycle()
+    val updateStatus by profileViewModel.updateStatus.collectAsStateWithLifecycle()
     val alreadyLoaded = remember { mutableStateOf(false) }
-    val fieldErrors by profileViewModel.fieldErrors.collectAsState()
+    val fieldErrors by profileViewModel.fieldErrors.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()

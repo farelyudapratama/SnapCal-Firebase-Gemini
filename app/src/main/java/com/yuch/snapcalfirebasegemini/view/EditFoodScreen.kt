@@ -44,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
@@ -80,7 +81,7 @@ fun EditFoodScreen(
     var fiber by remember { mutableStateOf(foodItem?.nutritionData?.fiber?.toString() ?: "") }
     var sugar by remember { mutableStateOf(foodItem?.nutritionData?.sugar?.toString() ?: "") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    val imageDeletedMessage by detailViewModel.imageDeletedMessage.collectAsState()
+    val imageDeletedMessage by detailViewModel.imageDeletedMessage.collectAsStateWithLifecycle()
 
     // Focus controllers
     val focusManager = LocalFocusManager.current
@@ -103,9 +104,9 @@ fun EditFoodScreen(
         }
     }
 
-    val isLoading by foodViewModel.isLoading.collectAsState()
-    val errorMessage by foodViewModel.errorMessage.collectAsState()
-    val successMessage by foodViewModel.successMessage.collectAsState()
+    val isLoading by foodViewModel.isLoading.collectAsStateWithLifecycle()
+    val errorMessage by foodViewModel.errorMessage.collectAsStateWithLifecycle()
+    val successMessage by foodViewModel.successMessage.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 

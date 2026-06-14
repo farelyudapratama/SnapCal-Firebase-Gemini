@@ -3,6 +3,7 @@ package com.yuch.snapcalfirebasegemini.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yuch.snapcalfirebasegemini.BuildConfig
 import com.yuch.snapcalfirebasegemini.data.api.response.RecommendationData
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.domain.result.AppResult
@@ -34,11 +35,11 @@ class RecommendationViewModel(
     val errorMessage = _errorMessage.asStateFlow()
 
     init {
-        Log.d(TAG, "ViewModel initialized")
+        if (BuildConfig.DEBUG) Log.d(TAG, "ViewModel initialized")
     }
 
     fun loadRecommendations(mealType: String, refresh: Boolean = false) {
-        Log.d(TAG, "loadRecommendations called - mealType: $mealType, refresh: $refresh")
+        if (BuildConfig.DEBUG) Log.d(TAG, "loadRecommendations called - mealType: $mealType, refresh: $refresh")
 
         _state.value = RecommendationState.Loading
 
@@ -48,7 +49,7 @@ class RecommendationViewModel(
         viewModelScope.launch {
             try {
                 if (!isNetworkAvailable()) {
-                    Log.w(TAG, "No internet connection detected")
+                    if (BuildConfig.DEBUG) Log.w(TAG, "No internet connection detected")
                     val errorMsg = "No internet connection"
 
                     _state.value = RecommendationState.Error(errorMsg)
@@ -58,12 +59,12 @@ class RecommendationViewModel(
                     return@launch
                 }
 
-                Log.d(TAG, "Calling API service for recommendations - mealType: $mealType, refresh: $refresh")
+                if (BuildConfig.DEBUG) Log.d(TAG, "Calling API service for recommendations - mealType: $mealType, refresh: $refresh")
 
                 when (val result = apiRepository.getRecommendation(mealType, refresh)) {
                     is AppResult.Success -> {
-                        Log.d(TAG, "Recommendations loaded successfully")
-                        Log.d(TAG, "Recommendations count: ${result.data.recommendations.size}")
+                        if (BuildConfig.DEBUG) Log.d(TAG, "Recommendations loaded successfully")
+                        if (BuildConfig.DEBUG) Log.d(TAG, "Recommendations count: ${result.data.recommendations.size}")
 
                         _state.value = RecommendationState.Success(result.data)
                     }
@@ -79,11 +80,11 @@ class RecommendationViewModel(
                         _state.value = RecommendationState.Error(errorMsg)
                         _errorMessage.value = errorMsg
 
-                        Log.e(TAG, "Error: $errorMsg")
+                        if (BuildConfig.DEBUG) Log.e(TAG, "Error: $errorMsg")
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Exception during API call", e)
+                if (BuildConfig.DEBUG) Log.e(TAG, "Exception during API call", e)
 
                 val errorMsg = when (e) {
                     is java.net.SocketTimeoutException -> "Request timeout. Please try again."
@@ -95,11 +96,11 @@ class RecommendationViewModel(
 
                 _errorMessage.value = errorMsg
 
-                Log.e(TAG, "Exception: ${e.javaClass.simpleName} - $errorMsg")
+                if (BuildConfig.DEBUG) Log.e(TAG, "Exception: ${e.javaClass.simpleName} - $errorMsg")
             } finally {
                 _isLoading.value = false
-                Log.d(TAG, "Set loading state to false")
-                Log.d(TAG, "Final state: ${_state.value}")
+                if (BuildConfig.DEBUG) Log.d(TAG, "Set loading state to false")
+                if (BuildConfig.DEBUG) Log.d(TAG, "Final state: ${_state.value}")
             }
         }
     }

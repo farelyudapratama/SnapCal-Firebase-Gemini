@@ -4,14 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.data.repository.ProfileRepository
+import com.yuch.snapcalfirebasegemini.domain.auth.TokenManager
 
 class ViewModelFactory(
     private val apiRepository: ApiRepository,
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val tokenManager: TokenManager
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
+            modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
+                AuthViewModel(tokenManager) as T
+            }
             modelClass.isAssignableFrom(FoodViewModel::class.java) -> {
                 FoodViewModel(apiRepository) as T
             }

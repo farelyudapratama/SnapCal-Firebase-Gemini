@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
         (application as SnapcalApplication).container.viewModelFactory
     }
 
-    private val authViewModel: AuthViewModel by viewModels()
+    private val authViewModel: AuthViewModel by viewModels { viewModelFactory }
     private val cameraViewModel: CameraViewModel by viewModels()
     
     // Gunakan factory yang sama

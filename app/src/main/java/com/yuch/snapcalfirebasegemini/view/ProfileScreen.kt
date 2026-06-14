@@ -49,8 +49,8 @@ fun ProfileScreen(
 ) {
     val authState = authViewModel.authState.collectAsStateWithLifecycle()
     val email by authViewModel.userEmail.collectAsStateWithLifecycle()
-    val userPreferences by profileViewModel.userPreferences.collectAsState()
-    val isLoading by profileViewModel.isLoading.collectAsState()
+    val userPreferences by profileViewModel.userPreferences.collectAsStateWithLifecycle()
+    val isLoading by profileViewModel.isLoading.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showOptionsBottomSheet by remember { mutableStateOf(false) }
 

@@ -3,6 +3,7 @@ package com.yuch.snapcalfirebasegemini.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yuch.snapcalfirebasegemini.BuildConfig
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatMessage
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatRequest
 import com.yuch.snapcalfirebasegemini.data.api.response.UsageAiChat
@@ -84,13 +85,13 @@ class AiChatViewModel(
                 when (response) {
                     is AppResult.Success -> _usageInfo.value = response.data
                     is AppResult.Error -> {
-                        Log.e("ChatUsage", "Error: ${response.message}")
+                        if (BuildConfig.DEBUG) Log.e("ChatUsage", "Error: ${response.message}")
                         _usageInfo.value = null
                         _errorMessage.value = response.message
                     }
                 }
             } catch (e: Exception) {
-                Log.e("ChatUsage", "Exception: ${e.message}")
+                if (BuildConfig.DEBUG) Log.e("ChatUsage", "Exception: ${e.message}")
                 // Handle exception
                 _usageInfo.value = null
                 _errorMessage.value = "An error occurred: ${e.message}"

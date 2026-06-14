@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.yuch.snapcalfirebasegemini.data.api.ApiConfig
+import com.yuch.snapcalfirebasegemini.domain.auth.TokenManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(
+    private val tokenManager: TokenManager
+) : ViewModel() {
 
     private val auth : FirebaseAuth = FirebaseAuth.getInstance()
 
@@ -177,8 +179,7 @@ class AuthViewModel : ViewModel() {
 
 
     fun signout(){
-        // Clear cached token
-        ApiConfig.clearTokenCache()
+        tokenManager.clearToken()
 
         auth.signOut()
         _authState.value = AuthState.Unauthenticated

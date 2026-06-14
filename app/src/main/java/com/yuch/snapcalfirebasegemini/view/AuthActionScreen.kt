@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yuch.snapcalfirebasegemini.ui.theme.PrimaryBlue
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthActionState
@@ -25,7 +26,7 @@ fun AuthActionScreen(
     onNavigateToLogin: () -> Unit,
     viewModel: AuthActionViewModel = viewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var newPassword by remember { mutableStateOf("") }
 
     // 1. Eksekusi Sekali Pas Layar Dibuka

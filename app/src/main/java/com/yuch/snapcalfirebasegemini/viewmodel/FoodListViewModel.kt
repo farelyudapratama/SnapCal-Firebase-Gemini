@@ -3,6 +3,7 @@ package com.yuch.snapcalfirebasegemini.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yuch.snapcalfirebasegemini.BuildConfig
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.mapper.toFoodItem
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
@@ -50,7 +51,7 @@ class FoodListViewModel(
      */
     private fun fetchFood(page: Int = _currentPage.value) {
         viewModelScope.launch {
-            Log.d("FoodListViewModel", "Fetching food data for page: $page")
+            if (BuildConfig.DEBUG) Log.d("FoodListViewModel", "Fetching food data for page: $page")
 
             // Gunakan isLoading untuk initial load dan isLoadingMore untuk pagination
             if (page == 1) {
