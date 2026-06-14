@@ -26,7 +26,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
-import com.yuch.snapcalfirebasegemini.view.AiChatScreen
+import com.yuch.snapcalfirebasegemini.view.chat.AiChatScreen
 import com.yuch.snapcalfirebasegemini.view.AnalyzeScreen
 import com.yuch.snapcalfirebasegemini.view.AuthActionScreen
 import com.yuch.snapcalfirebasegemini.view.NutriTrackScreen
@@ -39,7 +39,7 @@ import com.yuch.snapcalfirebasegemini.view.MainScreen
 import com.yuch.snapcalfirebasegemini.view.ManualEntryScreen
 import com.yuch.snapcalfirebasegemini.view.onboarding.ProfileOnboardingScreen
 import com.yuch.snapcalfirebasegemini.view.ProfileScreen
-import com.yuch.snapcalfirebasegemini.view.RecommendationScreen
+import com.yuch.snapcalfirebasegemini.view.recommendation.RecommendationScreen
 import com.yuch.snapcalfirebasegemini.view.RegisterScreen
 import com.yuch.snapcalfirebasegemini.view.camera.ScanScreen
 import com.yuch.snapcalfirebasegemini.viewmodel.AiChatViewModel
