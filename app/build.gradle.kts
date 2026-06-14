@@ -20,6 +20,7 @@ android {
         versionName = "0.2.0-pre-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "BASE_URL", "\"\"")
     }
 
     buildTypes {

@@ -21,7 +21,7 @@ class ProfileRepository(private val apiService: ApiService) {
                 Log.d("ProfileRepository", "Profile response: ${apiResponse?.status}")
 
                 if (apiResponse?.status == "success" && apiResponse.data != null) {
-                    Log.d("ProfileRepository", "Profile data found: ${apiResponse.data}")
+                    Log.d("ProfileRepository", "Profile data found")
                     AppResult.Success(apiResponse.data, apiResponse.message)
                 } else {
                     Log.w("ProfileRepository", "Profile not found or empty response")

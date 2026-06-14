@@ -1,6 +1,7 @@
 package com.yuch.snapcalfirebasegemini.data.api
 
 import com.google.firebase.auth.FirebaseAuth
+import com.yuch.snapcalfirebasegemini.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -15,8 +16,6 @@ class ApiConfig {
 
     companion object {
 
-        private const val BASE_URL = ""
-        
         // Token caching untuk mengurangi panggilan Firebase
         @Volatile
         private var cachedToken: String? = null
@@ -136,7 +135,7 @@ class ApiConfig {
                 .build()
 
             return Retrofit.Builder()
-                .baseUrl(BASE_URL)
+                .baseUrl(BuildConfig.BASE_URL)
                 .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()

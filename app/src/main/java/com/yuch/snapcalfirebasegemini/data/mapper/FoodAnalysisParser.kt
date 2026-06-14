@@ -30,7 +30,6 @@ fun AnalyzeMyModelResponse.toMyModelAnalysisResult(gson: Gson = Gson()): MyModel
     }
 
     val rawJson = gson.toJson(data)
-    Log.d(TAG, "Raw JSON response: $rawJson")
 
     return when {
         message.contains("Makanan berhasil dideteksi oleh model YoLo", ignoreCase = true) -> {
