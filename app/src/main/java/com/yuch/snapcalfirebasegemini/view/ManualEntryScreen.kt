@@ -26,9 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
+import com.yuch.snapcalfirebasegemini.utils.uriToFile
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodEntryViewModel
 import kotlinx.coroutines.launch
-import android.content.Context
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardActions
@@ -60,8 +60,6 @@ import com.yuch.snapcalfirebasegemini.ui.components.food.FoodTextField
 import com.yuch.snapcalfirebasegemini.ui.components.food.FoodImagePickerPreview
 import com.yuch.snapcalfirebasegemini.ui.components.food.MealTypeDropdown
 import com.yuch.snapcalfirebasegemini.ui.components.food.NutritionFields
-import java.io.File
-import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -370,17 +368,4 @@ private fun LoadingOverlay() {
             }
         }
     }
-}
-
-fun uriToFile(context: Context, uri: Uri): File {
-    val contentResolver = context.contentResolver
-    val file = kotlin.io.path.createTempFile(suffix = ".jpg").toFile()
-
-    contentResolver.openInputStream(uri)?.use { input ->
-        FileOutputStream(file).use { output ->
-            input.copyTo(output)
-        }
-    }
-
-    return file
 }

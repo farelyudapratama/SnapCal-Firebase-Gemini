@@ -1,6 +1,7 @@
 package com.yuch.snapcalfirebasegemini.utils
 
 import com.yuch.snapcalfirebasegemini.data.api.response.PersonalInfoReq
+import java.util.Locale
 
 // Fungsi helper untuk kalkulasi TDEE
 fun calculateRecommendedCalories(info: PersonalInfoReq?): Int? {
@@ -27,4 +28,11 @@ fun calculateRecommendedCalories(info: PersonalInfoReq?): Int? {
 
     // TDEE = BMR * Activity Multiplier
     return (bmr * activityMultiplier).toInt()
+}
+
+fun calculatePortionValue(valuePer100g: String, weight: String): String {
+    val value = valuePer100g.toFloatOrNull() ?: 0f
+    val grams = weight.toFloatOrNull() ?: 100f
+    val result = ((value / 100f) * grams)
+    return String.format(Locale.getDefault(), "%.2f", result)
 }

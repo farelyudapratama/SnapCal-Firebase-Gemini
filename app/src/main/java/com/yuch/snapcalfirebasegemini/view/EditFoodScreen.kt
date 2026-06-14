@@ -71,6 +71,7 @@ import com.yuch.snapcalfirebasegemini.ui.components.food.FoodImagePickerPreview
 import com.yuch.snapcalfirebasegemini.ui.components.food.FoodTextField
 import com.yuch.snapcalfirebasegemini.ui.components.food.MealTypeDropdown
 import com.yuch.snapcalfirebasegemini.ui.components.food.NutritionFields
+import com.yuch.snapcalfirebasegemini.utils.uriToFile
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodDetailViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodEntryViewModel
 import kotlinx.coroutines.delay

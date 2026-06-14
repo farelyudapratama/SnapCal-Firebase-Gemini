@@ -20,12 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
+import com.yuch.snapcalfirebasegemini.data.mapper.toProfileRequest
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.OnboardingViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileState
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
-import com.yuch.snapcalfirebasegemini.viewmodel.toProfileRequest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

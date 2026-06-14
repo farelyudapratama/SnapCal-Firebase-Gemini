@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodDetectionByMyModelResult
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
+import com.yuch.snapcalfirebasegemini.utils.calculatePortionValue
 import com.yuch.snapcalfirebasegemini.utils.normalizeDecimal
 import com.yuch.snapcalfirebasegemini.view.analyze.components.AnalyzeEditableAnalysisCard
 import com.yuch.snapcalfirebasegemini.view.analyze.components.AnalyzeImagePreview
@@ -375,11 +376,4 @@ fun AnalyzeScreen(
             }
         }
     }
-}
-
-fun calculatePortionValue(valuePer100g: String, weight: String): String {
-    val value = valuePer100g.toFloatOrNull() ?: 0f
-    val grams = weight.toFloatOrNull() ?: 100f
-    val result =  ((value / 100f) * grams)
-    return String.format(Locale.getDefault(), "%.2f", result)
 }

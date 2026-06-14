@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import com.yuch.snapcalfirebasegemini.data.api.response.DailyGoals
 import com.yuch.snapcalfirebasegemini.data.api.response.PersonalInfoReq
 import com.yuch.snapcalfirebasegemini.data.api.response.ProfileRequest
-import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -171,39 +170,4 @@ class OnboardingViewModel : ViewModel() {
         _currentStep.value = 0
         _formData.value = ProfileRequest()
     }
-}
-
-fun UserPreferences.toProfileRequest(): ProfileRequest {
-    return ProfileRequest(
-        personalInfo = PersonalInfoReq(
-            age = this.personalInfo.age,
-            gender = this.personalInfo.gender,
-            height = this.personalInfo.height,
-            weight = this.personalInfo.weight,
-            activityLevel = this.personalInfo.activityLevel
-        ),
-        dailyGoals = DailyGoals(
-            calories = this.dailyGoals?.calories,
-            carbs = this.dailyGoals?.carbs,
-            protein = this.dailyGoals?.protein,
-            fat = this.dailyGoals?.fat,
-            fiber = this.dailyGoals?.fiber,
-            sugar = this.dailyGoals?.sugar
-        ),
-        // Gabungkan predefined dan custom items ke dalam selected items
-        allergies = this.allergies + (this.customAllergies ?: emptyList()),
-        customAllergies = this.customAllergies ?: emptyList(),
-
-        healthConditions = this.healthConditions + (this.customHealthConditions ?: emptyList()),
-        customHealthConditions = this.customHealthConditions ?: emptyList(),
-
-        dietaryRestrictions = this.dietaryRestrictions + (this.customDietaryRestrictions ?: emptyList()),
-        customDietaryRestrictions = this.customDietaryRestrictions ?: emptyList(),
-
-        likedFoods = this.likedFoods + (this.customLikedFoods ?: emptyList()).distinct(),
-        customLikedFoods = this.customLikedFoods ?: emptyList(),
-
-        dislikedFoods = this.dislikedFoods + (this.customDislikedFoods ?: emptyList()),
-        customDislikedFoods = this.customDislikedFoods ?: emptyList()
-    )
 }

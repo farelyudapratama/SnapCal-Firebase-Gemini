@@ -41,11 +41,10 @@ import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.ui.components.CameraPermissionHandler
 import com.yuch.snapcalfirebasegemini.ui.components.ImagePermissionHandler
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
+import com.yuch.snapcalfirebasegemini.utils.uriToFile
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.CameraViewModel
-import java.io.File
-import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -265,17 +264,4 @@ private fun processSelectedImage(
     } catch (e: Exception) {
         Toast.makeText(context, "Failed to process image", Toast.LENGTH_SHORT).show()
     }
-}
-
-fun uriToFile(context: Context, uri: Uri): File {
-    val contentResolver = context.contentResolver
-    val file = kotlin.io.path.createTempFile(suffix = ".jpg").toFile()
-
-    contentResolver.openInputStream(uri)?.use { input ->
-        FileOutputStream(file).use { output ->
-            input.copyTo(output)
-        }
-    }
-
-    return file
 }
