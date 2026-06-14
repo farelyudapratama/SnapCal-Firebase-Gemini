@@ -1,5 +1,6 @@
 package com.yuch.snapcalfirebasegemini.view
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -32,9 +34,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.UserPreferences
+import com.yuch.snapcalfirebasegemini.domain.byok.ByokKeyStore
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
+import com.yuch.snapcalfirebasegemini.viewmodel.ProfileState
 import com.yuch.snapcalfirebasegemini.viewmodel.ProfileViewModel
 import java.util.Locale
 import kotlin.math.pow
@@ -51,6 +55,7 @@ fun ProfileScreen(
     val email by authViewModel.userEmail.collectAsStateWithLifecycle()
     val userPreferences by profileViewModel.userPreferences.collectAsStateWithLifecycle()
     val isLoading by profileViewModel.isLoading.collectAsStateWithLifecycle()
+    val updateStatus by profileViewModel.updateStatus.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showOptionsBottomSheet by remember { mutableStateOf(false) }
 
@@ -158,6 +163,24 @@ fun ProfileScreen(
                                 BMICard(height = info.height, weight = info.weight)
                             }
                         }
+                        userPreferences?.let { preferences ->
+                            item {
+                                AccountStatusCard(preferences)
+                            }
+                            item {
+                                ByokSettingsCard()
+                            }
+                        }
+                        if (updateStatus is ProfileState.Error) {
+                            item {
+                                Text(
+                                    text = (updateStatus as ProfileState.Error).message,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+                            }
+                        }
                         item {
                             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                             SectionHeader(stringResource(R.string.my_preferences))
@@ -234,7 +257,11 @@ fun ProfileScreen(
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
-                        // TODO: Implement profile deletion
+                        profileViewModel.deleteProfile { success ->
+                            if (success) {
+                                navController.navigate(Screen.ProfileOnboarding.createRoute(edit = false)) { popUpTo(0) }
+                            }
+                        }
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
                 ) {
@@ -247,6 +274,188 @@ fun ProfileScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+fun AccountStatusCard(userPreferences: UserPreferences) {
+    val subscription = userPreferences.subscription
+    val cooldown = userPreferences.cooldown
+    val notificationPreferences = userPreferences.notificationPreferences
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Account status", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                StatusPill(
+                    label = "Tier",
+                    value = subscription?.tier.toProfileLabel("Free"),
+                    color = Color(0xFF7C3AED),
+                    modifier = Modifier.weight(1f)
+                )
+                StatusPill(
+                    label = "Status",
+                    value = subscription?.status.toProfileLabel("Active"),
+                    color = Color(0xFF16A34A),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            notificationPreferences?.let {
+                Text(
+                    text = "Notifications: push ${it.push.toOnOff()}, email ${it.email.toOnOff()}, in-app ${it.inApp.toOnOff()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.DarkGray
+                )
+            }
+
+            if (cooldown?.until != null) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(
+                            text = "Cooldown active",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Until ${cooldown.until}${cooldown.reason?.let { " • $it" }.orEmpty()}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusPill(
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        color = color.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.25f))
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            Text(label, fontSize = 12.sp, color = Color.Gray)
+            Text(value, fontWeight = FontWeight.Bold, color = color)
+        }
+    }
+}
+
+private fun Boolean.toOnOff(): String = if (this) "on" else "off"
+
+private fun String?.toProfileLabel(defaultValue: String): String {
+    return this?.takeIf { it.isNotBlank() }
+        ?.replace('_', ' ')
+        ?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
+        ?: defaultValue
+}
+
+@Composable
+private fun ByokSettingsCard() {
+    val context = LocalContext.current
+    var geminiKey by remember { mutableStateOf(ByokKeyStore.getGeminiKey()) }
+    var groqKey by remember { mutableStateOf(ByokKeyStore.getGroqKey()) }
+    val hasAnySavedKey = remember(geminiKey, groqKey) { geminiKey.isNotBlank() || groqKey.isNotBlank() }
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("AI keys (BYOK)", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(
+                        text = if (hasAnySavedKey) "Stored locally on this device" else "Use your own provider key to reduce app AI quota usage",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = if (hasAnySavedKey) Color(0xFFDCFCE7) else Color(0xFFF3F4F6)
+                ) {
+                    Text(
+                        text = if (hasAnySavedKey) "Enabled" else "Off",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (hasAnySavedKey) Color(0xFF166534) else Color.Gray,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            OutlinedTextField(
+                value = geminiKey,
+                onValueChange = { geminiKey = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Gemini API key") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation()
+            )
+
+            OutlinedTextField(
+                value = groqKey,
+                onValueChange = { groqKey = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Groq API key") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation()
+            )
+
+            Text(
+                text = "Keys are only stored on this device and sent as BYOK headers to supported AI endpoints.",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = {
+                        ByokKeyStore.saveKeys(geminiKey, groqKey)
+                        geminiKey = ByokKeyStore.getGeminiKey()
+                        groqKey = ByokKeyStore.getGroqKey()
+                        Toast.makeText(context, "BYOK keys saved", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Save keys")
+                }
+                OutlinedButton(
+                    onClick = {
+                        ByokKeyStore.clearKeys()
+                        geminiKey = ""
+                        groqKey = ""
+                        Toast.makeText(context, "BYOK keys cleared", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Clear")
+                }
+            }
+        }
     }
 }
 

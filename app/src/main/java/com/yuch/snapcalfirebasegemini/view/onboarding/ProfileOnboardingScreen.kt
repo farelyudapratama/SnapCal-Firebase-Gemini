@@ -120,7 +120,7 @@ fun ProfileOnboardingScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = if (isEdit) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                 )
             )

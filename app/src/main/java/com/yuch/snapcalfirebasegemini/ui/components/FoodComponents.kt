@@ -31,10 +31,8 @@ import com.yuch.snapcalfirebasegemini.data.api.response.FoodItem
 import com.yuch.snapcalfirebasegemini.data.api.response.NutritionData
 import com.yuch.snapcalfirebasegemini.ui.navigation.Screen
 import com.yuch.snapcalfirebasegemini.ui.theme.*
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
+import com.yuch.snapcalfirebasegemini.ui.utils.toReadableNutritionSource
+import com.yuch.snapcalfirebasegemini.utils.formatCreatedAtForDisplay
 import java.util.Locale
 
 @Composable
@@ -234,15 +232,7 @@ fun NutritionItem(
 
 @Composable
 fun FoodMetadata(food: FoodItem) {
-    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-    val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-
-    val createdAt = try {
-        val zonedDateTime = Instant.parse(food.createdAt).atZone(ZoneId.systemDefault())
-        "${zonedDateTime.format(dateFormatter)}, ${zonedDateTime.format(timeFormatter)}"
-    } catch (e: Exception) {
-        stringResource(R.string.date_not_available)
-    }
+    val createdAt = formatCreatedAtForDisplay(food.createdAt) ?: stringResource(R.string.date_not_available)
 
     Row(
         modifier = Modifier
@@ -264,11 +254,20 @@ fun FoodMetadata(food: FoodItem) {
             )
         }
 
-        Text(
-            text = createdAt,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Column(horizontalAlignment = Alignment.End) {
+            food.nutritionData.sourceType?.takeIf { it.isNotBlank() }?.let { sourceType ->
+                Text(
+                    text = sourceType.toReadableNutritionSource(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+            Text(
+                text = createdAt,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

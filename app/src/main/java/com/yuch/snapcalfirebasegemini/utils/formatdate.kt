@@ -2,8 +2,11 @@ package com.yuch.snapcalfirebasegemini.utils
 
 import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
 import java.util.TimeZone
 
@@ -15,6 +18,25 @@ fun parseCreatedAt(createdAt: String?): Long {
     } catch (e: Exception) {
         System.currentTimeMillis() // Jika parsing gagal, pakai waktu sekarang
     }
+}
+
+fun parseCreatedAtOrNull(createdAt: String?): Instant? {
+    return try {
+        createdAt?.takeIf { it.isNotBlank() }?.let(Instant::parse)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+fun createdAtLocalDateOrNull(createdAt: String?): LocalDate? {
+    return parseCreatedAtOrNull(createdAt)?.atZone(ZoneId.systemDefault())?.toLocalDate()
+}
+
+fun formatCreatedAtForDisplay(createdAt: String?): String? {
+    val zonedDateTime = parseCreatedAtOrNull(createdAt)?.atZone(ZoneId.systemDefault()) ?: return null
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+    val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+    return "${zonedDateTime.format(dateFormatter)}, ${zonedDateTime.format(timeFormatter)}"
 }
 
 // Fungsi untuk mengubah Long ke String (ISO 8601)

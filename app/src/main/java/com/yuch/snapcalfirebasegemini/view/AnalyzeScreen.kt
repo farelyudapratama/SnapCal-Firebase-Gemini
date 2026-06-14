@@ -85,6 +85,8 @@ fun AnalyzeScreen(
                 saturatedFat = it.saturatedFat.toString().normalizeDecimal(),
                 fiber = it.fiber.toString().normalizeDecimal(),
                 sugar = it.sugar.toString().normalizeDecimal(),
+                sourceType = it.sourceType ?: "ai_estimate",
+                sourceDetails = it.sourceDetails,
                 weightInGrams = "100"
             )
             baseNutrition = baseData
@@ -264,8 +266,6 @@ fun AnalyzeScreen(
                             manualOverrides = manualOverrides,
                             onValueChange = { editableFood = it }
                         )
-
-                        // TODO: Food Composition Section
                     }
                 }
             }

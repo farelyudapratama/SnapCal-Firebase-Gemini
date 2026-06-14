@@ -57,6 +57,7 @@ import com.yuch.snapcalfirebasegemini.R
 import com.yuch.snapcalfirebasegemini.data.api.response.FoodDetectionByMyModelResult
 import com.yuch.snapcalfirebasegemini.data.model.EditableFoodData
 import com.yuch.snapcalfirebasegemini.ui.components.food.MealTypeDropdown
+import com.yuch.snapcalfirebasegemini.ui.utils.toReadableNutritionSource
 import com.yuch.snapcalfirebasegemini.utils.normalizeDecimal
 import java.io.File
 import java.util.Locale
@@ -317,6 +318,10 @@ fun AnalyzeEditableAnalysisCard(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
+
+            NutritionSourceInfo(foodData = foodData)
+
+            Spacer(modifier = Modifier.height(16.dp))
             MealTypeDropdown(
                 selectedMealType = foodData.mealType,
                 onMealTypeSelected = { onValueChange(foodData.copy(mealType = it)) }
@@ -377,6 +382,60 @@ fun AnalyzeEditableAnalysisCard(
                     onToggleChange = { isChecked ->
                         manualOverrides[key] = isChecked
                     }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NutritionSourceInfo(foodData: EditableFoodData) {
+    val sourceDetails = foodData.sourceDetails
+    val sourceLabel = foodData.sourceType.toReadableNutritionSource()
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = "Nutrition source: $sourceLabel",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            sourceDetails?.estimatedBy?.let {
+                Text(
+                    text = "Estimated by: $it",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            sourceDetails?.basis?.let {
+                Text(
+                    text = "Basis: $it",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            sourceDetails?.confidenceNote?.takeIf { it.isNotBlank() }?.let {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
+            }
+            if (sourceDetails?.requiresUserVerification == true) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Please verify values before saving.",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.error
                 )
             }
         }

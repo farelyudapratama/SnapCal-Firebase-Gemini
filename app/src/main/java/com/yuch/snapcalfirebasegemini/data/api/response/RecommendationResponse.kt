@@ -3,11 +3,14 @@ package com.yuch.snapcalfirebasegemini.data.api.response
 import com.google.gson.annotations.SerializedName
 
 data class RecommendationData(
-    val userId: String,
-    val mealType: String,
-    val date: String,
+    val userId: String = "",
+    val mealType: String = "",
+    val date: String = "",
     val recommendations: List<FoodRecommendation>,
-    val metadata: RecommendationMetadata
+    val cached: Boolean = false,
+    val modelUsed: String = "",
+    val generatedAt: String = "",
+    val metadata: RecommendationMetadata? = null
 )
 
 data class FoodRecommendation(

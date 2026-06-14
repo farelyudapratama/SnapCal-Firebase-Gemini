@@ -180,6 +180,29 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
         _isLoading.value = false
     }
 
+    fun deleteProfile(onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            _updateStatus.value = ProfileState.Loading
+            _isLoading.value = true
+
+            try {
+                when (val result = repository.deleteProfile()) {
+                    is AppResult.Success -> {
+                        _userPreferences.value = null
+                        _updateStatus.value = ProfileState.Success(result.message ?: "Profile deleted successfully")
+                        onComplete(true)
+                    }
+                    is AppResult.Error -> {
+                        _updateStatus.value = ProfileState.Error(result.message)
+                        onComplete(false)
+                    }
+                }
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     fun refreshProfile() {
         fetchUserPreferences()
     }

@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.LunchDining
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -72,10 +73,8 @@ import com.yuch.snapcalfirebasegemini.ui.theme.fiberColor
 import com.yuch.snapcalfirebasegemini.ui.theme.proteinColor
 import com.yuch.snapcalfirebasegemini.ui.theme.saturatedFatColor
 import com.yuch.snapcalfirebasegemini.ui.theme.sugarColor
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
+import com.yuch.snapcalfirebasegemini.ui.utils.toReadableNutritionSource
+import com.yuch.snapcalfirebasegemini.utils.formatCreatedAtForDisplay
 import java.util.Locale
 import kotlin.math.atan2
 
@@ -189,6 +188,72 @@ fun FoodHeaderSection(foodItem: FoodItem, context: Context) {
         }
     } else {
         FoodHeaderWithoutImage(foodItem)
+    }
+}
+
+@Composable
+fun NutritionSourceCard(nutritionData: NutritionData) {
+    val sourceType = nutritionData.sourceType ?: "manual"
+    val sourceDetails = nutritionData.sourceDetails
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Verified,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Nutrition source: ${sourceType.toReadableNutritionSource()}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            sourceDetails?.estimatedBy?.let {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text("Estimated by: $it", style = MaterialTheme.typography.bodySmall)
+            }
+            sourceDetails?.basis?.let {
+                Text("Basis: $it", style = MaterialTheme.typography.bodySmall)
+            }
+            sourceDetails?.confidenceNote?.takeIf { it.isNotBlank() }?.let {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
+            }
+            if (sourceDetails?.generalReferences?.isNotEmpty() == true) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "References: ${sourceDetails.generalReferences.joinToString(", ")}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                )
+            }
+            if (sourceDetails?.requiresUserVerification == true) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Values are AI estimates and should be verified.",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
     }
 }
 
@@ -642,15 +707,7 @@ private fun FatValueRow(label: String, value: String, color: Color) {
 
 @Composable
 fun DateInfoCard(createdAt: String) {
-    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-    val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-
-    val createdAtFormatted = try {
-        val zonedDateTime = Instant.parse(createdAt).atZone(ZoneId.systemDefault())
-        "${zonedDateTime.format(dateFormatter)}, ${zonedDateTime.format(timeFormatter)}"
-    } catch (e: Exception) {
-        "Date not available"
-    }
+    val createdAtFormatted = formatCreatedAtForDisplay(createdAt) ?: "Date not available"
 
     Card(
         modifier = Modifier

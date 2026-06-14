@@ -19,7 +19,8 @@ fun FoodEntity.toFoodItem(): FoodItem = FoodItem(
         totalFat = totalFat,
         saturatedFat = saturatedFat,
         fiber = fiber,
-        sugar = sugar
+        sugar = sugar,
+        sourceType = "cached"
     ),
     imageUrl = imageUrl,
     createdAt = formatDateFromLong(createdAt)

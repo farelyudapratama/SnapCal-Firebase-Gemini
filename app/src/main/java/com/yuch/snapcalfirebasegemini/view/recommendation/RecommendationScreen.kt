@@ -187,7 +187,7 @@ fun RecommendationScreen(
                         if (BuildConfig.DEBUG) Log.d(TAG, "Rendering success state with ${data.recommendations.size} recommendations")
 
                         if (data.recommendations.isNotEmpty()) {
-                            item { RecommendationMetadataCard(data.metadata) }
+                            item { RecommendationMetadataCard(data) }
 
                             items(data.recommendations) { recommendation ->
                                 FoodRecommendationCard(recommendation)

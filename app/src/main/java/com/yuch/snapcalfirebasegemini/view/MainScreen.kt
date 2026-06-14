@@ -36,11 +36,10 @@ import com.yuch.snapcalfirebasegemini.viewmodel.AnnouncementViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
 import com.yuch.snapcalfirebasegemini.viewmodel.FoodListViewModel
-import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import com.yuch.snapcalfirebasegemini.utils.createdAtLocalDateOrNull
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -250,7 +249,7 @@ fun MainScreen(
                             }
                         } else {
                             val groupedFoodList = foodList.groupBy { foodItem ->
-                                Instant.parse(foodItem.createdAt).atZone(ZoneId.systemDefault()).toLocalDate()
+                                createdAtLocalDateOrNull(foodItem.createdAt) ?: LocalDateTime.now().toLocalDate()
                             }
 
                             groupedFoodList.forEach { (date, itemsOnDate) ->

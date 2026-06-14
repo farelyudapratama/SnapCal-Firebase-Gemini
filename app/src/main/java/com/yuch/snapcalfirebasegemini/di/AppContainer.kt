@@ -9,9 +9,13 @@ import com.yuch.snapcalfirebasegemini.data.local.FoodDao
 import com.yuch.snapcalfirebasegemini.data.repository.ApiRepository
 import com.yuch.snapcalfirebasegemini.data.repository.ProfileRepository
 import com.yuch.snapcalfirebasegemini.domain.auth.TokenManager
+import com.yuch.snapcalfirebasegemini.domain.byok.ByokKeyStore
 import com.yuch.snapcalfirebasegemini.viewmodel.ViewModelFactory
 
 class AppContainer(private val context: Context) {
+    init {
+        ByokKeyStore.initialize(context)
+    }
 
     // 1. Database
     val database: AppDatabase by lazy {

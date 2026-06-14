@@ -53,6 +53,7 @@ import com.yuch.snapcalfirebasegemini.view.fooddetail.components.FatBreakdownCar
 import com.yuch.snapcalfirebasegemini.view.fooddetail.components.FoodDetailEmptyState
 import com.yuch.snapcalfirebasegemini.view.fooddetail.components.FoodHeaderSection
 import com.yuch.snapcalfirebasegemini.view.fooddetail.components.NutritionInfoCard
+import com.yuch.snapcalfirebasegemini.view.fooddetail.components.NutritionSourceCard
 import com.yuch.snapcalfirebasegemini.view.fooddetail.components.showDeleteFoodToast
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthState
 import com.yuch.snapcalfirebasegemini.viewmodel.AuthViewModel
@@ -203,6 +204,7 @@ fun DetailFoodScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         item { FoodHeaderSection(foodItem, context) }
+                        item { NutritionSourceCard(foodItem.nutritionData) }
                         item { NutritionInfoCard(foodItem) }
                         item { FatBreakdownCard(foodItem.nutritionData) }
                         item { DateInfoCard(foodItem.createdAt ?: "N/A") }

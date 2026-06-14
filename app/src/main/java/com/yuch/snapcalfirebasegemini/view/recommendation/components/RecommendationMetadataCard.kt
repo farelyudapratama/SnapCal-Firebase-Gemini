@@ -25,13 +25,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.yuch.snapcalfirebasegemini.R
-import com.yuch.snapcalfirebasegemini.data.api.response.RecommendationMetadata
-import java.time.Instant
+import com.yuch.snapcalfirebasegemini.data.api.response.RecommendationData
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import com.yuch.snapcalfirebasegemini.utils.parseCreatedAtOrNull
 
 @Composable
-fun RecommendationMetadataCard(metadata: RecommendationMetadata) {
+fun RecommendationMetadataCard(data: RecommendationData) {
+    val metadata = data.metadata
+    val modelUsed = metadata?.modelUsed ?: data.modelUsed
+    val fallbackUsed = metadata?.fallbackUsed == true
+    val fromCache = metadata?.fromCache ?: data.cached
+    val generatedAt = metadata?.generatedAt ?: data.generatedAt
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -49,15 +55,15 @@ fun RecommendationMetadataCard(metadata: RecommendationMetadata) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = if (metadata.fallbackUsed) Icons.Default.Warning else Icons.Default.AutoAwesome,
+                        imageVector = if (fallbackUsed) Icons.Default.Warning else Icons.Default.AutoAwesome,
                         contentDescription = null,
-                        tint = if (metadata.fallbackUsed) Color(0xFFF59E0B) else Color(0xFF0369A1),
+                        tint = if (fallbackUsed) Color(0xFFF59E0B) else Color(0xFF0369A1),
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = metadata.modelUsed,
+                            text = modelUsed,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF0369A1)
@@ -66,14 +72,14 @@ fun RecommendationMetadataCard(metadata: RecommendationMetadata) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            if (metadata.fallbackUsed) {
+                            if (fallbackUsed) {
                                 Text(
                                     text = stringResource(R.string.fallback_mode),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFFF59E0B)
                                 )
                             }
-                            if (metadata.fromCache) {
+                            if (fromCache) {
                                 Text(
                                     text = stringResource(R.string.from_cache),
                                     style = MaterialTheme.typography.bodySmall,
@@ -86,9 +92,10 @@ fun RecommendationMetadataCard(metadata: RecommendationMetadata) {
 
                 val formatter = DateTimeFormatter.ofPattern("MMM dd, HH:mm")
                 val dateTime = try {
-                    Instant.parse(metadata.generatedAt)
-                        .atZone(ZoneId.systemDefault())
-                        .format(formatter)
+                    parseCreatedAtOrNull(generatedAt)
+                        ?.atZone(ZoneId.systemDefault())
+                        ?.format(formatter)
+                        ?: "Recently"
                 } catch (e: Exception) {
                     "Recently"
                 }

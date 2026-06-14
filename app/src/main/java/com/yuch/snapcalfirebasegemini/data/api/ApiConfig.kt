@@ -2,6 +2,7 @@ package com.yuch.snapcalfirebasegemini.data.api
 
 import com.google.firebase.auth.FirebaseAuth
 import com.yuch.snapcalfirebasegemini.BuildConfig
+import com.yuch.snapcalfirebasegemini.domain.byok.ByokKeyStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -105,9 +106,17 @@ class ApiConfig {
                             .build()
                     }
 
-                    val newRequest = request.newBuilder()
+                    val requestBuilder = request.newBuilder()
                         .addHeader("Authorization", "Bearer $token")
-                        .build()
+
+                    ByokKeyStore.getGeminiKey().takeIf { it.isNotBlank() }?.let { key ->
+                        requestBuilder.addHeader("x-byok-gemini", key)
+                    }
+                    ByokKeyStore.getGroqKey().takeIf { it.isNotBlank() }?.let { key ->
+                        requestBuilder.addHeader("x-byok-groq", key)
+                    }
+
+                    val newRequest = requestBuilder.build()
 
                     chain.proceed(newRequest)
                 }

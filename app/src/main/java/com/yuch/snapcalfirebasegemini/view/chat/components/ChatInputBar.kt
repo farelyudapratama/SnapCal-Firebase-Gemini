@@ -32,6 +32,7 @@ import java.util.Locale
 fun ChatInputBar(
     message: String,
     selectedService: String,
+    enabled: Boolean = true,
     onMessageChange: (String) -> Unit,
     onSend: () -> Unit
 ) {
@@ -54,8 +55,9 @@ fun ChatInputBar(
             TextField(
                 value = message,
                 onValueChange = onMessageChange,
+                enabled = enabled,
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Message ${selectedService.titlecase()}...") },
+                placeholder = { Text(if (enabled) "Message ${selectedService.titlecase()}..." else "Daily chat quota reached") },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
@@ -69,6 +71,7 @@ fun ChatInputBar(
             Spacer(modifier = Modifier.width(8.dp))
             FilledIconButton(
                 onClick = onSend,
+                enabled = enabled && message.isNotBlank(),
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = colorScheme.primary),
                 modifier = Modifier.size(48.dp)
             ) {

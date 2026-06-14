@@ -91,4 +91,35 @@ class ProfileRepository(private val apiService: ApiService) {
             )
         }
     }
+
+    suspend fun deleteProfile(): AppResult<Unit> {
+        return try {
+            Log.d("ProfileRepository", "Deleting profile...")
+            val response = apiService.deleteProfile()
+
+            if (response.isSuccessful) {
+                val apiResponse = response.body()
+                if (apiResponse?.status == "success") {
+                    AppResult.Success(Unit, apiResponse.message)
+                } else {
+                    AppResult.Error(
+                        message = apiResponse?.message ?: "Failed to delete profile",
+                        code = response.code(),
+                        errorCode = apiResponse?.code
+                    )
+                }
+            } else {
+                AppResult.Error(
+                    message = "Failed to delete profile: ${response.message()}",
+                    code = response.code()
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("ProfileRepository", "Unexpected error during delete: ${e.message}")
+            AppResult.Error(
+                message = e.message ?: "Failed to delete profile",
+                cause = e
+            )
+        }
+    }
 }

@@ -23,6 +23,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,14 +37,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.yuch.snapcalfirebasegemini.data.api.response.UsageResponse
 import com.yuch.snapcalfirebasegemini.view.chat.components.ChatBubble
 import com.yuch.snapcalfirebasegemini.view.chat.components.ChatInputBar
 import com.yuch.snapcalfirebasegemini.view.chat.components.ChatTopBar
 import com.yuch.snapcalfirebasegemini.view.chat.components.DateHeader
 import com.yuch.snapcalfirebasegemini.view.chat.components.WelcomeMessage
 import com.yuch.snapcalfirebasegemini.viewmodel.AiChatViewModel
-import kotlinx.coroutines.delay
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -58,6 +60,7 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
     val errorMessage by aiChatViewModel.errorMessage.collectAsStateWithLifecycle()
     val selectedService by aiChatViewModel.selectedService.collectAsStateWithLifecycle()
     val usageInfo by aiChatViewModel.usageInfo.collectAsStateWithLifecycle()
+    val usageError by aiChatViewModel.usageError.collectAsStateWithLifecycle()
 
     var userMessage by remember { mutableStateOf("") }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -78,6 +81,8 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
             }
         }
     }
+    val chatQuota = usageInfo?.usage?.chat
+    val isChatQuotaExhausted = chatQuota?.remaining == 0
 
     val currentDate = remember {
         ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
@@ -94,17 +99,8 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
         }
     }
 
-    LaunchedEffect(usageInfo) {
-        if (usageInfo == null) {
-            aiChatViewModel.fetchChatUsage()
-        }
-    }
-
     LaunchedEffect(Unit) {
-        while (true) {
-            aiChatViewModel.fetchChatUsage()
-            delay(30_000)
-        }
+        aiChatViewModel.fetchChatUsage()
     }
 
     if (showDeleteConfirmation) {
@@ -170,7 +166,10 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
                             )
                         }
 
-                        items(messages, key = { it.id }) { message ->
+                        items(
+                            messages,
+                            key = { message -> message.id ?: "${message.role}-${message.timestamp}-${message.content.hashCode()}" }
+                        ) { message ->
                             ChatBubble(message)
                             Spacer(modifier = Modifier.height(8.dp))
                         }
@@ -236,17 +235,111 @@ fun AiChatScreen(aiChatViewModel: AiChatViewModel, onBackClick: () -> Unit) {
                 }
             }
 
+            UsageQuotaCard(usageInfo = usageInfo, usageError = usageError)
+
             ChatInputBar(
                 message = userMessage,
                 selectedService = selectedService,
+                enabled = !isChatQuotaExhausted,
                 onMessageChange = { userMessage = it },
                 onSend = {
-                    if (userMessage.isNotBlank()) {
+                    if (userMessage.isNotBlank() && !isChatQuotaExhausted) {
                         aiChatViewModel.sendMessage(userMessage, selectedService)
                         userMessage = ""
                     }
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun UsageQuotaCard(usageInfo: UsageResponse?, usageError: String?) {
+    val chatQuota = usageInfo?.usage?.chat
+    val usedRatio = chatQuota?.let { quota ->
+        if (quota.limit <= 0) 0f else (quota.used.toFloat() / quota.limit).coerceIn(0f, 1f)
+    } ?: 0f
+    val isExhausted = chatQuota?.remaining == 0
+    val isNearLimit = chatQuota?.let { it.limit > 0 && it.remaining <= (it.limit * 0.2f) } == true
+    val statusColor = when {
+        isExhausted -> MaterialTheme.colorScheme.error
+        isNearLimit -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.primary
+    }
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = if (isExhausted) "AI quota exhausted" else "AI quota",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            if (usageError != null) {
+                Text(
+                    text = usageError,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            } else if (usageInfo == null || chatQuota == null) {
+                Text(
+                    text = "Loading quota information...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                )
+            } else {
+                Text(
+                    text = "Tier: ${usageInfo.tier} (${usageInfo.subscriptionStatus})",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                usageInfo.byokActive?.let { isByokActive ->
+                    Text(
+                        text = if (isByokActive) "BYOK active: using your configured AI key" else "BYOK inactive: using default AI quota",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    progress = { usedRatio },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = statusColor,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Chat remaining: ${chatQuota.remaining}/${chatQuota.limit} (used ${chatQuota.used})",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = statusColor,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (chatQuota.bonusQuota > 0) {
+                    Text(
+                        text = "Includes ${chatQuota.bonusQuota} bonus quota",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                if (isExhausted) {
+                    Text(
+                        text = "You have reached today\'s chat limit. Try again after quota resets or upgrade your tier.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                } else if (isNearLimit) {
+                    Text(
+                        text = "You are close to today\'s chat limit.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = statusColor
+                    )
+                }
+            }
         }
     }
 }

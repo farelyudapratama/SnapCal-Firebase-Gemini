@@ -198,7 +198,9 @@ fun EditFoodScreen(
                                     totalFat = totalFat.toDoubleOrNull() ?: 0.0,
                                     saturatedFat = saturatedFat.toDoubleOrNull() ?: 0.0,
                                     fiber = fiber.toDoubleOrNull() ?: 0.0,
-                                    sugar = sugar.toDoubleOrNull() ?: 0.0
+                                    sugar = sugar.toDoubleOrNull() ?: 0.0,
+                                    sourceType = foodItem?.nutritionData?.sourceType,
+                                    sourceDetails = foodItem?.nutritionData?.sourceDetails
                                 )
                             } catch (e: Exception) {
                                 Log.e("EditFoodScreen", "Error parsing food data: ${e.message}")

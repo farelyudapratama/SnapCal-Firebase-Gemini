@@ -17,13 +17,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yuch.snapcalfirebasegemini.data.api.response.AiChatMessage
-import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import com.yuch.snapcalfirebasegemini.utils.parseCreatedAtOrNull
 
 @Composable
 fun ChatBubble(message: AiChatMessage) {
@@ -32,7 +33,7 @@ fun ChatBubble(message: AiChatMessage) {
     val timestampInfo = remember {
         try {
             val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-            val zonedTime = Instant.parse(message.timestamp).atZone(ZoneId.systemDefault())
+            val zonedTime = parseCreatedAtOrNull(message.timestamp)?.atZone(ZoneId.systemDefault()) ?: return@remember ""
             zonedTime.format(timeFormatter)
         } catch (e: Exception) {
             ""
@@ -67,8 +68,12 @@ fun ChatBubble(message: AiChatMessage) {
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = timestampInfo,
+                    text = listOfNotNull(
+                        timestampInfo.takeIf { it.isNotBlank() },
+                        message.service?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                    ).joinToString(" • "),
                     style = MaterialTheme.typography.labelSmall,
+                    fontWeight = if (message.service != null) FontWeight.Medium else FontWeight.Normal,
                     color = if (isUser) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     textAlign = if (isUser) TextAlign.End else TextAlign.Start
                 )

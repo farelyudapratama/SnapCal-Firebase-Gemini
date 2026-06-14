@@ -20,13 +20,16 @@ android {
         versionName = "0.2.0-pre-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "BASE_URL", "\"\"")
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"http://192.168.1.15:3000/\"")
+        }
         release {
             isMinifyEnabled = false
             isShrinkResources = false
+            buildConfigField("String", "BASE_URL", "\"http://192.168.1.15:3000/\"")
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

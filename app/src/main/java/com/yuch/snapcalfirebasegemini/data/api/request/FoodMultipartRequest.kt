@@ -40,7 +40,9 @@ fun EditableFoodData.toUploadFoodParts(imagePath: String?): UploadFoodParts {
             "totalFat" to totalFat,
             "saturatedFat" to saturatedFat,
             "fiber" to fiber,
-            "sugar" to sugar
+            "sugar" to sugar,
+            "sourceType" to sourceType,
+            "sourceDetails" to sourceDetails
         ).toJsonRequestBody()
     )
 }
@@ -57,7 +59,9 @@ fun UpdateFoodData.toUpdateFoodParts(imagePath: String?): UpdateFoodParts = Upda
         "totalFat" to totalFat,
         "saturatedFat" to saturatedFat,
         "fiber" to fiber,
-        "sugar" to sugar
+        "sugar" to sugar,
+        "sourceType" to sourceType,
+        "sourceDetails" to sourceDetails
     ).toJsonRequestBody()
 )
 
